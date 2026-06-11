@@ -14,9 +14,10 @@ export function EditorGizmo() {
   const mode = useViewerStore((s) => s.gizmoMode);
   const setDisplay = useViewerStore((s) => s.setDisplay);
   const recordEdit = useViewerStore((s) => s.recordEdit);
+  const registryVersion = useViewerStore((s) => s.registryVersion); // 객체 등록 시 리렌더 → 새 드롭 장비도 기즈모 부착
   const { data: zoneByMesh } = useZoneMap();
 
-  const obj = selectedId != null ? deviceObjects.get(selectedId) : undefined;
+  const obj = selectedId != null && registryVersion >= 0 ? deviceObjects.get(selectedId) : undefined;
 
   const compute = () => {
     const trs = unityFromObject(obj!);

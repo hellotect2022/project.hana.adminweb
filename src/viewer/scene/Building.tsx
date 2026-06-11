@@ -8,8 +8,8 @@ export function Building() {
   if (!manifest || !matMap) return null;
   return (
     <group>
-      {manifest.floors.map((f) => (
-        <Floor key={f.glb} data={f} matMap={matMap} />
+      {manifest.floors.map((f, i) => (
+        <Floor key={`${f.glb}__${i}`} data={f} matMap={matMap} />
       ))}
     </group>
   );

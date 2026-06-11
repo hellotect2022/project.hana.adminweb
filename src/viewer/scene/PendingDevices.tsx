@@ -37,7 +37,7 @@ function PendingCube({ device, pos }: { device: DeviceDTO; pos: Pos }) {
   useRegister(device.deviceId, ref);
   return (
     <group ref={ref} userData={{ isDevice: true }} onClick={onDevicePick(device.deviceId)}>
-      <mesh material={DEVICE_MISS_MAT}><boxGeometry args={[1, 1, 1]} /></mesh>
+      <mesh material={DEVICE_MISS_MAT}><boxGeometry args={[2, 2, 2]} /></mesh>
     </group>
   );
 }

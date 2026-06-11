@@ -28,11 +28,11 @@ export function onDevicePick(deviceId: number) {
     if (o) { const p = o.getWorldPosition(new THREE.Vector3()); st.setFocus({ x: p.x, y: p.y, z: p.z }); }
   };
 }
-// 노드 등록(레지스트리) — 기즈모/인스펙터가 참조
+// 노드 등록(레지스트리) — 기즈모/인스펙터가 참조. (등록/해제 시 registryVersion 증가로 리렌더 유도)
 export function useRegister(deviceId: number, ref: RefObject<THREE.Group | null>) {
   useLayoutEffect(() => {
-    if (ref.current) deviceObjects.set(deviceId, ref.current);
-    return () => { deviceObjects.delete(deviceId); };
+    if (ref.current) { deviceObjects.set(deviceId, ref.current); useViewerStore.getState().bumpRegistry(); }
+    return () => { deviceObjects.delete(deviceId); useViewerStore.getState().bumpRegistry(); };
   }, [deviceId, ref]);
 }
 

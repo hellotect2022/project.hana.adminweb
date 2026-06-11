@@ -87,21 +87,22 @@ export function ViewerPage() {
 
   // 미배치 카드 → 캔버스 드롭: 드롭 지점을 건물 표면에 레이캐스트 → 임시 배치 + 선택
   const onDrop = (e: DragEvent) => {
-    if (!editMode) return;
+    if (!editMode) { console.warn('[drop] editMode=false'); return; }
     e.preventDefault();
     const id = Number(e.dataTransfer.getData('text/deviceId'));
-    if (!id) return;
+    if (!id) { console.warn('[drop] dataTransfer 비어있음 (id 없음)'); return; }
     const { camera, raycaster, gl, world } = viewerCtx;
-    if (!camera || !raycaster || !gl || !world) return;
+    if (!camera || !raycaster || !gl || !world) { console.warn('[drop] viewerCtx 미준비', { camera: !!camera, raycaster: !!raycaster, gl: !!gl, world: !!world }); return; }
     const rect = gl.domElement.getBoundingClientRect();
     const ndc = new THREE.Vector2(
       ((e.clientX - rect.left) / rect.width) * 2 - 1,
       -((e.clientY - rect.top) / rect.height) * 2 + 1,
     );
     raycaster.setFromCamera(ndc, camera);
+    const allHits = raycaster.intersectObject(world, true);
     // three 레이캐스터는 visible=false 도 맞히므로, 숨긴 층(다른 층)·디바이스·콜라이더는 제외 →
     // 화면에 보이는 층 표면에만 안착(층 단독보기에서 정확한 floorKey 보장).
-    const hit = raycaster.intersectObject(world, true).find((h) => {
+    const hit = allHits.find((h) => {
       let o: THREE.Object3D | null = h.object;
       while (o) {
         if (o.userData?.isDevice || o.userData?.isCollider) return false;
@@ -110,7 +111,7 @@ export function ViewerPage() {
       }
       return true;
     });
-    if (!hit) return; // 건물 표면 못 맞춤(해당 층이 안 보이면 그 층 먼저 선택)
+    if (!hit) { console.warn('[drop] 보이는 건물 표면을 못 맞춤 — 해당 층을 먼저 선택하거나 건물 위에 드롭하세요'); return; }
     let fk: string | null = null;
     let o: THREE.Object3D | null = hit.object;
     while (o) { if (o.userData?.floorKey) { fk = o.userData.floorKey as string; break; } o = o.parent; }

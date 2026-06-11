@@ -16,6 +16,7 @@ interface ViewerState {
   selectedDeviceId: number | null;
   sidebarOpen: boolean;
   focus: { x: number; y: number; z: number } | null; // 카메라 줌 타겟
+  registryVersion: number; // 3D 객체 (등록/해제) 시 증가 → 기즈모/인스펙터 리렌더 트리거
   // 편집 상태
   gizmoMode: GizmoMode;
   editTRS: UnityTransform | null;     // 선택 장비 표시값(인스펙터)
@@ -34,6 +35,7 @@ interface ViewerState {
   setEditMode: (v: boolean) => void;
   selectDevice: (id: number | null) => void;
   setFocus: (p: { x: number; y: number; z: number } | null) => void;
+  bumpRegistry: () => void;
   toggleSidebar: () => void;
   setGizmoMode: (m: GizmoMode) => void;
   setDisplay: (trs: UnityTransform | null, zone: EditZone | null) => void;
@@ -51,6 +53,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   selectedDeviceId: null,
   sidebarOpen: false,
   focus: null,
+  registryVersion: 0,
   gizmoMode: 'translate',
   editTRS: null,
   editZone: null,
@@ -72,6 +75,7 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setEditMode: (v) => set({ editMode: v, selectedDeviceId: null, editTRS: null, editZone: null }),
   selectDevice: (id) => set({ selectedDeviceId: id }),
   setFocus: (p) => set({ focus: p }),
+  bumpRegistry: () => set((s) => ({ registryVersion: s.registryVersion + 1 })),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setGizmoMode: (m) => set({ gizmoMode: m }),
   // 선택 시 표시값만(누적 X)
