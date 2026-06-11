@@ -2,7 +2,7 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useGLTF } from '@react-three/drei';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import type { DeviceDTO } from '@/types/device';
+import type { DeviceDTO } from '../data/types';
 import { DEVICE_MAT, DEVICE_SELECTED_MAT, DEVICE_MISS_MAT } from '../lib/deviceMat';
 import { useViewerStore } from '../state/viewerStore';
 import { useAllDevices } from '../hooks';

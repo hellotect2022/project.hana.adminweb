@@ -1,0 +1,922 @@
+import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import styled from "styled-components";
+import {
+  categoryFetchAPI,
+  createDeviceAPI,
+  DEVICE_CATEGORY_QUERY_KEY,
+  DEVICE_LIST_QUERY_KEY,
+  flattenDeviceCategoryTree,
+  sortByDisplayOrder,
+} from "@/services/deviceService";
+import {
+  fetchUnityAssetsList,
+  UNITY_ASSET_LIST_QUERY_KEY,
+} from "@/services/unityAssetService";
+
+/** @param {{ categoryCode?: string; categoryName: string }} cat */
+function resolveCategoryCode(cat) {
+  if (!cat) return "";
+  if (cat.categoryCode?.trim()) return cat.categoryCode.trim();
+  return cat.categoryName
+    .trim()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_가-힣-]/g, "");
+}
+
+/**
+ * 대·중·소 categoryCode + deviceName 으로 deviceKey 생성
+ * 형식: {대}_{중}_{소}_{deviceName}
+ */
+export function buildDeviceKey(major, mid, small, deviceName) {
+  const majorCode = resolveCategoryCode(major);
+  const midCode = resolveCategoryCode(mid);
+  const smallCode = resolveCategoryCode(small);
+  const name = deviceName?.trim() ?? "";
+  if (!majorCode || !midCode || !smallCode || !name) return "";
+  return `${majorCode}_${midCode}_${smallCode}_${name}`;
+}
+
+/** point_key: {deviceKey}_{schemaTagName} (예: 전기설비_전력제어_SUBE_test_test3) */
+export function buildPointKey(deviceKey, schemaTagName) {
+  const key = deviceKey?.trim() ?? "";
+  const tag = schemaTagName?.trim() ?? "";
+  if (!key || !tag) return "";
+  return `${key}_${tag}`;
+}
+
+/** @param {Array<{ tagName?: string; type?: string; unit?: string; tagDesc?: string; isDisplay?: boolean }>} schemaDefinitions */
+export function buildPointRowsFromSchema(deviceKey, schemaDefinitions = []) {
+  return schemaDefinitions
+    .filter((s) => s?.tagName?.trim())
+    .map((s) => {
+      const schemaTagName = s.tagName.trim();
+      return {
+        schemaTagName,
+        tagName: schemaTagName,
+        pointKey: buildPointKey(deviceKey, schemaTagName),
+        pointName: s.tagDesc?.trim() || schemaTagName,
+        pointType: s.type ?? "",
+        unit: s.unit ?? "",
+        tagDesc: s.tagDesc ?? "",
+        isDisplay: s.isDisplay ?? true,
+      };
+    });
+}
+
+/**
+ * @param {{ onSuccess?: (res: unknown, variables: unknown) => void; onCancel?: () => void }} props
+ */
+const DeviceRegistForm = ({ onSuccess, onCancel }) => {
+  const inModal = Boolean(onCancel || onSuccess);
+  const queryClient = useQueryClient();
+  const [selectedMajorId, setSelectedMajorId] = useState(null);
+  const [selectedMidId, setSelectedMidId] = useState(null);
+  const [selectedSmallId, setSelectedSmallId] = useState(null);
+  const [deviceName, setDeviceName] = useState("");
+  const [assetId, setAssetId] = useState("");
+  const [submitError, setSubmitError] = useState("");
+
+  const {
+    data: categoryTree,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: DEVICE_CATEGORY_QUERY_KEY,
+    queryFn: async () => {
+      const res = await categoryFetchAPI();
+      if (!res?.success) throw new Error(res?.message || "카테고리 조회 실패");
+      return res.data ?? [];
+    },
+  });
+
+  const {
+    data: assets = [],
+    isLoading: isAssetsLoading,
+    isError: isAssetsError,
+    error: assetsError,
+  } = useQuery({
+    queryKey: UNITY_ASSET_LIST_QUERY_KEY,
+    queryFn: () => fetchUnityAssetsList({ activeOnly: true }),
+    enabled: Boolean(selectedSmallId),
+  });
+
+  const flat = useMemo(() => flattenDeviceCategoryTree(categoryTree), [categoryTree]);
+
+  const majors = useMemo(
+    () => flat.filter((c) => c.parentId == null && c.active).sort(sortByDisplayOrder),
+    [flat]
+  );
+  const mids = useMemo(
+    () =>
+      selectedMajorId == null
+        ? []
+        : flat.filter((c) => c.parentId === selectedMajorId && c.active).sort(sortByDisplayOrder),
+    [flat, selectedMajorId]
+  );
+  const smalls = useMemo(
+    () =>
+      selectedMidId == null
+        ? []
+        : flat.filter((c) => c.parentId === selectedMidId && c.active).sort(sortByDisplayOrder),
+    [flat, selectedMidId]
+  );
+
+  const selectedMajor = useMemo(
+    () => flat.find((c) => c.categoryId === selectedMajorId) ?? null,
+    [flat, selectedMajorId]
+  );
+  const selectedMid = useMemo(
+    () => flat.find((c) => c.categoryId === selectedMidId) ?? null,
+    [flat, selectedMidId]
+  );
+  const selectedSmall = useMemo(
+    () => flat.find((c) => c.categoryId === selectedSmallId) ?? null,
+    [flat, selectedSmallId]
+  );
+
+  const deviceKey = useMemo(
+    () => buildDeviceKey(selectedMajor, selectedMid, selectedSmall, deviceName),
+    [selectedMajor, selectedMid, selectedSmall, deviceName]
+  );
+
+  const schemaDefinitions = selectedSmall?.schemaDefinitions ?? [];
+
+  const pointRows = useMemo(
+    () => buildPointRowsFromSchema(deviceKey, schemaDefinitions),
+    [deviceKey, schemaDefinitions]
+  );
+
+  useEffect(() => {
+    if (!majors.length) return;
+    setSelectedMajorId((prev) =>
+      prev != null && majors.some((m) => m.categoryId === prev) ? prev : majors[0].categoryId
+    );
+  }, [majors]);
+
+  const { mutate: createDevice, isPending: isCreating } = useMutation({
+    mutationFn: createDeviceAPI,
+    onSuccess: (res, variables) => {
+      if (res?.success === false) {
+        setSubmitError(res?.message || "장비 등록에 실패했습니다.");
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: DEVICE_LIST_QUERY_KEY });
+      const pointCount = variables?.points?.length ?? 0;
+      const message =
+        res?.message ||
+        (pointCount > 0
+          ? `장비 및 포인트 ${pointCount}건이 등록되었습니다.`
+          : "장비가 등록되었습니다.");
+      if (onSuccess) {
+        onSuccess(res, variables);
+      } else {
+        setDeviceName("");
+        setAssetId("");
+        setSubmitError("");
+        alert(message);
+      }
+    },
+    onError: (err) => {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.data ||
+        err?.message ||
+        "장비 등록 중 오류가 발생했습니다.";
+      setSubmitError(msg);
+    },
+  });
+
+  const pickMajor = (id) => {
+    setSelectedMajorId(id);
+    setSelectedMidId(null);
+    setSelectedSmallId(null);
+    setDeviceName("");
+    setAssetId("");
+    setSubmitError("");
+  };
+  const pickMid = (id) => {
+    setSelectedMidId(id);
+    setSelectedSmallId(null);
+    setDeviceName("");
+    setAssetId("");
+    setSubmitError("");
+  };
+  const pickSmall = (id) => {
+    setSelectedSmallId(id);
+    setDeviceName("");
+    setAssetId("");
+    setSubmitError("");
+  };
+
+  const canRegister = Boolean(selectedSmallId && deviceName.trim() && deviceKey);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!canRegister) return;
+    setSubmitError("");
+    createDevice({
+      deviceName: deviceName.trim(),
+      deviceKey,
+      categoryId: selectedSmallId,
+      assetId: assetId ? Number(assetId) : null,
+      active: true,
+      points: pointRows.map(({ tagName, pointKey, schemaTagName, pointName, pointType, unit, tagDesc, isDisplay }) => ({
+        tagName,
+        pointKey,
+        schemaTagName,
+        pointName,
+        pointType,
+        unit,
+        tagDesc,
+        isDisplay,
+      })),
+    });
+  };
+
+  if (isLoading && !categoryTree) {
+    return (
+      <Wrap $inModal={inModal}>
+        <StatusBox>카테고리를 불러오는 중…</StatusBox>
+      </Wrap>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Wrap $inModal={inModal}>
+        <ErrorBox>
+          <p>{error?.message ?? "카테고리를 불러오지 못했습니다."}</p>
+          <RetryBtn type="button" onClick={() => refetch()}>
+            다시 시도
+          </RetryBtn>
+        </ErrorBox>
+      </Wrap>
+    );
+  }
+
+  return (
+    <Wrap $inModal={inModal}>
+      {isFetching && !isLoading && <FetchHint>동기화 중…</FetchHint>}
+
+      <ThreeCol>
+        <Pane>
+          <PaneHeader>
+            <PaneTitleText>대분류</PaneTitleText>
+          </PaneHeader>
+          <ListBox>
+            {majors.length === 0 && <EmptyHint>등록된 대분류가 없습니다.</EmptyHint>}
+            {majors.map((m) => (
+              <ListItem
+                key={m.categoryId}
+                $active={m.categoryId === selectedMajorId}
+                onClick={() => pickMajor(m.categoryId)}
+              >
+                <ItemLabel>{m.categoryName}</ItemLabel>
+                {m.categoryCode && <ItemCode>{m.categoryCode}</ItemCode>}
+              </ListItem>
+            ))}
+          </ListBox>
+        </Pane>
+
+        <Pane>
+          <PaneHeader>
+            <PaneTitleText>중분류</PaneTitleText>
+          </PaneHeader>
+          <ListBox>
+            {mids.length === 0 && (
+              <EmptyHint>
+                {selectedMajorId ? "중분류가 없습니다." : "대분류를 선택하세요."}
+              </EmptyHint>
+            )}
+            {mids.map((m) => (
+              <ListItem
+                key={m.categoryId}
+                $active={m.categoryId === selectedMidId}
+                onClick={() => pickMid(m.categoryId)}
+              >
+                <ItemLabel>{m.categoryName}</ItemLabel>
+                {m.categoryCode && <ItemCode>{m.categoryCode}</ItemCode>}
+              </ListItem>
+            ))}
+          </ListBox>
+        </Pane>
+
+        <Pane>
+          <PaneHeader>
+            <PaneTitleText>소분류</PaneTitleText>
+          </PaneHeader>
+          <ListBox>
+            {smalls.length === 0 && (
+              <EmptyHint>
+                {selectedMidId ? "소분류가 없습니다." : "중분류를 선택하세요."}
+              </EmptyHint>
+            )}
+            {smalls.map((s) => (
+              <ListItem
+                key={s.categoryId}
+                $active={s.categoryId === selectedSmallId}
+                onClick={() => pickSmall(s.categoryId)}
+              >
+                <ItemLabel>{s.categoryName}</ItemLabel>
+                {s.categoryCode && <ItemCode>{s.categoryCode}</ItemCode>}
+              </ListItem>
+            ))}
+          </ListBox>
+        </Pane>
+      </ThreeCol>
+
+      {selectedSmallId ? (
+        <RegisterSection onSubmit={handleSubmit}>
+          <RegisterHeader>
+            <RegisterTitle>장비 정보 등록</RegisterTitle>
+            <RegisterPath>{selectedSmall?.fullPath ?? ""}</RegisterPath>
+          </RegisterHeader>
+
+          <FieldGrid>
+            <FieldLabel $required>장비 이름 (deviceName)</FieldLabel>
+            <FieldInput
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+              placeholder="장비 이름을 입력하세요"
+              maxLength={100}
+              required
+            />
+
+            <FieldLabel>장비 키 (deviceKey)</FieldLabel>
+            <KeyFieldWrap>
+              <KeyInput
+                value={deviceKey}
+                readOnly
+                placeholder="카테고리·장비 이름 입력 시 자동 생성"
+              />
+              <KeyHint>
+                형식: 대(categoryCode)_중(categoryCode)_소(categoryCode)_장비이름
+              </KeyHint>
+            </KeyFieldWrap>
+
+            <FieldLabel>3D 에셋 (asset_name)</FieldLabel>
+            <AssetFieldWrap>
+              {isAssetsLoading ? (
+                <AssetStatus>에셋 목록 불러오는 중…</AssetStatus>
+              ) : isAssetsError ? (
+                <AssetStatus $error>{assetsError?.message ?? "에셋 목록을 불러오지 못했습니다."}</AssetStatus>
+              ) : (
+                <AssetSelect
+                  value={assetId}
+                  onChange={(e) => setAssetId(e.target.value)}
+                >
+                  <option value="">— 3D 에셋 선택 (선택) —</option>
+                  {assets.map((a) => (
+                    <option key={a.assetId} value={String(a.assetId)}>
+                      {a.assetName}
+                    </option>
+                  ))}
+                </AssetSelect>
+              )}
+              <KeyHint>
+                Unity 3D 모델 에셋을 선택합니다. 미선택 시 3D 표시용 에셋 없이 등록됩니다.
+              </KeyHint>
+            </AssetFieldWrap>
+          </FieldGrid>
+
+          <PointsSection>
+            <PointsHeader>
+              <PointsTitle>
+                포인트 정보
+                {pointRows.length > 0 && (
+                  <PointsCount>{pointRows.length}개</PointsCount>
+                )}
+              </PointsTitle>
+              <PointsHint>
+                tag_name = 스키마 tag (예: test3) · point_key = deviceKey_tag (예: 전기설비_전력제어_SUBE_test_test3)
+              </PointsHint>
+            </PointsHeader>
+
+            {schemaDefinitions.length === 0 ? (
+              <PointsEmpty>
+                이 소분류에 스키마 정의가 없습니다. 카테고리 관리에서 스키마를 먼저 등록하세요.
+              </PointsEmpty>
+            ) : !deviceKey ? (
+              <PointsEmpty>장비 이름을 입력하면 point_key가 자동 생성됩니다.</PointsEmpty>
+            ) : pointRows.length === 0 ? (
+              <PointsEmpty>유효한 schema tagName이 없습니다.</PointsEmpty>
+            ) : (
+              <>
+                <PointsTableWrap>
+                  <PointsTable>
+                    <thead>
+                      <tr>
+                        <PTh style={{ width: 100 }}>tagName</PTh>
+                        <PTh>point_key</PTh>
+                        <PTh style={{ width: 70 }}>type</PTh>
+                        <PTh style={{ width: 70 }}>unit</PTh>
+                        <PTh $center style={{ width: 56 }}>표시</PTh>
+                        <PTh style={{ width: 140 }}>설명</PTh>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pointRows.map((row) => (
+                        <tr key={row.schemaTagName}>
+                          <PTd>
+                            <SchemaTag>{row.tagName}</SchemaTag>
+                          </PTd>
+                          <PTd>
+                            <FullTagName>{row.pointKey}</FullTagName>
+                          </PTd>
+                          <PTd>
+                            <TypeBadge $type={row.pointType}>{row.pointType || "—"}</TypeBadge>
+                          </PTd>
+                          <PTd>{row.unit || "—"}</PTd>
+                          <PTd $center>
+                            {row.isDisplay ? <span>✓</span> : <span style={{ color: "#d1d5db" }}>—</span>}
+                          </PTd>
+                          <PTd>{row.tagDesc || "—"}</PTd>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </PointsTable>
+                </PointsTableWrap>
+                <PointsPreview>
+                  등록 시 전송되는 points:{" "}
+                  <code>
+                    {JSON.stringify(
+                      pointRows.map(({ tagName, pointKey, pointName, pointType, unit, isDisplay }) => ({
+                        tagName,
+                        pointKey,
+                        pointName,
+                        pointType,
+                        unit,
+                        isDisplay,
+                      }))
+                    )}
+                  </code>
+                </PointsPreview>
+              </>
+            )}
+          </PointsSection>
+
+          {submitError && <SubmitError>{submitError}</SubmitError>}
+
+          <ButtonRow>
+            {onCancel ? (
+              <ResetBtn type="button" onClick={onCancel}>
+                취소
+              </ResetBtn>
+            ) : null}
+            <ResetBtn
+              type="button"
+              onClick={() => {
+                setDeviceName("");
+                setAssetId("");
+                setSubmitError("");
+              }}
+            >
+              입력 초기화
+            </ResetBtn>
+            <SubmitBtn type="submit" disabled={!canRegister || isCreating}>
+              {isCreating ? "등록 중…" : "장비 등록"}
+            </SubmitBtn>
+          </ButtonRow>
+        </RegisterSection>
+      ) : (
+        <RegisterPlaceholder>
+          소분류를 선택하면 아래에서 장비를 등록할 수 있습니다.
+        </RegisterPlaceholder>
+      )}
+    </Wrap>
+  );
+};
+
+export default DeviceRegistForm;
+
+const Wrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: ${(p) => (p.$inModal ? "0 0 4px" : "8px 0 24px")};
+`;
+
+const StatusBox = styled.div`
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+`;
+
+const ErrorBox = styled.div`
+  padding: 24px;
+  text-align: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  p {
+    margin: 0 0 12px 0;
+  }
+`;
+
+const RetryBtn = styled.button`
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #4a6380;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+`;
+
+const FetchHint = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  text-align: right;
+`;
+
+const ThreeCol = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const Pane = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  min-height: 280px;
+`;
+
+const PaneHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #e8ecf1;
+  border-bottom: 1px solid #d1d5db;
+`;
+
+const PaneTitleText = styled.span`
+  font-size: 13px;
+  font-weight: 700;
+  color: #111d2c;
+`;
+
+const ListBox = styled.div`
+  flex: 1;
+  min-height: 220px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 6px;
+`;
+
+const ListItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  margin-bottom: 3px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: ${(p) => (p.$active ? "rgba(74, 99, 128, 0.15)" : "transparent")};
+  color: ${(p) => (p.$active ? "#1e3a5f" : "#374151")};
+  font-weight: ${(p) => (p.$active ? 600 : 400)};
+  cursor: pointer;
+  &:hover {
+    background: ${(p) => (p.$active ? "rgba(74,99,128,0.2)" : "#f3f4f6")};
+  }
+`;
+
+const ItemLabel = styled.span`
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const ItemCode = styled.span`
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a6380;
+  background: #e8ecf1;
+  padding: 1px 6px;
+  border-radius: 3px;
+`;
+
+const EmptyHint = styled.div`
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
+`;
+
+const RegisterSection = styled.form`
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fafafa;
+  overflow: hidden;
+`;
+
+const RegisterPlaceholder = styled.div`
+  padding: 32px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #9ca3af;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+`;
+
+const RegisterHeader = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+const RegisterTitle = styled.h3`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111d2c;
+`;
+
+const RegisterPath = styled.span`
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a6380;
+  background: #e8ecf1;
+  padding: 1px 8px;
+  border-radius: 4px;
+`;
+
+const FieldGrid = styled.div`
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px 12px;
+  align-items: start;
+  padding: 20px 16px;
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FieldLabel = styled.label`
+  font-size: 14px;
+  color: #374151;
+  padding-top: 8px;
+  &::after {
+    content: "${(p) => (p.$required ? " *" : "")}";
+    color: #dc2626;
+  }
+`;
+
+const FieldInput = styled.input`
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  &:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+  }
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+const KeyFieldWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const AssetFieldWrap = styled(KeyFieldWrap)``;
+
+const AssetSelect = styled.select`
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+  &:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+  }
+`;
+
+const AssetStatus = styled.span`
+  font-size: 13px;
+  color: ${(p) => (p.$error ? "#dc2626" : "#64748b")};
+`;
+
+const KeyInput = styled.input`
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: ui-monospace, monospace;
+  color: #1e3a5f;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: default;
+`;
+
+const KeyHint = styled.span`
+  font-size: 12px;
+  color: #94a3b8;
+`;
+
+const PointsSection = styled.section`
+  margin: 0 16px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+`;
+
+const PointsHeader = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+const PointsTitle = styled.h4`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111d2c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PointsCount = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a6380;
+  background: #e8ecf1;
+  padding: 1px 8px;
+  border-radius: 999px;
+`;
+
+const PointsHint = styled.span`
+  font-size: 12px;
+  color: #94a3b8;
+`;
+
+const PointsEmpty = styled.div`
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #9ca3af;
+  line-height: 1.6;
+`;
+
+const PointsTableWrap = styled.div`
+  overflow-x: auto;
+`;
+
+const PointsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+`;
+
+const PTh = styled.th`
+  padding: 9px 12px;
+  text-align: ${(p) => (p.$center ? "center" : "left")};
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const PTd = styled.td`
+  padding: 8px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  vertical-align: middle;
+  text-align: ${(p) => (p.$center ? "center" : "left")};
+`;
+
+const SchemaTag = styled.code`
+  font-size: 12px;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+`;
+
+const FullTagName = styled.code`
+  font-size: 12px;
+  color: #1e3a5f;
+  word-break: break-all;
+`;
+
+const TypeBadge = styled.span`
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  background: ${(p) => {
+    const t = p.$type;
+    if (t === "AI" || t === "AO") return "#dbeafe";
+    if (t === "DI" || t === "DO") return "#dcfce7";
+    return "#f3f4f6";
+  }};
+  color: ${(p) => {
+    const t = p.$type;
+    if (t === "AI" || t === "AO") return "#1d4ed8";
+    if (t === "DI" || t === "DO") return "#15803d";
+    return "#6b7280";
+  }};
+`;
+
+const PointsPreview = styled.p`
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 11px;
+  color: #94a3b8;
+  border-top: 1px solid #e5e7eb;
+  background: #f8fafc;
+  code {
+    word-break: break-all;
+    font-size: 11px;
+    color: #475569;
+  }
+`;
+
+const SubmitError = styled.p`
+  margin: 0 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+`;
+
+const ResetBtn = styled.button`
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
+const SubmitBtn = styled.button`
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  &:hover:not(:disabled) {
+    background: #1d4ed8;
+  }
+`;

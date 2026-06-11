@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import svgr from 'vite-plugin-svgr';
 import path from 'node:path';
 
 // 통합 앱: admin(React/TS) + WebGL 뷰어(R3F). /api 는 hana-digitaltwin 백엔드로 프록시.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), svgr()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },

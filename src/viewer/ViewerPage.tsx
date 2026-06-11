@@ -11,7 +11,7 @@ import { viewerCtx } from './state/registry';
 import { flipPos, type UnityTransform } from './lib/coords';
 import { resolveZoneAt } from './lib/zone';
 import { useAllDevices, useZoneMap, useSaveAll } from './hooks';
-import type { DevicePlacementRequest } from '@/types/device';
+import type { DevicePlacementRequest } from './data/types';
 
 const round = (n: number) => Math.round(n * 1e4) / 1e4;
 

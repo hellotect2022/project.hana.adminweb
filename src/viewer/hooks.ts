@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SceneManifest, MaterialMap } from './lib/manifest';
-import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement, patchDeviceActive } from '@/services/deviceService';
-import type { DevicePlacementRequest } from '@/types/device';
+import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement, patchDeviceActive } from './data/deviceService';
+import type { DevicePlacementRequest } from './data/types';
 import { flattenZones, type ZoneMap } from './lib/zone';
 
 const getJson = <T,>(url: string) => fetch(url).then((r) => r.json() as Promise<T>);

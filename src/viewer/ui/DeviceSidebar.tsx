@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
-import type { DeviceDTO } from '@/types/device';
+import type { DeviceDTO } from '../data/types';
 import { useAllDevices, useSetActive } from '../hooks';
 import { floorNameToKey, floorLabel } from '../lib/manifest';
 import { useViewerStore } from '../state/viewerStore';
