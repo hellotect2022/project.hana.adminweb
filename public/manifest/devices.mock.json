@@ -1,0 +1,17 @@
+[
+  { "deviceId": 1, "deviceName": "AHU-1F", "assetName": "sm_hana_bas_ahu",
+    "location": { "floorName": "1층" },
+    "placement": { "positionX": 0, "positionY": 0, "positionZ": 0, "rotationX": 0, "rotationY": 0, "rotationZ": 0, "scaleX": 1, "scaleY": 1, "scaleZ": 1 } },
+  { "deviceId": 2, "deviceName": "FCU-1F", "assetName": "sm_hana_bas_fcu",
+    "location": { "floorName": "1층" },
+    "placement": { "positionX": 4, "positionY": 0, "positionZ": 2, "rotationX": 0, "rotationY": 90, "rotationZ": 0, "scaleX": 1, "scaleY": 1, "scaleZ": 1 } },
+  { "deviceId": 3, "deviceName": "ACS-DOOR-5F", "assetName": "sm_hana_acs_door",
+    "location": { "floorName": "5층" },
+    "placement": { "positionX": 0, "positionY": 0, "positionZ": 0, "rotationX": 0, "rotationY": 0, "rotationZ": 0, "scaleX": 1, "scaleY": 1, "scaleZ": 1 } },
+  { "deviceId": 4, "deviceName": "CHILLER-B1F", "assetName": "sm_hana_bas_absorption_chiller",
+    "location": { "floorName": "지하1층" },
+    "placement": { "positionX": 0, "positionY": 0, "positionZ": 0, "rotationX": 0, "rotationY": 0, "rotationZ": 0, "scaleX": 1, "scaleY": 1, "scaleZ": 1 } },
+  { "deviceId": 5, "deviceName": "UNKNOWN-ASSET", "assetName": "sm_hana_nonexistent_for_cube_fallback",
+    "location": { "floorName": "1층" },
+    "placement": { "positionX": -4, "positionY": 0, "positionZ": -2, "rotationX": 0, "rotationY": 0, "rotationZ": 0, "scaleX": 1, "scaleY": 1, "scaleZ": 1 } }
+]

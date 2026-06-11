@@ -1,0 +1,1285 @@
+{
+  "space": "unity-LH-Yup",
+  "floors": [
+    {
+      "glb": "sm_hana_building_15f_in.glb",
+      "name": "15f_in",
+      "position": [
+        10.260002,
+        78.52325,
+        2.239994
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_14f_in.glb",
+      "name": "14f_in",
+      "position": [
+        0.00793381,
+        74.02305,
+        2.2662182
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_6f_in.glb",
+      "name": "6f_in",
+      "position": [
+        18.967033,
+        35.029232,
+        -0.7420254
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_14f_out.glb",
+      "name": "14f_out",
+      "position": [
+        0.007933617,
+        74.02305,
+        2.2662182
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_1f_ceiling.glb",
+      "name": "1f_ceiling",
+      "position": [
+        -21.751917,
+        14.921796,
+        -38.84084
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_13f_in.glb",
+      "name": "13f_in",
+      "position": [
+        -3.0383625,
+        69.32182,
+        4.239637
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_rf.glb",
+      "name": "rf",
+      "position": [
+        -16.870733,
+        47.470016,
+        23.139128
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_9f_in.glb",
+      "name": "9f_in",
+      "position": [
+        -15.648475,
+        49.45974,
+        1.6649017
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b5f.glb",
+      "name": "b5f",
+      "position": [
+        -52.372993,
+        -8.473011,
+        -62.322983
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_1f_in.glb",
+      "name": "1f_in",
+      "position": [
+        1.1428862,
+        9.5,
+        6.942643
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_13f_ceiling.glb",
+      "name": "13f_ceiling",
+      "position": [
+        -30.014,
+        73.303,
+        -46.715
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_3f_ceiling.glb",
+      "name": "3f_ceiling",
+      "position": [
+        -29.534273,
+        25.491,
+        -43.978985
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_7f_in.glb",
+      "name": "7f_in",
+      "position": [
+        18.647213,
+        39.52965,
+        3.9930544
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b7f_ceiling.glb",
+      "name": "b7f_ceiling",
+      "position": [
+        -52.372993,
+        -12.473011,
+        -62.323776
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_5f_ceiling.glb",
+      "name": "5f_ceiling",
+      "position": [
+        -29.68,
+        34.71,
+        -43.931
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_3f_in.glb",
+      "name": "3f_in",
+      "position": [
+        18.920568,
+        21.529654,
+        0.9665582
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_12f_out.glb",
+      "name": "12f_out",
+      "position": [
+        -2.5041938,
+        65.02355,
+        1.6667751
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_7f_ceiling.glb",
+      "name": "7f_ceiling",
+      "position": [
+        -29.75,
+        43.49,
+        -43.798172
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_12f_in.glb",
+      "name": "12f_in",
+      "position": [
+        -2.5041962,
+        65.02355,
+        1.6667751
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_11f_ceiling.glb",
+      "name": "11f_ceiling",
+      "position": [
+        -30.1398,
+        63.621616,
+        -42.72
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_14f_ceiling.glb",
+      "name": "14f_ceiling",
+      "position": [
+        -29.939854,
+        77.32326,
+        -43.91
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_8f_ceiling.glb",
+      "name": "8f_ceiling",
+      "position": [
+        -27.902,
+        49.29,
+        -44.516
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_2f_out.glb",
+      "name": "2f_out",
+      "position": [
+        23.311754,
+        0.52324486,
+        -8.659764
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_6f_ceiling.glb",
+      "name": "6f_ceiling",
+      "position": [
+        -30.109861,
+        39.02,
+        -44.07
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_15f_ceiling.glb",
+      "name": "15f_ceiling",
+      "position": [
+        -29.939888,
+        83.32324,
+        -41.91
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b7f_ceiling.glb",
+      "name": "b7f_ceiling",
+      "position": [
+        -52.372993,
+        -16.473015,
+        -62.323776
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b3f_ceiling.glb",
+      "name": "b3f_ceiling",
+      "position": [
+        -52.372993,
+        -0.47301,
+        -62.3228
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_4f_in.glb",
+      "name": "4f_in",
+      "position": [
+        18.878267,
+        26.029646,
+        1.7926483
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_5f_out.glb",
+      "name": "5f_out",
+      "position": [
+        18.597586,
+        30.529652,
+        2.557103
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_10f_ceiling.glb",
+      "name": "10f_ceiling",
+      "position": [
+        -31.138958,
+        60.12324,
+        -44.659367
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_2f_in.glb",
+      "name": "2f_in",
+      "position": [
+        23.311754,
+        0.52324486,
+        -8.659764
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_13f_out.glb",
+      "name": "13f_out",
+      "position": [
+        -3.0383606,
+        69.32182,
+        4.2396364
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_7f_out.glb",
+      "name": "7f_out",
+      "position": [
+        18.647213,
+        39.52965,
+        3.9930544
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_8f_in.glb",
+      "name": "8f_in",
+      "position": [
+        18.855648,
+        44.02326,
+        2.4659247
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b5f_ceiling.glb",
+      "name": "b5f_ceiling",
+      "position": [
+        -52.372993,
+        -8.473011,
+        -62.322983
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_11f_out.glb",
+      "name": "11f_out",
+      "position": [
+        0.6800369,
+        60.322037,
+        2.2585573
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_12f_ceiling.glb",
+      "name": "12f_ceiling",
+      "position": [
+        -29.939821,
+        68.12325,
+        -43.88
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_8f_out.glb",
+      "name": "8f_out",
+      "position": [
+        18.855648,
+        44.02326,
+        2.4659252
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_1f_out.glb",
+      "name": "1f_out",
+      "position": [
+        1.1428856,
+        9.5,
+        6.942643
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_10f_out.glb",
+      "name": "10f_out",
+      "position": [
+        -5.741493,
+        56.02575,
+        2.1056302
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_ph1f_in.glb",
+      "name": "ph1f_in",
+      "position": [
+        7.7995567,
+        78.51,
+        7.290003
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b4f.glb",
+      "name": "b4f",
+      "position": [
+        -52.372993,
+        -4.473011,
+        -62.3228
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b6f.glb",
+      "name": "b6f",
+      "position": [
+        -52.372993,
+        -12.473011,
+        -62.323776
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b1f.glb",
+      "name": "b1f",
+      "position": [
+        13.500466,
+        3.500006,
+        2.240495
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b3f.glb",
+      "name": "b3f",
+      "position": [
+        -52.372993,
+        -0.47301,
+        -62.3228
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_4f_out.glb",
+      "name": "4f_out",
+      "position": [
+        18.878267,
+        26.029646,
+        1.7926483
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_9f_ceiling.glb",
+      "name": "9f_ceiling",
+      "position": [
+        -31.073923,
+        54.6,
+        -46.517776
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_3f_out.glb",
+      "name": "3f_out",
+      "position": [
+        18.920568,
+        21.529654,
+        0.96655846
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_ground_001.glb",
+      "name": "ground_001",
+      "position": [
+        34.3,
+        8.81,
+        -17.9
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_2f_ceiling.glb",
+      "name": "2f_ceiling",
+      "position": [
+        -29.534172,
+        20.85,
+        -44.077457
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b4f_ceiling.glb",
+      "name": "b4f_ceiling",
+      "position": [
+        -52.372993,
+        -4.473011,
+        -62.3228
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b2f_ceiling.glb",
+      "name": "b2f_ceiling",
+      "position": [
+        -52.37301,
+        3.5269747,
+        -62.322754
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_5f_in.glb",
+      "name": "5f_in",
+      "position": [
+        18.597586,
+        30.529652,
+        2.5571053
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_15f_out.glb",
+      "name": "15f_out",
+      "position": [
+        10.259998,
+        78.523254,
+        2.240001
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_10f_in.glb",
+      "name": "10f_in",
+      "position": [
+        -5.741493,
+        56.02575,
+        2.10563
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b7f.glb",
+      "name": "b7f",
+      "position": [
+        -52.372993,
+        -16.473015,
+        -62.323776
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_4f_ceiling.glb",
+      "name": "4f_ceiling",
+      "position": [
+        -30.109812,
+        29.59,
+        -43.759975
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b1f_ceiling.glb",
+      "name": "b1f_ceiling",
+      "position": [
+        -52.33616,
+        9.193603,
+        -62.222206
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_11f_in.glb",
+      "name": "11f_in",
+      "position": [
+        0.68003654,
+        60.322037,
+        2.2585578
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_9f_out.glb",
+      "name": "9f_out",
+      "position": [
+        -15.648475,
+        49.45974,
+        1.6649024
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_b2f.glb",
+      "name": "b2f",
+      "position": [
+        -52.37301,
+        3.52699,
+        -62.322754
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_6f_out.glb",
+      "name": "6f_out",
+      "position": [
+        18.967033,
+        35.029232,
+        -0.74202466
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_ph1f_out.glb",
+      "name": "ph1f_out",
+      "position": [
+        7.7995567,
+        78.51,
+        7.29
+      ],
+      "rotation": [
+        -0.7071068,
+        0,
+        0,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "glb": "sm_hana_building_ph2f.glb",
+      "name": "ph2f",
+      "position": [
+        -16.870743,
+        89.67001,
+        23.139162
+      ],
+      "rotation": [
+        -0.7071068,
+        -6.1817246e-8,
+        -6.1817246e-8,
+        0.7071068
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  ]
+}

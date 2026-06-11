@@ -10,4 +10,16 @@ export const GlobalStyle = createGlobalStyle`
   }
   a { color: inherit; text-decoration: none; }
   button { font-family: inherit; }
+  div {
+    overflow-y: auto;
+    &::-webkit-scrollbar {
+          display: none; 
+      }
+
+      /* 3. 파이어폭스 (Gecko 엔진) */
+      scrollbar-width: none; 
+
+      /* 4. 인터넷 익스플로러 및 구형 엣지 */
+      -ms-overflow-style: none;
+  }
 `;

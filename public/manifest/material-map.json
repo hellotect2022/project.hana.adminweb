@@ -1,0 +1,2040 @@
+{
+  "m_hana_brick_001": {
+    "textures": {
+      "map": "t_hana_brick_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_floor_001": {
+    "textures": {
+      "map": "t_hana_floor_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_floor_002": {
+    "textures": {
+      "map": "t_hana_brick_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_floor_003": {
+    "textures": {
+      "map": "t_hana_floor_003d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_floor_004": {
+    "textures": {
+      "map": "t_hana_floor_004d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_frame_001": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_frame_002": {
+    "textures": {
+      "map": "t_hana_gaurd_frame_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_frame_003": {
+    "textures": {
+      "map": "t_hana_object_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_glass_001": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0,
+        0.27537528,
+        0.2924528,
+        0.57254905
+      ],
+      "metallic": 0.073,
+      "smoothness": 0
+    }
+  },
+  "m_hana_glass_002": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0,
+        0.43669868,
+        0.4811321,
+        0.5176471
+      ],
+      "metallic": 0.073,
+      "smoothness": 0
+    }
+  },
+  "m_hana_grass_001": {
+    "textures": {
+      "map": "t_hana_grass_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_grass_002": {
+    "textures": {
+      "map": "t_hana_grass_002d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_heliport_001": {
+    "textures": {
+      "map": "t_hana_heliport_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_metal_001": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0.6226415,
+        0.6226415,
+        0.6226415,
+        1
+      ],
+      "smoothness": 1
+    }
+  },
+  "m_hana_metal_002": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_object_001": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_outer_road_001": {
+    "textures": {
+      "map": "t_hana_outer_road_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_outer_road_002": {
+    "textures": {
+      "map": "t_hana_outer_road_002d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_outer_road_003": {
+    "textures": {
+      "map": "t_hana_outer_road_003d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_outer_road_004": {
+    "textures": {
+      "map": "t_hana_outer_road_004d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_road_001": {
+    "textures": {
+      "map": "t_hana_road_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_road_002": {
+    "textures": {
+      "map": "t_hana_road_002d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_stone_001": {
+    "textures": {
+      "map": "t_hana_stone_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_tree_001": {
+    "textures": {
+      "map": "t_hana_interior_tree_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_wall_001": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_wall_002": {
+    "textures": {
+      "map": "t_hana_wall_002d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.101,
+      "smoothness": 0
+    }
+  },
+  "m_hana_wood_panel_001": {
+    "textures": {
+      "map": "t_hana_wood_panel_001.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_wood_panel_002": {
+    "textures": {
+      "map": "t_hana_wood_panel_002.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_security_guard_001": {
+    "textures": {
+      "map": "t_security_guard_001d.png",
+      "normalMap": "t_security_guard_001n.png",
+      "metalRoughMap": "t_security_guard_001m.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_electrical_power_path": {
+    "textures": {
+      "map": "t_electrical_cable_001d.png",
+      "normalMap": "t_electrical_cable_001n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.456,
+      "smoothness": 0
+    }
+  },
+  "m_hana_elevator_collider": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_parking_line_001": {
+    "textures": {
+      "map": "t_hana_parking_line_001.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_top": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_underground_concrete_001": {
+    "textures": {
+      "map": "t_hana_concrete_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_underground_concrete_002": {
+    "textures": {
+      "map": "t_hana_concrete_002d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_underground_concrete_003": {
+    "textures": {
+      "map": "t_hana_concrete_003d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_underground_road": {
+    "textures": {
+      "map": "t_hana_parking_floor_001.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_sky_clear": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_sky_night": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_sky_rainy": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_sky_sunset": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_color_common": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        0,
+        0.09027767,
+        0.74509805
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_acs_control_panel": {
+    "textures": {
+      "map": "t_hana_acs_control_panel_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "smoothness": 0
+    }
+  },
+  "m_hana_acs_door": {
+    "textures": {
+      "map": "t_hana_acs_door_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_acs_door_controller": {
+    "textures": {
+      "map": "t_hana_acs_door_controller_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_absorption_chiller": {
+    "textures": {
+      "map": "t_hana_bas_absorption_chiller.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_actuator": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_ahu": {
+    "textures": {
+      "map": "t_hana_bas_ahu.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_air_source_heat_pump": {
+    "textures": {
+      "map": "t_hana_bas_air_source_heat_pump_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_compact_unit": {
+    "textures": {
+      "map": "t_hana_bas_compact_unit_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_cooling_tower": {
+    "textures": {
+      "map": "t_hana_bas_cooling_tower.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_drainage_package": {
+    "textures": {
+      "map": "t_hana_bas_drainage_package_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_exhaust_deodorization_unit": {
+    "textures": {
+      "map": "t_hana_bas_exhaust_deodorization_unit.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_exhaust_fan": {
+    "textures": {
+      "map": "t_hana_bas_exhaust_fan_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.129,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_expander_separator": {
+    "textures": {
+      "map": "t_hana_bas_expander_separator_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_expansion_tank": {
+    "textures": {
+      "map": "t_hana_bas_expansion_tank.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_fcu": {
+    "textures": {
+      "map": "t_hana_bas_fcu.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_floor_air_diffuser": {
+    "textures": {
+      "map": "t_hana_bas_floor_air_diffuser_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_fuel_pump": {
+    "textures": {
+      "map": "t_hana_matte_metal.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_fuel_tank": {
+    "textures": {
+      "map": "t_hana_matte_metal.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_geothermal_heat_pump": {
+    "textures": {
+      "map": "t_hana_bas_geothermal_heat_pump.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_geothermal_primary_pump": {
+    "textures": {
+      "map": "t_hana_bas_geothermal_primary_pump.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_header": {
+    "textures": {
+      "map": "t_hana_bas_header.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_hrv": {
+    "textures": {
+      "map": "t_hana_bas_hrv_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_hvac_pump": {
+    "textures": {
+      "map": "t_hana_bas_hvac_pump_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_induction_fan": {
+    "textures": {
+      "map": "t_hana_bas_induction_fan_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_motorized_blind": {
+    "textures": {
+      "map": "t_hana_bas_motorized_blind_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_motorized_window": {
+    "textures": {
+      "map": "t_hana_bas_motorized_window_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_ohu": {
+    "textures": {
+      "map": "t_hana_bas_ohu_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_parking_vent_fan": {
+    "textures": {
+      "map": "t_hana_bas_parking_vent_fan_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0.481,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_precision_ac": {
+    "textures": {
+      "map": "t_hana_bas_precision_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_sanitary_pump_001": {
+    "textures": {
+      "map": "t_hana_bas_sanitary_pump_001_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_sanitary_pump_002": {
+    "textures": {
+      "map": "t_hana_bas_sanitary_pump_002_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_sanitary_pump_003": {
+    "textures": {
+      "map": "t_hana_bas_sanitary_pump_003_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_supply_fan": {
+    "textures": {
+      "map": "t_hana_bas_supply_fan_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_ufad_unit": {
+    "textures": {
+      "map": "t_hana_bas_ufad_unit_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_water_tank": {
+    "textures": {
+      "map": "t_hana_bas_water_tank_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_water_treatment_unit": {
+    "textures": {
+      "map": "t_hana_bas_water_treatment_unit_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_bas_window_control_panel": {
+    "textures": {
+      "map": "t_hana_bas_window_control_panel_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_building_info_guide_display": {
+    "textures": {
+      "map": "t_hana_building_info_guide_display_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_building_info_kiosk": {
+    "textures": {
+      "map": "t_hana_building_info_kiosk_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_camera_glass": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0.6367924,
+        0.78130835,
+        1,
+        0.24705882
+      ],
+      "metallic": 1,
+      "smoothness": 0
+    }
+  },
+  "m_hana_cctv_bullet_camera": {
+    "textures": {
+      "map": "t_hana_cctv_bullet_camera_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_cctv_dome_camera": {
+    "textures": {
+      "map": "t_hana_cctv_dome_camera_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_cctv_ptz_camera": {
+    "textures": {
+      "map": "t_hana_cctv_ptz_camera_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_did_media_wall": {
+    "textures": {
+      "map": "t_hana_did_media_wall_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_did_wall_screen": {
+    "textures": {
+      "map": "t_hana_did_wall_screen_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_elv_elevator": {
+    "textures": {
+      "map": "t_hana_elv_elevator_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_epms_busduct_temp_sensor": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_epms_generator": {
+    "textures": {
+      "map": "t_hana_epms_generator_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_epms_remote_meter": {
+    "textures": {
+      "map": "t_hana_epms_remote_meter_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_epms_switchgear": {
+    "textures": {
+      "map": "t_hana_epms_switchgear_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_epms_transformer": {
+    "textures": {
+      "map": "t_hana_epms_transformer_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_equipment_metal": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0.7264151,
+        0.7264151,
+        0.7264151,
+        0.24705882
+      ],
+      "metallic": 0.74,
+      "smoothness": 0
+    }
+  },
+  "m_hana_evcs_fast_charger": {
+    "textures": {
+      "map": "t_hana_evcs_fast_charger_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_evcs_slow_charger": {
+    "textures": {
+      "map": "t_hana_evcs_slow_charger_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_fas_alarm_bell": {
+    "textures": {
+      "map": "t_hana_fas_alarm_bell_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_fas_fire_alarm_panel": {
+    "textures": {
+      "map": "t_hana_fas_fire_alarm_panel_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_fas_fire_detector": {
+    "textures": {
+      "map": "t_hana_fas_fire_detector_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_fas_fire_repeater": {
+    "textures": {
+      "map": "t_hana_fas_fire_repeater_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_intercom_call_point": {
+    "textures": {
+      "map": "t_hana_intercom_call_point_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_lcs_dcp_panel": {
+    "textures": {
+      "map": "t_hana_lcs_dcp_panel_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_lcs_landscape_light": {
+    "textures": {
+      "map": "t_hana_lcs_landscape_light_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_lcs_lcp_panel": {
+    "textures": {
+      "map": "t_hana_lcs_lcp_panel_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_media_facade": {
+    "textures": {
+      "map": "t_hana_media_facade_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_media_installation": {
+    "textures": {
+      "map": "t_hana_media_installation_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_media_water_feature": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pava_amp_rack": {
+    "textures": {
+      "map": "t_hana_pava_amp_rack_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pgs_full_sign": {
+    "textures": {
+      "map": "t_hana_pgs_full_sign_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pgs_guidance_display": {
+    "textures": {
+      "map": "t_hana_pgs_guidance_display_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pgs_lane_camera": {
+    "textures": {
+      "map": "t_hana_pgs_lane_camera_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pgs_parking_camera": {
+    "textures": {
+      "map": "t_hana_pgs_parking_camera_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pms_barrier_gate": {
+    "textures": {
+      "map": "t_hana_pms_barrier_gate_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pms_lpr_camera": {
+    "textures": {
+      "map": "t_hana_pms_lpr_camera_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pms_payment_terminal": {
+    "textures": {
+      "map": "t_hana_pms_payment_terminal_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pv_inverter": {
+    "textures": {
+      "map": "t_hana_pv_inverter_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_pv_panel": {
+    "textures": {
+      "map": "t_hana_pv_panel_d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_armchair_001": {
+    "textures": {
+      "map": "t_hana_armchair_001d.png",
+      "normalMap": "t_hana_armchair_001n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_armchair_002": {
+    "textures": {
+      "map": "t_hana_armchair_002d.png",
+      "normalMap": "t_hana_armchair_002n.png",
+      "metalRoughMap": "t_hana_armchair_002m.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_barstool_001": {
+    "textures": {
+      "map": "t_hana_barstool_001d.png",
+      "normalMap": "t_hana_barstool_001n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_barstool_002": {
+    "textures": {
+      "map": "t_hana_barstool_002d.png",
+      "normalMap": "t_hana_barstool_002n.png",
+      "metalRoughMap": "t_hana_barstool_002m.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_barstool_004": {
+    "textures": {
+      "map": "t_hana_barstool_004d.png",
+      "normalMap": "t_hana_barstool_004n.png",
+      "metalRoughMap": "t_hana_barstool_004m.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_chair_001": {
+    "textures": {
+      "map": "t_hana_chair_001d.png",
+      "normalMap": "t_hana_chair_001n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_chair_002": {
+    "textures": {
+      "map": "t_hana_chair_002d.png"
+    },
+    "factors": {}
+  },
+  "m_hana_chair_003": {
+    "textures": {
+      "map": "t_hana_chair_003d.png",
+      "normalMap": "t_hana_chair_003n.png"
+    },
+    "factors": {}
+  },
+  "m_hana_chair_004": {
+    "textures": {
+      "map": "t_hana_chair_004d.png",
+      "normalMap": "t_hana_chair_004n.png"
+    },
+    "factors": {}
+  },
+  "m_hana_chair_005": {
+    "textures": {
+      "map": "t_hana_chair_005d.png",
+      "normalMap": "t_hana_chair_005n.png"
+    },
+    "factors": {}
+  },
+  "m_hana_chair_006": {
+    "textures": {
+      "map": "t_hana_chair_006d.png",
+      "normalMap": "t_hana_chair_006n.png"
+    },
+    "factors": {}
+  },
+  "m_hana_coffeetable_001": {
+    "textures": {
+      "map": "t_hana_coffeetable_001d.png",
+      "normalMap": "t_hana_coffeetable_001n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_coffeetable_002": {
+    "textures": {
+      "map": "t_hana_coffeetable_002d.png",
+      "normalMap": "t_hana_coffeetable_002n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_length": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_sofa_001": {
+    "textures": {
+      "map": "t_hana_sofa_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_sofa_002": {
+    "textures": {
+      "map": "t_hana_sofa_002d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_table_001": {
+    "textures": {
+      "map": "t_hana_table_001d.png",
+      "normalMap": "t_hana_table_001n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_hana_table_002": {
+    "textures": {
+      "map": "t_hana_table_002d.png",
+      "normalMap": "t_hana_table_002n.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "TestMapLand": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0.8301887,
+        0.7573485,
+        0.6383055,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_blin_body": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_glass": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        0.14117643,
+        0.19215682,
+        0.26274508,
+        0.68235296
+      ],
+      "metallic": 0.182,
+      "smoothness": 0
+    }
+  },
+  "m_metal": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 1,
+      "smoothness": 0
+    }
+  },
+  "m_outer_guard": {
+    "textures": {
+      "map": "t_hana_wall_001d.png"
+    },
+    "factors": {
+      "baseColor": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  },
+  "m_red": {
+    "textures": {},
+    "factors": {
+      "baseColor": [
+        1,
+        0,
+        0,
+        1
+      ],
+      "metallic": 0,
+      "smoothness": 0
+    }
+  }
+}
