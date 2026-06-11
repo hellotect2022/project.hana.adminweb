@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SceneManifest, MaterialMap } from './lib/manifest';
-import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement } from '@/services/deviceService';
+import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement, patchDeviceActive } from '@/services/deviceService';
 import type { DevicePlacementRequest } from '@/types/device';
 import { flattenZones, type ZoneMap } from './lib/zone';
 
@@ -25,6 +25,15 @@ export const useZoneMap = () =>
       return j.byMesh ?? {};
     },
   });
+
+// 장비 활성/비활성 토글 (PATCH) → DB active 저장 + 목록 갱신(비활성 시 3D 숨김).
+export function useSetActive() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ deviceId, active }: { deviceId: number; active: boolean }) => patchDeviceActive(deviceId, active),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['devices', 'all'] }),
+  });
+}
 
 // 여러 장비 배치를 일괄 저장(순차 PUT). 편집 모드 배치 커밋용.
 export function useSaveAll() {

@@ -42,3 +42,9 @@ export async function fetchLocationInfo(): Promise<UnityBuilding[]> {
   const { data } = await api.get<ApiResponse<UnityBuilding[]>>('/device/location-info');
   return data.data;
 }
+
+// PATCH /api/device/{deviceId} — 장비 부분 수정(여기선 active 토글). DeviceUpdateRequest.active만 전송.
+export async function patchDeviceActive(deviceId: number, active: boolean): Promise<DeviceDTO> {
+  const { data } = await api.patch<ApiResponse<DeviceDTO>>(`/device/${deviceId}`, { active });
+  return data.data;
+}

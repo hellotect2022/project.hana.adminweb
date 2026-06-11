@@ -14,7 +14,7 @@ function useDeviceVisible(device: DeviceDTO): boolean {
   const selectedFloors = useViewerStore((s) => s.selectedFloors);
   const sd = useViewerStore((s) => s.showDevices);
   const key = floorNameToKey(device.location?.floorName);
-  return sd && isFloorVisible(selectedFloors, key);
+  return sd && device.active && isFloorVisible(selectedFloors, key); // 비활성 장비는 숨김
 }
 
 // 편집 모드에서 장비 클릭 → 선택 + 카메라 줌

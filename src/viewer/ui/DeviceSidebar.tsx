@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
 import type { DeviceDTO } from '@/types/device';
-import { useAllDevices } from '../hooks';
+import { useAllDevices, useSetActive } from '../hooks';
 import { floorNameToKey, floorLabel } from '../lib/manifest';
 import { useViewerStore } from '../state/viewerStore';
 import { deviceObjects } from '../state/registry';
@@ -64,11 +64,11 @@ const Row = styled.div<{ $depth: number }>`
   .nm { font-weight: 600; }
   .cnt { margin-left: auto; font-size: 11px; color: #767d88; }
 `;
-const Card = styled.div<{ $placed: boolean; $sel: boolean }>`
+const Card = styled.div<{ $placed: boolean; $sel: boolean; $active: boolean }>`
   display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 5px;
   padding: 6px 8px; margin: 2px 0;
   background: ${(p) => (p.$sel ? 'rgba(74,134,255,0.25)' : 'transparent')};
-  opacity: ${(p) => (p.$placed ? 0.6 : 1)};
+  opacity: ${(p) => (!p.$active ? 0.4 : p.$placed ? 0.6 : 1)};
   border: 1px dashed ${(p) => (p.$placed ? 'transparent' : '#6a5a30')};
   &:hover { background: rgba(74,134,255,0.18); }
   .nm { font-weight: 600; color: #eef1f5; }
@@ -79,9 +79,17 @@ const St = styled.span<{ $on: boolean }>`
   font-size: 10px; font-weight: 700; color: #fff;
   background: ${(p) => (p.$on ? '#2f6f4a' : '#6a4a18')};
 `;
+const ActiveBtn = styled.button<{ $on: boolean }>`
+  margin-left: auto; flex-shrink: 0; min-width: 42px; padding: 3px 6px; cursor: pointer;
+  font-size: 10px; font-weight: 700; border-radius: 4px; color: #fff;
+  border: 1px solid ${(p) => (p.$on ? '#2f8f5a' : '#7a3a3a')};
+  background: ${(p) => (p.$on ? 'rgba(47,143,90,0.85)' : 'rgba(122,58,58,0.85)')};
+  &:hover { filter: brightness(1.15); }
+`;
 
-function NodeView({ node, depth, expanded, toggle, filter }: {
+function NodeView({ node, depth, expanded, toggle, filter, onToggleActive }: {
   node: TreeNode; depth: number; expanded: Set<string>; toggle: (p: string) => void; filter: string;
+  onToggleActive: (deviceId: number, active: boolean) => void;
 }) {
   const editMode = useViewerStore((s) => s.editMode);
   const selectedId = useViewerStore((s) => s.selectedDeviceId);
@@ -103,13 +111,14 @@ function NodeView({ node, depth, expanded, toggle, filter }: {
       {open && (
         <>
           {kids.map((k) => (
-            <NodeView key={k.path} node={k} depth={depth + 1} expanded={expanded} toggle={toggle} filter={filter} />
+            <NodeView key={k.path} node={k} depth={depth + 1} expanded={expanded} toggle={toggle} filter={filter} onToggleActive={onToggleActive} />
           ))}
           {node.devices.map((d) => (
             <div key={d.deviceId} style={{ paddingLeft: 6 + (depth + 1) * 14 }}>
               <Card
                 $placed={d.placed}
                 $sel={selectedId === d.deviceId}
+                $active={d.active}
                 draggable={editMode && !d.placed}
                 onDragStart={(e) => { e.dataTransfer.setData('text/deviceId', String(d.deviceId)); e.dataTransfer.effectAllowed = 'copy'; }}
                 onClick={() => {
@@ -121,10 +130,17 @@ function NodeView({ node, depth, expanded, toggle, filter }: {
                 }}
               >
                 <St $on={d.placed}>{d.placed ? '배치' : '미배치'}</St>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div className="nm">{d.deviceName}</div>
                   <div className="meta">{d.assetName ?? '(자산없음)'} · {d.location?.floorName ? floorLabel(floorNameToKey(d.location.floorName) ?? '') : '-'}</div>
                 </div>
+                <ActiveBtn
+                  $on={d.active}
+                  title={d.active ? '클릭 시 비활성(3D 숨김)' : '클릭 시 활성'}
+                  onClick={(e) => { e.stopPropagation(); onToggleActive(d.deviceId, !d.active); }}
+                >
+                  {d.active ? '활성' : '비활성'}
+                </ActiveBtn>
               </Card>
             </div>
           ))}
@@ -139,6 +155,8 @@ export function DeviceSidebar() {
   const open = useViewerStore((s) => s.sidebarOpen);
   const togglePanel = useViewerStore((s) => s.toggleSidebar);
   const editMode = useViewerStore((s) => s.editMode);
+  const setActive = useSetActive();
+  const onToggleActive = (deviceId: number, active: boolean) => setActive.mutate({ deviceId, active });
   const [q, setQ] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (p: string) => setExpanded((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n; });
@@ -160,7 +178,7 @@ export function DeviceSidebar() {
       <Search placeholder="이름 / 자산 / 분류 검색…" value={q} onChange={(e) => setQ(e.target.value)} />
       <Scroll>
         {roots.map((r) => (
-          <NodeView key={r.path} node={r} depth={0} expanded={expanded} toggle={toggle} filter={q.trim()} />
+          <NodeView key={r.path} node={r} depth={0} expanded={expanded} toggle={toggle} filter={q.trim()} onToggleActive={onToggleActive} />
         ))}
         {!roots.length && <div style={{ color: '#888', padding: 8 }}>결과 없음</div>}
       </Scroll>
