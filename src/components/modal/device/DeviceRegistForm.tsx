@@ -74,6 +74,7 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
   const [selectedMidId, setSelectedMidId] = useState(null);
   const [selectedSmallId, setSelectedSmallId] = useState(null);
   const [deviceName, setDeviceName] = useState("");
+  const [deviceDescription, setDeviceDescription] = useState("");
   const [assetId, setAssetId] = useState("");
   const [submitError, setSubmitError] = useState("");
 
@@ -195,6 +196,7 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
     setSelectedMidId(null);
     setSelectedSmallId(null);
     setDeviceName("");
+    setDeviceDescription("");
     setAssetId("");
     setSubmitError("");
   };
@@ -202,12 +204,14 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
     setSelectedMidId(id);
     setSelectedSmallId(null);
     setDeviceName("");
+    setDeviceDescription("");
     setAssetId("");
     setSubmitError("");
   };
   const pickSmall = (id) => {
     setSelectedSmallId(id);
     setDeviceName("");
+    setDeviceDescription("");
     setAssetId("");
     setSubmitError("");
   };
@@ -220,6 +224,7 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
     setSubmitError("");
     createDevice({
       deviceName: deviceName.trim(),
+      description: deviceDescription.trim(),
       deviceKey,
       categoryId: selectedSmallId,
       assetId: assetId ? Number(assetId) : null,
@@ -381,6 +386,17 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
                 Unity 3D 모델 에셋을 선택합니다. 미선택 시 3D 표시용 에셋 없이 등록됩니다.
               </KeyHint>
             </AssetFieldWrap>
+
+            <FieldLabel $required>장비 설명 (deviceDescription)</FieldLabel>
+            <KeyFieldWrap>
+              <FieldInput
+                value={deviceDescription}
+                onChange={(e) => setDeviceDescription(e.target.value)}
+                placeholder="장비 설명을 입력하세요"
+                maxLength={200}
+                required
+              />
+            </KeyFieldWrap>
           </FieldGrid>
 
           <PointsSection>
@@ -473,6 +489,7 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
                 setDeviceName("");
                 setAssetId("");
                 setSubmitError("");
+                setDeviceDescription("");
               }}
             >
               입력 초기화

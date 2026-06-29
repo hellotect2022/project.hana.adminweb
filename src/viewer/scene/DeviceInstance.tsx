@@ -4,6 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { DeviceDTO } from '../data/types';
 import { applyUnityToObject } from '../lib/coords';
+import { assetUrl } from '../lib/asset';
 import { DEVICE_MAT, DEVICE_SELECTED_MAT, DEVICE_MISS_MAT } from '../lib/deviceMat';
 import { floorNameToKey } from '../lib/manifest';
 import { useViewerStore, isFloorVisible } from '../state/viewerStore';
@@ -38,7 +39,7 @@ export function useRegister(deviceId: number, ref: RefObject<THREE.Group | null>
 
 // 배치된 장비 GLB (녹색/선택 시 노랑 오버라이드). transform(Unity) → flipX 적용.
 export function DeviceModel({ device }: { device: DeviceDTO }) {
-  const gltf = useGLTF(`/models/${device.assetName}.glb`, true);
+  const gltf = useGLTF(assetUrl(`/models/${device.assetName}.glb`), true);
   const selectedId = useViewerStore((s) => s.selectedDeviceId);
   const selected = selectedId === device.deviceId;
 

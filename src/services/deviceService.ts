@@ -284,6 +284,7 @@ export async function fetchDevicePointsForMappingAPI({
   deviceId,
   categoryId,
   keyword,
+  unmapped = false,
   sort,
 } = {}) {
   const { data } = await privateApi.get("/device/points/mapping", {
@@ -293,6 +294,7 @@ export async function fetchDevicePointsForMappingAPI({
       ...(deviceId != null ? { deviceId } : {}),
       ...(categoryId != null ? { categoryId } : {}),
       ...(keyword ? { keyword } : {}),
+      ...(unmapped ? { unmapped: true } : {}),
       ...(sort ? { sort } : {}),
     },
   });

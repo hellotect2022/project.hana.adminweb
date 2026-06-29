@@ -4,6 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { DeviceDTO } from '../data/types';
 import { DEVICE_MAT, DEVICE_SELECTED_MAT, DEVICE_MISS_MAT } from '../lib/deviceMat';
+import { assetUrl } from '../lib/asset';
 import { useViewerStore } from '../state/viewerStore';
 import { useAllDevices } from '../hooks';
 import { useRegister, onDevicePick } from './DeviceInstance';
@@ -13,7 +14,7 @@ type Pos = [number, number, number];
 
 // 드롭으로 막 배치된(저장 전) 장비. pos(three 월드좌표)에 한 번 놓고 이후엔 기즈모가 제어.
 function PendingModel({ device, pos }: { device: DeviceDTO; pos: Pos }) {
-  const gltf = useGLTF(`/models/${device.assetName}.glb`, true);
+  const gltf = useGLTF(assetUrl(`/models/${device.assetName}.glb`), true);
   const selectedId = useViewerStore((s) => s.selectedDeviceId);
   const sel = selectedId === device.deviceId;
   const obj = useMemo(() => {

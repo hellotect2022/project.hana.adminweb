@@ -4,6 +4,7 @@ import { useGLTF, Html } from '@react-three/drei';
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { flipPos } from '../lib/coords';
 import { floorKeyOf } from '../lib/manifest';
+import { assetUrl } from '../lib/asset';
 import type { FloorEntry } from '../lib/manifest';
 import type { ZoneMap } from '../lib/zone';
 import { useSceneManifest, useZoneMap } from '../hooks';
@@ -28,7 +29,7 @@ const HIDDEN_MAT = new THREE.MeshBasicMaterial({ visible: false }); // zone ì•„ë
 interface ZoneLabel { zoneId: number; zoneName: string; floorName?: string; pos: [number, number, number] }
 
 function ZoneFloor({ floorKey, entry, zoneByMesh }: { floorKey: string; entry: FloorEntry; zoneByMesh: ZoneMap }) {
-  const gltf = useGLTF(`/models/colliders/collider_${floorKey}.glb`, true);
+  const gltf = useGLTF(assetUrl(`/models/colliders/collider_${floorKey}.glb`), true);
   const showColliders = useViewerStore((s) => s.showColliders);
   const selectedFloors = useViewerStore((s) => s.selectedFloors);
   const zoneMeshes = useRef<THREE.Mesh[]>([]);

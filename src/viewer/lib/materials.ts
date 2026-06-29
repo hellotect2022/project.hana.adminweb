@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { MaterialMap } from './manifest';
+import { assetUrl } from './asset';
 
 // 원본 PNG 풀화질 로드 + 비등방성 (hanadream_web 의 방식 그대로).
 const texCache = new Map<string, Promise<THREE.Texture | null>>();
@@ -10,7 +11,7 @@ function loadTex(file: string, srgb: boolean, maxAniso: number): Promise<THREE.T
   const cached = texCache.get(name);
   if (cached) return cached;
   const p = texLoader
-    .loadAsync(`/textures/${name}`)
+    .loadAsync(assetUrl(`/textures/${name}`))
     .then((t) => {
       t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
       t.wrapS = t.wrapT = THREE.RepeatWrapping;

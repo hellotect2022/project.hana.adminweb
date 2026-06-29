@@ -31,6 +31,7 @@ const DevicePointMappingPage = () => {
   const [keywordInput, setKeywordInput] = useState("");
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(0);
+  const [unmappedOnly, setUnmappedOnly] = useState(false); // 미매핑(ref 코드 없음)만 표시
   /** @type {[Record<number, { refDeviceCode: string; refPointCode: string }>, Function]} */
   const [drafts, setDrafts] = useState({});
 
@@ -51,6 +52,7 @@ const DevicePointMappingPage = () => {
         appliedCategoryId ?? "all",
         appliedDeviceId ?? "all",
         keyword,
+        unmappedOnly ? "unmapped" : "all",
       ],
       queryFn: () =>
         fetchDevicePointsForMappingAPI({
@@ -59,6 +61,7 @@ const DevicePointMappingPage = () => {
           deviceId: appliedDeviceId,
           categoryId: appliedCategoryId,
           keyword: keyword || undefined,
+          unmapped: unmappedOnly,
         }),
       select: (res) => ({
         points: res.data?.content ?? [],
@@ -83,6 +86,14 @@ const DevicePointMappingPage = () => {
   };
 
   const dirtyRows = useMemo(() => points.filter(isRowDirty), [points, drafts]);
+
+  // 미매핑 필터는 서버에서 처리(unmapped 파라미터) → 화면은 서버 결과를 그대로 사용.
+  const displayRows = points;
+
+  const toggleUnmappedOnly = (next) => {
+    setUnmappedOnly(next);
+    setPage(0); // 필터 바뀌면 첫 페이지부터
+  };
 
   const getRefDeviceCode = (row) =>
     drafts[row.pointId]?.refDeviceCode ?? row.refDeviceCode ?? "";
@@ -146,8 +157,18 @@ const DevicePointMappingPage = () => {
         <SearchButton type="button" onClick={handleSearch}>
           검색
         </SearchButton>
+        <UnmappedToggle title="저장된 ref 코드가 없는(미매핑) 포인트만 현재 결과에서 표시">
+          <input
+            type="checkbox"
+            checked={unmappedOnly}
+            onChange={(e) => toggleUnmappedOnly(e.target.checked)}
+          />
+          미매핑만
+        </UnmappedToggle>
         <Summary>
-          총 {pagination?.totalElements ?? 0}건 · 매핑됨 {mappedCount}건
+          {unmappedOnly
+            ? `미매핑 ${pagination?.totalElements ?? 0}건`
+            : `총 ${pagination?.totalElements ?? 0}건 · 매핑됨 ${mappedCount}건 · 미매핑 ${Math.max(0, (pagination?.totalElements ?? 0) - mappedCount)}건`}
           {dirtyRows.length > 0 && ` · 변경 ${dirtyRows.length}건`}
         </Summary>
         <SaveButton
@@ -188,16 +209,18 @@ const DevicePointMappingPage = () => {
                   불러오는 중…
                 </Td>
               </tr>
-            ) : points.length === 0 ? (
+            ) : displayRows.length === 0 ? (
               <tr>
                 <Td colSpan={11} $center>
-                  {keyword || hasHierarchyFilter(appliedFilter)
+                  {unmappedOnly
+                    ? "미매핑 포인트가 없습니다."
+                    : keyword || hasHierarchyFilter(appliedFilter)
                     ? "검색 결과가 없습니다."
                     : "대·중·소·장비를 선택 후 검색하거나, 검색어로 포인트를 찾을 수 있습니다."}
                 </Td>
               </tr>
             ) : (
-              points.map((row, idx) => {
+              displayRows.map((row, idx) => {
                 const dirty = isRowDirty(row);
                 const mapped =
                   norm(getRefDeviceCode(row)) && norm(getRefPointCode(row));
@@ -303,6 +326,22 @@ const SearchButton = styled.button`
   &:hover {
     background: #e8eaed;
   }
+`;
+
+const UnmappedToggle = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #d0d3d8;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  input { cursor: pointer; }
+  &:hover { background: #f2f4f7; }
 `;
 
 const Summary = styled.span`

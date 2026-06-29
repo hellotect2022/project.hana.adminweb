@@ -29,7 +29,7 @@ const AppRouter = () => {
     const allRoutes = menuData.flatMap(group=>group.items)
 
     return(
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
             <Routes>
                 {/* 공용 페이지 */}
                 <Route path="/login" element={<LoginPage/>}/>

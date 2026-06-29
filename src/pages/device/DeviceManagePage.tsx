@@ -72,14 +72,17 @@ const DeviceManagePage = () => {
         keyword: keyword || undefined,
         categoryId: appliedCategoryId,
       });
+
+
+      console.log('res--',res)
       return {
         devices: res.data?.content ?? [],
         pagination: {
-          totalPages: res.data?.totalPages ?? 0,
-          number: res.data?.number ?? 0,
-          totalElements: res.data?.totalElements ?? 0,
-          first: res.data?.first ?? true,
-          last: res.data?.last ?? true,
+          totalPages: res.data?.page?.totalPages ?? 0,
+          number: res.data?.page?.number ?? 0,
+          totalElements: res.data?.page?.totalElements ?? 0,
+          first: res.data?.page?.first ?? true,
+          last: res.data?.page?.last ?? true,
         },
       };
     },
@@ -188,9 +191,10 @@ const DeviceManagePage = () => {
         <Table>
           <thead>
             <tr>
-              <Th style={{ width: 70 }}>번호</Th>
-              <Th>장비 이름</Th>
-              <Th>카테고리</Th>
+              <Th $center style={{ width: 70 }}>번호</Th>
+              <Th $center style={{ width: 120 }}>장비 이름</Th>
+              <Th style={{ width: 320}}>카테고리</Th>
+              <Th style={{ width: 120 }}>장비설명</Th>
               <Th $center style={{ width: 90 }}>활성</Th>
               <Th $center style={{ width: 90 }}>배치</Th>
               <Th $center style={{ width: 240 }}>관리</Th>
@@ -214,9 +218,10 @@ const DeviceManagePage = () => {
             ) : (
               devices.map((device, idx) => (
                 <tr key={device.deviceId}>
-                  <Td>{page * PAGE_SIZE + idx + 1}</Td>
-                  <Td>{device.deviceName}</Td>
+                  <Td $center>{page * PAGE_SIZE + idx + 1}</Td>
+                  <Td $center>{device.deviceName}</Td>
                   <Td>{device.categoryPath || device.categoryName || "-"}</Td>
+                  <Td>{device.description }</Td>
                   <Td $center>
                     <Badge $active={device.active}>{device.active ? "활성" : "비활성"}</Badge>
                   </Td>

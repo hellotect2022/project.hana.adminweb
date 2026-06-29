@@ -40,15 +40,23 @@ export async function fetchAllDeviceSystems() {
     data: { data: results },
   } = await privateApi.get("/device-system/all");
   if (!Array.isArray(results)) return [];
-  return results.map((s) => ({
-    systemId: s.systemId,
-    systemName: s.systemName,
-    systemCode: s.systemCode,
-    sortOrder: s.sortOrder,
-    active: s.active,
-    categoryIds: s.categoryIds ?? [],
-    categories: s.categories ?? [],
-  }));
+  return results.map((s) => {
+    const categories = s.categories ?? [];
+    // 백엔드 응답은 categories(객체)만 내려주므로, 없으면 categories에서 categoryId를 파생한다.
+    const categoryIds =
+      s.categoryIds?.length
+        ? s.categoryIds
+        : categories.map((c) => c.categoryId).filter((id) => id != null);
+    return {
+      systemId: s.systemId,
+      systemName: s.systemName,
+      systemCode: s.systemCode,
+      sortOrder: s.sortOrder,
+      active: s.active,
+      categoryIds,
+      categories,
+    };
+  });
 }
 
 /**

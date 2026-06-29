@@ -1,10 +1,40 @@
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { SceneManifest, MaterialMap } from './lib/manifest';
+import type { SceneManifest, MaterialMap, TestManifest, FloorEntry } from './lib/manifest';
 import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement, patchDeviceActive } from './data/deviceService';
 import type { DevicePlacementRequest } from './data/types';
 import { flattenZones, type ZoneMap } from './lib/zone';
+import { assetUrl } from './lib/asset';
 
-const getJson = <T,>(url: string) => fetch(url).then((r) => r.json() as Promise<T>);
+// url 은 public 정적 경로(/manifest/...). 배포 base(VITE_BASE) 를 반영해 fetch.
+const getJson = <T,>(url: string) => fetch(assetUrl(url)).then((r) => r.json() as Promise<T>);
+
+// public/models 에 실제로 존재하는 glb 만 통과시킨다.
+// dev 서버는 없는 파일에 404 대신 index.html(HTML, 200)을 돌려주므로
+// 상태 코드뿐 아니라 content-type 이 HTML 이 아닌지까지 확인한다.
+async function glbExists(glb: string): Promise<boolean> {
+  try {
+    const res = await fetch(assetUrl(`/models/${glb}`), { method: 'HEAD' });
+    const ct = res.headers.get('content-type') ?? '';
+    return res.ok && !ct.includes('text/html');
+  } catch {
+    return false;
+  }
+}
+
+// 매니페스트 floors 중 파일이 실제 존재하는 항목만 반환. 검사 전엔 null.
+export function useExistingFloors(floors: FloorEntry[] | undefined): FloorEntry[] | null {
+  const [existing, setExisting] = useState<FloorEntry[] | null>(null);
+  useEffect(() => {
+    if (!floors) { setExisting(null); return; }
+    let cancelled = false;
+    Promise.all(floors.map(async (f) => ((await glbExists(f.glb)) ? f : null))).then((arr) => {
+      if (!cancelled) setExisting(arr.filter((f): f is FloorEntry => f !== null));
+    });
+    return () => { cancelled = true; };
+  }, [floors]);
+  return existing;
+}
 
 // 전체 장비(페이지 순회). 3D Devices 와 사이드바가 공유(캐시).
 export const useAllDevices = () =>
@@ -50,6 +80,9 @@ export function useSaveAll() {
 
 export const useSceneManifest = () =>
   useQuery<SceneManifest>({ queryKey: ['scene-manifest'], queryFn: () => getJson('/manifest/scene-manifest.json'), staleTime: Infinity });
+
+export const useTestManifest = () =>
+  useQuery<TestManifest>({ queryKey: ['test-manifest'], queryFn: () => getJson('/manifest/test-manifest.json'), staleTime: Infinity });
 
 export const useMaterialMap = () =>
   useQuery<MaterialMap>({ queryKey: ['material-map'], queryFn: () => getJson('/manifest/material-map.json'), staleTime: Infinity });

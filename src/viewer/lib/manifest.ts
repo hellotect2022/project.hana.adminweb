@@ -12,6 +12,19 @@ export interface SceneManifest {
   floors: FloorEntry[];
 }
 
+export interface TestEntry {
+  glb: string;
+  name: string;       // 예: 15f_in, 1f_ceiling, b7f_out
+  position: Vec3;     // Unity LH 원본
+  rotation: Quat;
+  scale: Vec3;
+}
+
+export interface TestManifest {
+  space?: unknown;
+  floors: TestEntry[];
+}
+
 // 머티리얼 맵
 export interface MatDef {
   textures?: { map?: string; normalMap?: string };

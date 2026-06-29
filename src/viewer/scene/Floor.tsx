@@ -5,12 +5,13 @@ import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { flipPos } from '../lib/coords';
 import { applyMaterialMap } from '../lib/materials';
 import { floorKeyOf, isCeiling } from '../lib/manifest';
+import { assetUrl } from '../lib/asset';
 import type { FloorEntry, MaterialMap } from '../lib/manifest';
 import { useViewerStore, isFloorVisible } from '../state/viewerStore';
 
 // 한 층(_in/_out/_ceiling) GLB. flipX 위치 + 회전 identity(검증: FBX2glTF가 이미 Y-up).
 export function Floor({ data, matMap }: { data: FloorEntry; matMap: MaterialMap }) {
-  const gltf = useGLTF(`/models/${data.glb}`, true); // draco(CDN)
+  const gltf = useGLTF(assetUrl(`/models/${data.glb}`), true); // draco(CDN)
   const gl = useThree((s) => s.gl);
 
   const obj = useMemo(() => {
@@ -27,7 +28,10 @@ export function Floor({ data, matMap }: { data: FloorEntry; matMap: MaterialMap 
 
   const pos = flipPos(data.position);
   return (
-    <group position={pos} scale={data.scale} visible={visible} userData={{ floorKey: key }}>
+    <group 
+      //position={pos} 
+      //scale={data.scale} 
+      visible={visible} userData={{ floorKey: key }}>
       <primitive object={obj} />
     </group>
   );
