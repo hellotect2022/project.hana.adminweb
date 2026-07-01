@@ -2,12 +2,14 @@ import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
+import { Button } from "@/components/ui";
 import {
   LOG_RETENTION_QUERY_KEY,
   fetchLogRetentionPolicies,
   runLogRetentionPurge,
   updateLogRetentionPolicies,
 } from "@/services/logRetentionService";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /**
  * 로그 종류별 보관 일수 설정 + (선택) 즉시 정리
@@ -59,11 +61,7 @@ const SystemLogRetentionPage = () => {
       window.alert("저장되었습니다.");
     },
     onError: (err) => {
-      window.alert(
-        err?.response?.data?.message ??
-          err?.message ??
-          "저장에 실패했습니다."
-      );
+      window.alert(getApiErrorMessage(err, "저장에 실패했습니다."));
     },
   });
 
@@ -76,11 +74,7 @@ const SystemLogRetentionPage = () => {
       );
     },
     onError: (err) => {
-      window.alert(
-        err?.response?.data?.message ??
-          err?.message ??
-          "정리 실행에 실패했습니다."
-      );
+      window.alert(getApiErrorMessage(err, "정리 실행에 실패했습니다."));
     },
   });
 
@@ -134,22 +128,22 @@ const SystemLogRetentionPage = () => {
         <PanelHeader>
           <PanelTitle>보관 일수</PanelTitle>
           <PanelActions>
-            <GhostBtn
-              type="button"
+            <Button
+              variant="outline"
               onClick={handlePurgeNow}
               disabled={purgeMutation.isPending || saveMutation.isPending}
             >
               {purgeMutation.isPending ? "정리 중…" : "만료 로그 지금 정리"}
-            </GhostBtn>
-            <PrimaryBtn
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
               onClick={() => saveMutation.mutate()}
               disabled={
                 !isDirty || saveMutation.isPending || isLoading || isError
               }
             >
               {saveMutation.isPending ? "저장 중…" : "설정 저장"}
-            </PrimaryBtn>
+            </Button>
           </PanelActions>
         </PanelHeader>
 
@@ -273,42 +267,6 @@ const PanelActions = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-`;
-
-const PrimaryBtn = styled.button`
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover:not(:disabled) {
-    filter: brightness(1.05);
-  }
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-`;
-
-const GhostBtn = styled.button`
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover:not(:disabled) {
-    background: #f8fafc;
-  }
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
 `;
 
 const TableWrap = styled.div`

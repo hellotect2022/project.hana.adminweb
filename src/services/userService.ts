@@ -6,7 +6,7 @@ import privateApi from "@/services/api";
 
 /**
  * 사용자 목록 조회
- * @param {{ page?: number, size?: number, keyword?: string, searchField?: 'loginId'|'username', active?: boolean }} [params]
+ * @param {{ page?: number, size?: number, loginId?: string, username?: string, active?: boolean, roleId?: number }} [params]
  */
 export function fetchUsersAPI(params = {}) {
   return privateApi.get("/users", { params });

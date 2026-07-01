@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 
 /**
  * 사용자 등록 폼
@@ -117,11 +118,11 @@ const UserRegisterForm = ({ onSuccess, onCancel }) => {
 
       <ButtonRow>
         {onCancel && (
-          <CancelButton type="button" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             취소
-          </CancelButton>
+          </Button>
         )}
-        <SubmitButton type="submit">사용자 등록</SubmitButton>
+        <Button variant="primary" type="submit">사용자 등록</Button>
       </ButtonRow>
     </Form>
   );
@@ -158,7 +159,7 @@ const FieldRow = styled.div`
   }
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   color: #374151;
   &::after {
@@ -219,40 +220,6 @@ const ButtonRow = styled.div`
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-`;
-
-const CancelButton = styled.button`
-  padding: 10px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #f3f4f6;
-  }
-`;
-
-const SubmitButton = styled.button`
-  padding: 10px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1565c0;
-  background-color: #e3f2fd;
-  border: 1px solid #2196f3;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
-
-  &:hover {
-    background-color: #bbdefb;
-    border-color: #1976d2;
-  }
-  &:active {
-    background-color: #90caf9;
-  }
 `;
 
 export default UserRegisterForm;

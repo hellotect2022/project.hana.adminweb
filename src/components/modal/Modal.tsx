@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { SvgIcons } from "../common/Icon";
+import { Button } from "@/components/ui";
 
 const Modal = ({ config, onClose }) => {
   const { isOpen, title, content, onConfirm, hideFooter, wide, full } = config;
@@ -21,16 +22,22 @@ const Modal = ({ config, onClose }) => {
         <ModalBody $alignLeft={hideFooter || wide || full}>{content}</ModalBody>
         {showFooter && (
           <ModalFooter>
-            <Button type="button" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              style={{ width: 137, height: 36 }}
+            >
               취소
             </Button>
             <Button
               type="button"
-              $primary
+              variant="primary"
               onClick={() => {
                 if (onConfirm) onConfirm();
                 onClose();
               }}
+              style={{ width: 137, height: 36 }}
             >
               확인
             </Button>
@@ -71,7 +78,7 @@ const CloseRow = styled.div`
   }
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<{ $wide?: boolean; $full?: boolean }>`
   background: white;
   padding: 12px 20px 20px;
   border-radius: 8px;
@@ -91,7 +98,7 @@ const ModalHeader = styled.h2`
     margin: 0 0 16px 0; 
     font-size: 1.25rem; 
 `;
-const ModalBody = styled.div`
+const ModalBody = styled.div<{ $alignLeft?: boolean }>`
   display: ${(p) => (p.$alignLeft ? "block" : "flex")};
   justify-content: ${(p) => (p.$alignLeft ? "stretch" : "center")};
   margin-bottom: ${(p) => (p.$alignLeft ? "0" : "24px")};
@@ -103,18 +110,7 @@ const ModalBody = styled.div`
   min-height: 0;
 `;
 const ModalFooter = styled.div`
- display: flex; 
- justify-content: center; 
- gap: 8px; 
-`;
-const Button = styled.button`
-  padding: 8px 16px; 
-  border-radius: 4px; 
-  border: none; 
-  width: 137px;
-  height: 36px;
-  cursor: pointer;
-  background: ${props => props.$primary ? '#009591' : '#FFFFFF'};
-  color: ${props => props.$primary ? 'white' : 'black'};
-  border: ${props => props.$primary ? '1px solid #009591' : '1px solid #CECECE'};
+ display: flex;
+ justify-content: center;
+ gap: 8px;
 `;

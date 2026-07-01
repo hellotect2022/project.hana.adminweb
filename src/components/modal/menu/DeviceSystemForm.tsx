@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
+import { Button } from "@/components/ui";
 
 function renderCategoryPath(fullPath, categoryName) {
   const raw = fullPath || categoryName || "";
@@ -203,12 +204,12 @@ const DeviceSystemForm = ({
       </CategorySection>
 
       <Actions>
-        <ToolBtn type="button" onClick={onClose} disabled={pending}>
+        <Button variant="outline" onClick={onClose} disabled={pending}>
           취소
-        </ToolBtn>
-        <ToolBtn type="button" $primary onClick={handleSubmit} disabled={pending}>
+        </Button>
+        <Button variant="primary" onClick={handleSubmit} disabled={pending}>
           {pending ? (mode === "create" ? "생성 중…" : "저장 중…") : mode === "create" ? "생성" : "저장"}
-        </ToolBtn>
+        </Button>
       </Actions>
     </FormWrap>
   );
@@ -232,7 +233,7 @@ const FormGrid = styled.div`
   }
 `;
 
-const Field = styled.div`
+const Field = styled.div<{ $narrow?: boolean }>`
   grid-column: ${(p) => (p.$narrow ? "span 1" : "span 1")};
 
   label {
@@ -300,7 +301,7 @@ const CategoryBadges = styled.div`
   flex-shrink: 0;
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ $tone?: string }>`
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
@@ -381,7 +382,7 @@ const CategoryCheckList = styled.div`
   }
 `;
 
-const CategoryCheckLabel = styled.label`
+const CategoryCheckLabel = styled.label<{ $selected?: boolean }>`
   display: flex;
   align-items: center;
   gap: 10px;
@@ -426,12 +427,12 @@ const PathSep = styled.span`
   font-weight: 500;
 `;
 
-const PathSegment = styled.span`
+const PathSegment = styled.span<{ $last?: boolean }>`
   color: ${(p) => (p.$last ? "#1e293b" : "#64748b")};
   font-weight: ${(p) => (p.$last ? 600 : 400)};
 `;
 
-const StateBox = styled.div`
+const StateBox = styled.div<{ $error?: boolean }>`
   padding: 20px 12px;
   text-align: center;
   border-radius: 8px;
@@ -454,29 +455,3 @@ const Actions = styled.div`
   border-top: 1px solid #f1f5f9;
 `;
 
-const ToolBtn = styled.button`
-  min-width: 72px;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 8px;
-  border: 1px solid ${(p) => (p.$primary ? "#4a6380" : "#d1d5db")};
-  background: ${(p) => (p.$primary ? "#4a6380" : "#fff")};
-  color: ${(p) => (p.$primary ? "#fff" : "#374151")};
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-
-  &:hover:not(:disabled) {
-    background: ${(p) => (p.$primary ? "#3d5370" : "#f8fafc")};
-    border-color: ${(p) => (p.$primary ? "#3d5370" : "#94a3b8")};
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;

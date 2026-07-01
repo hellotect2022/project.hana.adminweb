@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 import {
   categoryFetchAPI,
   DEVICE_CATEGORY_QUERY_KEY,
@@ -99,9 +100,9 @@ const DeviceCategoryPicker = ({
     return (
       <ErrorBox>
         <p>{error?.message ?? "카테고리를 불러오지 못했습니다."}</p>
-        <RetryBtn type="button" onClick={() => refetch()}>
+        <Button variant="secondary" onClick={() => refetch()}>
           다시 시도
-        </RetryBtn>
+        </Button>
       </ErrorBox>
     );
   }
@@ -206,17 +207,6 @@ const ErrorBox = styled.div`
   }
 `;
 
-const RetryBtn = styled.button`
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-`;
-
 const FetchHint = styled.div`
   font-size: 12px;
   color: #64748b;
@@ -234,7 +224,7 @@ const ThreeCol = styled.div`
   }
 `;
 
-const Pane = styled.div`
+const Pane = styled.div<{ $compact?: boolean }>`
   display: flex;
   flex-direction: column;
   border: 1px solid #d1d5db;
@@ -259,7 +249,7 @@ const PaneTitleText = styled.span`
   color: #111d2c;
 `;
 
-const ListBox = styled.div`
+const ListBox = styled.div<{ $compact?: boolean }>`
   flex: 1;
   min-height: ${(p) => (p.$compact ? "140px" : "220px")};
   max-height: ${(p) => (p.$compact ? "200px" : "340px")};
@@ -267,7 +257,7 @@ const ListBox = styled.div`
   padding: 6px;
 `;
 
-const ListItem = styled.div`
+const ListItem = styled.div<{ $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;

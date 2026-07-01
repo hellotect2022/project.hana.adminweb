@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SceneManifest, MaterialMap, TestManifest, FloorEntry } from './lib/manifest';
-import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement, patchDeviceActive } from './data/deviceService';
+import { fetchAllDevices, fetchLocationInfo, saveDevicePlacement, patchDeviceActiveBulk } from './data/deviceService';
+import type { BulkActiveRequest } from './data/deviceService';
 import type { DevicePlacementRequest } from './data/types';
 import { flattenZones, type ZoneMap } from './lib/zone';
 import { assetUrl } from './lib/asset';
@@ -56,11 +57,22 @@ export const useZoneMap = () =>
     },
   });
 
-// 장비 활성/비활성 토글 (PATCH) → DB active 저장 + 목록 갱신(비활성 시 3D 숨김).
+// 장비 활성/비활성 일괄 처리 (PATCH /device/active) → DB active 저장 + 목록 갱신(비활성 시 3D 숨김).
+// 전체(ALL)/카테고리(CATEGORY)/개별(DEVICES) 모두 이 훅으로 통일. data = updatedCount.
+export function useSetActiveBulk() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BulkActiveRequest) => patchDeviceActiveBulk(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['devices', 'all'] }),
+  });
+}
+
+// 개별 토글 호환 훅 — 내부적으로 bulk(scope=DEVICES,[id])로 처리. 캐시 무효화 동일.
 export function useSetActive() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ deviceId, active }: { deviceId: number; active: boolean }) => patchDeviceActive(deviceId, active),
+    mutationFn: ({ deviceId, active }: { deviceId: number; active: boolean }) =>
+      patchDeviceActiveBulk({ scope: 'DEVICES', deviceIds: [deviceId], active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['devices', 'all'] }),
   });
 }

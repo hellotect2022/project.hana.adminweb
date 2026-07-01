@@ -1,11 +1,22 @@
 import Modal from "@/components/modal/Modal";
 import { setApiErrorModalHandler } from "@/utils/apiErrorModalBridge";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 const ModalContext = createContext(null);
 
+type ModalConfig = {
+    isOpen: boolean;
+    title: ReactNode;
+    content: ReactNode;
+    onConfirm: (() => void) | null;
+    hideFooter: boolean;
+    wide: boolean;
+    full: boolean;
+};
+
 export const ModalProvider = ({children}) => {
-    const [modalConfig, setModalConfig] = useState({
+    const [modalConfig, setModalConfig] = useState<ModalConfig>({
         isOpen: false,
         title: "",
         content: "",

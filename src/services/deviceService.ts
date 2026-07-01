@@ -118,7 +118,7 @@ export async function updateCategorySchemaAPI({ categoryId, schema }) {
  * @param {{ page?: number; size?: number; keyword?: string; categoryId?: number; sort?: string }} [params]
  * @returns {Promise<{success: boolean; data: { content: DeviceDTO[]; totalElements: number; totalPages: number; number: number; size: number; first: boolean; last: boolean } }>}
  */
-export async function fetchDevicesAPI({ page = 0, size = 20, keyword, categoryId, sort } = {}) {
+export async function fetchDevicesAPI({ page = 0, size = 20, keyword, categoryId, sort }: { page?: number; size?: number; keyword?: string; categoryId?: number; sort?: string } = {}) {
   const { data } = await privateApi.get("/device/all", {
     params: {
       page,
@@ -286,7 +286,7 @@ export async function fetchDevicePointsForMappingAPI({
   keyword,
   unmapped = false,
   sort,
-} = {}) {
+}: { page?: number; size?: number; deviceId?: number; categoryId?: number; keyword?: string; unmapped?: boolean; sort?: string } = {}) {
   const { data } = await privateApi.get("/device/points/mapping", {
     params: {
       page,

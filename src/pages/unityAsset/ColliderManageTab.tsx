@@ -11,6 +11,8 @@ import {
   UNITY_FLOOR_OPTION_QUERY_KEY,
   UNITY_ZONE_LIST_QUERY_KEY,
 } from "@/services/unityZoneService";
+import { Button } from "@/components/ui";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /** 콜라이더(존) 관리 탭 — 층별 필터 / 등록·조회·수정 */
 const ColliderManageTab = () => {
@@ -52,7 +54,7 @@ const ColliderManageTab = () => {
       closeModal();
     },
     onError: (err) => {
-      window.alert(err?.response?.data?.message || err?.message || "등록 중 오류가 발생했습니다.");
+      window.alert(getApiErrorMessage(err, "등록 중 오류가 발생했습니다."));
     },
   });
 
@@ -67,7 +69,7 @@ const ColliderManageTab = () => {
       closeModal();
     },
     onError: (err) => {
-      window.alert(err?.response?.data?.message || err?.message || "수정 중 오류가 발생했습니다.");
+      window.alert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다."));
     },
   });
 
@@ -82,7 +84,7 @@ const ColliderManageTab = () => {
   }, [zones, meshKeyword]);
 
   // 현재 로드된 목록 기준 클라이언트 1차 중복검사(서버에서도 재검사)
-  const isDuplicateMesh = (mesh, excludeId) =>
+  const isDuplicateMesh = (mesh, excludeId = null) =>
     zones.some(
       (z) =>
         z.zoneMeshName?.toLowerCase() === mesh.toLowerCase() &&
@@ -156,9 +158,9 @@ const ColliderManageTab = () => {
             onChange={(e) => setMeshKeyword(e.target.value)}
           />
         </FilterGroup>
-        <RegisterButton type="button" onClick={openRegisterModal}>
+        <Button variant="primary" onClick={openRegisterModal}>
           + 콜라이더 등록
-        </RegisterButton>
+        </Button>
       </Toolbar>
 
       <TableWrap>
@@ -170,25 +172,26 @@ const ColliderManageTab = () => {
               <Th style={{ width: 160 }}>층</Th>
               <Th>이름</Th>
               <Th>mesh_name</Th>
+              <Th $center style={{ width: 90 }}>메쉬 타입</Th>
               <Th $center style={{ width: 100 }}>관리</Th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={7} $center>
                   불러오는 중…
                 </Td>
               </tr>
             ) : isError ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={7} $center>
                   {error?.message ?? "목록을 불러오지 못했습니다."}
                 </Td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={7} $center>
                   {meshKeyword ? "검색 결과가 없습니다." : "등록된 콜라이더가 없습니다."}
                 </Td>
               </tr>
@@ -205,10 +208,11 @@ const ColliderManageTab = () => {
                   <Td>
                     <MeshCell>{row.zoneMeshName}</MeshCell>
                   </Td>
+                  <Td $center>{row.meshType ?? "2D"}</Td>
                   <Td $center>
-                    <EditBtn type="button" onClick={() => openEditModal(row)}>
+                    <Button variant="secondary" size="sm" onClick={() => openEditModal(row)}>
                       수정
-                    </EditBtn>
+                    </Button>
                   </Td>
                 </tr>
               ))
@@ -263,21 +267,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const RegisterButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #2563eb;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    background: #1d4ed8;
-  }
-`;
-
 const TableWrap = styled.div`
   overflow-x: auto;
   background: #fff;
@@ -291,7 +280,7 @@ const Table = styled.table`
   font-size: 14px;
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $center?: boolean }>`
   padding: 12px 16px;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   font-weight: 700;
@@ -300,7 +289,7 @@ const Th = styled.th`
   border-bottom: 1px solid #e5e7eb;
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $center?: boolean }>`
   padding: 11px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
@@ -312,16 +301,3 @@ const MeshCell = styled.span`
   color: #1e3a5f;
 `;
 
-const EditBtn = styled.button`
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background: #3d5370;
-  }
-`;

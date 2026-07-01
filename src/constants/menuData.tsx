@@ -18,49 +18,68 @@ import DeviceCategoryManagePage from "@/pages/device/DeviceCategoryManagePage";
 import DeviceRegistPage from "@/pages/device/DeviceRegistPage";
 import DevicePointMappingPage from "@/pages/device/DevicePointMappingPage";
 import UnityAssetManagePage from "@/pages/unityAsset/UnityAssetManagePage";
+import ZoneManagePage from "@/pages/zone/ZoneManagePage";
+import SpaceLightManagePage from "@/pages/zone/SpaceLightManagePage";
 
 export const menuData = [
   {
     label: "사용자 관리",
     abbr: "사용자",
     items: [
-      { title: "사용자 관리", icon: <SvgIcons.FileCheck/>, path: "/manage/user", element: <UserManagePage/> },
-      { title: "사용자 그룹 관리", icon: <SvgIcons.Users/>, path: "/manage/group", element: <UserManageGroupPage/> },
+      { title: "사용자 관리", 
+        //icon: <SvgIcons.FileCheck/>, 
+        path: "/manage/user", element: <UserManagePage/> },
+      { title: "사용자 그룹(권한)", 
+        //icon: <SvgIcons.Users/>, 
+        path: "/manage/group", element: <UserManageGroupPage/> },
     ]
   },
-  // {
-  //   label: "권한 관리",
-  //   abbr: "권한",
-  //   items: [
-  //     { title: "사용자 그룹 관리", icon: <SvgIcons.Users/>, path: "/manage/group", element: <UserManageGroupPage/> },
-  //     { title: "그룹별 시스템메뉴 권한 설정", icon: <SvgIcons.Widget/>, path: "/auth/menu-permission" ,element:<AuthMenuPermissionPage/>},
-  //     // { title: "그룹별 기능 권한 설정", icon: <SvgIcons.Tunning/>, path: "/auth/feature-permission" ,element:<AuthFeaturePermissionPage/>},
-  //   ]
-  // },
   {
     label: "시스템 메뉴 설정",
     abbr: "시스템",
     items: [
-      { title: "표시 설정", icon: <SvgIcons.Setting/>, path: "/menu/display", element:<MenuDisplayPage/>},
-      { title: "그룹별 시스템메뉴 권한 설정", icon: <SvgIcons.Widget/>, path: "/auth/menu-permission" ,element:<AuthMenuPermissionPage/>},
-      // { title: "정보 수정", icon: <SvgIcons.WidgetAdd/>, path: "/menu/edit" , element:<MenuEditPage/>},
+      { title: "시스템 표시 설정", 
+        //icon: <SvgIcons.Setting/>, 
+        path: "/menu/display", element:<MenuDisplayPage/>},
+      { title: "그룹별 시스템메뉴 권한",
+        //icon: <SvgIcons.Widget/>,
+        path: "/auth/menu-permission" ,element:<AuthMenuPermissionPage/>},
     ]
   },
   {
-    label: "Unity Asset 관리",
-    abbr: "Asset",
+    label: "구역 설정",
+    abbr: "구역",
     items: [
-      { title: "3D Asset 관리", icon: <SvgIcons.Layers/>, path: "/asset/3d-manage", element: <UnityAssetManagePage/> },
+      { title: "2D Zone 관리",
+        //icon: <SvgIcons.Layers/>,
+        path: "/zone/manage", element:<ZoneManagePage/>},
+      { title: "3D 공간·조명/화재감지 구역 관리",
+        //icon: <SvgIcons.Layers/>,
+        path: "/zone/space-light", element:<SpaceLightManagePage/>},
+    ]
+  },
+  {
+    label: "에셋 관리",
+    abbr: "에셋",
+    items: [
+      { title: "장비 에셋 관리", 
+        //icon: <SvgIcons.Layers/>, 
+        path: "/asset/3d-manage", element: <UnityAssetManagePage/> },
     ]
   },
   {
     label: "장비 관리",
     abbr: "장비",
     items: [
-      { title: "장비 카테고리 관리", icon: <SvgIcons.Siren/>, path: "/category/manage", element: <DeviceCategoryManagePage/>},
-      // { title: "장비 등록", icon: <SvgIcons.Siren/>, path: "/device/regist", element: <DeviceRegistPage/>},
-      { title: "장비 관리", icon: <SvgIcons.Siren/>, path: "/device/manage", element: <DeviceManagePage/>},
-      { title: "포인트 정보 매핑", icon: <SvgIcons.Layers/>, path: "/device/point-mapping", element: <DevicePointMappingPage/>},
+      { title: "장비 카테고리 관리", 
+        //icon: <SvgIcons.Siren/>, 
+        path: "/category/manage", element: <DeviceCategoryManagePage/>},
+      { title: "장비 관리", 
+        //icon: <SvgIcons.Siren/>, 
+        path: "/device/manage", element: <DeviceManagePage/>},
+      { title: "포인트 정보 매핑", 
+        //icon: <SvgIcons.Layers/>, 
+        path: "/device/point-mapping", element: <DevicePointMappingPage/>},
     ]
   },
   {
@@ -69,7 +88,7 @@ export const menuData = [
     items: [
       {
         title: "유형 관리",
-        icon: <SvgIcons.Siren/>,
+        //icon: <SvgIcons.Siren/>,
         path: "/event/type",
         disabled: true,
         disabledReason:
@@ -84,7 +103,7 @@ export const menuData = [
       },
       {
         title: "명칭 관리",
-        icon: <SvgIcons.CheckList/>,
+        //icon: <SvgIcons.CheckList/>,
         path: "/event/name",
         disabled: true,
         disabledReason:
@@ -97,10 +116,12 @@ export const menuData = [
           />
         ),
       },
-      { title: "임계값 설정", icon: <SvgIcons.Layers/>, path: "/event/threshold", element: <EventThresholdPage/> },
+      { title: "임계값 설정", 
+        //icon: <SvgIcons.Layers/>, 
+        path: "/event/threshold", element: <EventThresholdPage/> },
       {
         title: "알림 설정",
-        icon: <SvgIcons.Bell/>,
+        //icon: <SvgIcons.Bell/>,
         path: "/event/notification",
         disabled: true,
         disabledReason:
@@ -113,31 +134,45 @@ export const menuData = [
           />
         ),
       },
-      { title: "SOP 템플릿", icon: <SvgIcons.CheckList/>, path: "/sop/templates", element: <SopTemplateManagePage/> },
+      { title: "SOP 템플릿", 
+        //icon: <SvgIcons.CheckList/>, 
+        path: "/sop/templates", element: <SopTemplateManagePage/> },
     ]
   },
   {
     label: "로그 관리",
     abbr: "로그",
     items: [
-      { title: "접속 로그", icon: <SvgIcons.SidebarCode/>, path: "/log/access" , element:<LogHubPage/>},
-      { title: "사용 로그", icon: <SvgIcons.Code/>, path: "/log/usage", element:<LogHubPage/>},
-      { title: "운영 통계", icon: <SvgIcons.PieChart/>, path: "/log/statistics", element:<LogHubPage/>},
+      { title: "접속 로그", 
+        //icon: <SvgIcons.SidebarCode/>,
+        path: "/log/access" , element:<LogHubPage/>},
+      { title: "사용 로그", 
+        //icon: <SvgIcons.Code/>, 
+        path: "/log/usage", element:<LogHubPage/>},
+      { title: "운영 통계", 
+        //icon: <SvgIcons.PieChart/>, 
+        path: "/log/statistics", element:<LogHubPage/>},
     ]
   },
   {
     label: "시스템 관리",
     abbr: "시스템",
     items: [
-      { title: "서버 관리 콘솔", icon: <SvgIcons.Server/>, path: "/system/server" , element:<SystemServerPage/>},
-      { title: "로그 보관 기간", icon: <SvgIcons.Folder/>, path: "/system/log-retention" , element:<SystemLogRetentionPage/>},
+      { title: "서버 관리 콘솔", 
+        //icon: <SvgIcons.Server/>, 
+        path: "/system/server" , element:<SystemServerPage/>},
+      { title: "로그 보관 기간", 
+        //icon: <SvgIcons.Folder/>, 
+        path: "/system/log-retention" , element:<SystemLogRetentionPage/>},
     ]
   },
   {
     label: "테스트",
     abbr: "테스트",
     items: [
-      { title: "테스트1", icon: <SvgIcons.Server/>, path: "/test/1" , element:<AuthGroupsPage/>},
+      { title: "테스트1", 
+        //icon: <SvgIcons.Server/>, 
+        path: "/test/1" , element:<AuthGroupsPage/>},
     ]
   }
 ];

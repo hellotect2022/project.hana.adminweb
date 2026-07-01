@@ -24,7 +24,7 @@ const Sidebar = () => {
                     key={itemIdx}
                     title={item.disabledReason ?? "준비 중인 메뉴입니다."}
                   >
-                    {item.icon}
+                    {(item as any).icon}
                     <MenuText $isCollapsed={isCollapsed}>{item.title}</MenuText>
                   </MenuItemDisabled>
                 ) : (
@@ -35,7 +35,7 @@ const Sidebar = () => {
                     title={isCollapsed ? item.title : ""}
                     onClick={() => addSidebarHistory(item.path, item.title)}
                   >
-                    {item.icon}
+                    {(item as any).icon}
                     <MenuText $isCollapsed={isCollapsed}>{item.title}</MenuText>
                   </MenuItem>
                 )
@@ -88,7 +88,7 @@ const Sidebar = () => {
 }
 
 
-const SidebarContainer = styled.aside`
+const SidebarContainer = styled.aside<{ $isCollapsed?: boolean }>`
   width: ${props => (props.$isCollapsed ? '80px' : '260px')};
   min-width: ${props => (props.$isCollapsed ? '80px' : '260px')};
   background-color: #111d2c; // 이미지의 짙은 네이비 톤
@@ -135,7 +135,7 @@ const AdminText = styled.span`
   white-space: nowrap;
 `;
 
-const ProfileSection = styled.div`
+const ProfileSection = styled.div<{ $isCollapsed?: boolean }>`
   padding: ${props => (props.$isCollapsed ? '20px 0' : '24px')};
   display: flex;
   flex-direction: column;
@@ -255,7 +255,7 @@ const MenuItemDisabled = styled.div`
   }
 `;
 
-const MenuText = styled.span`
+const MenuText = styled.span<{ $isCollapsed?: boolean }>`
   margin-left: 12px;
   font-size: 14px;
   white-space: nowrap;

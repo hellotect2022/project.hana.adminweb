@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { NavLink, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 import {
   AUDIT_QUERY_KEYS,
   fetchAccessLogs,
@@ -425,20 +426,22 @@ function Pager({ page, totalPages, onChange, total }) {
         총 {total}건 · {page + 1} / {totalPages} 페이지
       </PagerInfo>
       <PagerBtns>
-        <PagerBtn
-          type="button"
+        <Button
+          variant="outline"
+          size="sm"
           disabled={page <= 0}
           onClick={() => onChange(page - 1)}
         >
           이전
-        </PagerBtn>
-        <PagerBtn
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           disabled={page >= totalPages - 1}
           onClick={() => onChange(page + 1)}
         >
           다음
-        </PagerBtn>
+        </Button>
       </PagerBtns>
     </PagerRow>
   );
@@ -506,7 +509,7 @@ const KpiRow = styled.div`
   gap: 12px;
 `;
 
-const Kpi = styled.div`
+const Kpi = styled.div<{ $accent?: boolean }>`
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 10px;
@@ -605,7 +608,7 @@ const FilterHint = styled.span`
   min-width: 200px;
 `;
 
-const Panel = styled.section`
+const Panel = styled.section<{ $wide?: boolean }>`
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
@@ -662,7 +665,7 @@ const TableWrap = styled.div`
   }
 `;
 
-const TypeBadge = styled.span`
+const TypeBadge = styled.span<{ $t?: string }>`
   display: inline-block;
   padding: 2px 8px;
   border-radius: 999px;
@@ -701,20 +704,6 @@ const PagerBtns = styled.div`
   gap: 8px;
 `;
 
-const PagerBtn = styled.button`
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  cursor: pointer;
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
-
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -750,7 +739,7 @@ const BarPair = styled.div`
   height: 120px;
 `;
 
-const BarFill = styled.div`
+const BarFill = styled.div<{ $h?: number; $c?: string }>`
   width: 42%;
   max-width: 16px;
   height: ${(p) => `${p.$h}%`};
@@ -775,7 +764,7 @@ const LegendRow = styled.div`
   margin-top: 8px;
 `;
 
-const LegendDot = styled.span`
+const LegendDot = styled.span<{ $bg?: string }>`
   width: 10px;
   height: 10px;
   border-radius: 2px;
@@ -818,7 +807,7 @@ const RankBarWrap = styled.div`
   overflow: hidden;
 `;
 
-const RankBar = styled.div`
+const RankBar = styled.div<{ $w?: number }>`
   height: 100%;
   width: ${(p) => p.$w}%;
   border-radius: 999px;
@@ -854,7 +843,7 @@ const HourCell = styled.div`
   min-width: 0;
 `;
 
-const HourBar = styled.div`
+const HourBar = styled.div<{ $h?: number }>`
   width: 100%;
   max-width: 14px;
   height: ${(p) => `${p.$h}%`};

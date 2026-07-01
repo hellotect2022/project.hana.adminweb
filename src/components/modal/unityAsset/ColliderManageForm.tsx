@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 
 /**
  * 콜라이더(존) 등록·수정 폼
@@ -23,16 +24,19 @@ const ColliderManageForm = ({
   const [floorId, setFloorId] = useState("");
   const [zoneName, setZoneName] = useState("");
   const [zoneMeshName, setZoneMeshName] = useState("");
+  const [meshType, setMeshType] = useState("2D");
 
   useEffect(() => {
     if (mode === "edit" && initial) {
       setFloorId(initial.floorId != null ? String(initial.floorId) : "");
       setZoneName(initial.zoneName ?? "");
       setZoneMeshName(initial.zoneMeshName ?? "");
+      setMeshType(initial.meshType ?? "2D");
     } else {
       setFloorId(defaultFloorId != null ? String(defaultFloorId) : "");
       setZoneName("");
       setZoneMeshName("");
+      setMeshType("2D");
     }
   }, [mode, initial, defaultFloorId]);
 
@@ -50,6 +54,7 @@ const ColliderManageForm = ({
       floorId: Number(floorId),
       zoneName: name,
       zoneMeshName: mesh,
+      meshType,
     };
     if (mode === "edit" && initial) {
       onSubmit?.({ zoneId: initial.zoneId, ...payload });
@@ -105,11 +110,21 @@ const ColliderManageForm = ({
         </InputWrap>
       </FieldRow>
 
+      <FieldRow>
+        <Label $required>메쉬 타입</Label>
+        <Select value={meshType} onChange={(e) => setMeshType(e.target.value)}>
+          <option value="2D">2D</option>
+          <option value="3D">3D</option>
+        </Select>
+      </FieldRow>
+
       <ButtonRow>
-        <CancelButton type="button" onClick={onCancel}>
+        <Button variant="outline" type="button" onClick={onCancel}>
           취소
-        </CancelButton>
-        <SubmitButton type="submit">{mode === "edit" ? "저장" : "등록"}</SubmitButton>
+        </Button>
+        <Button variant="primary" type="submit">
+          {mode === "edit" ? "저장" : "등록"}
+        </Button>
       </ButtonRow>
     </Form>
   );
@@ -130,7 +145,7 @@ const FieldRow = styled.div`
   margin-bottom: 14px;
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   color: #374151;
   padding-top: 8px;
@@ -186,32 +201,4 @@ const ButtonRow = styled.div`
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid #e8eaed;
-`;
-
-const CancelButton = styled.button`
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #f3f4f6;
-  }
-`;
-
-const SubmitButton = styled.button`
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1565c0;
-  background: #e3f2fd;
-  border: 1px solid #2196f3;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #bbdefb;
-  }
 `;

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
 import type { DeviceDTO } from '../data/types';
-import { useAllDevices, useSetActive } from '../hooks';
+import { useAllDevices, useSetActive, useSetActiveBulk } from '../hooks';
 import { floorNameToKey, floorLabel } from '../lib/manifest';
 import { useViewerStore } from '../state/viewerStore';
 import { deviceObjects } from '../state/registry';
@@ -29,14 +29,31 @@ function buildTree(devices: DeviceDTO[]): TreeNode {
   }
   return root;
 }
-function countDevices(n: TreeNode): { total: number; placed: number } {
+function countDevices(n: TreeNode): { total: number; placed: number; active: number } {
   let total = n.devices.length;
   let placed = n.devices.filter((d) => d.placed).length;
+  let active = n.devices.filter((d) => d.active).length;
   for (const c of n.children.values()) {
     const s = countDevices(c);
-    total += s.total; placed += s.placed;
+    total += s.total; placed += s.placed; active += s.active;
   }
-  return { total, placed };
+  return { total, placed, active };
+}
+// 노드 하위(자기 자신 + 자손) 모든 디바이스 수집.
+function collectDevices(n: TreeNode, out: DeviceDTO[] = []): DeviceDTO[] {
+  out.push(...n.devices);
+  for (const c of n.children.values()) collectDevices(c, out);
+  return out;
+}
+// 노드 하위 디바이스가 단일 categoryId 로 묶이면 그 id, 아니면 null(→ DEVICES scope 폴백).
+function singleCategoryId(devs: DeviceDTO[]): number | null {
+  let id: number | null = null;
+  for (const d of devs) {
+    if (d.categoryId == null) return null;
+    if (id == null) id = d.categoryId;
+    else if (id !== d.categoryId) return null;
+  }
+  return id;
 }
 
 const Panel = styled.div<{ $open: boolean }>`
@@ -64,6 +81,25 @@ const Row = styled.div<{ $depth: number }>`
   .nm { font-weight: 600; }
   .cnt { margin-left: auto; font-size: 11px; color: #767d88; }
 `;
+// 카테고리 행 일괄 토글 버튼 (하위 디바이스 표시/숨김).
+const CatBtn = styled.button<{ $on: boolean }>`
+  flex-shrink: 0; min-width: 34px; padding: 2px 5px; cursor: pointer;
+  font-size: 9px; font-weight: 700; border-radius: 4px; color: #e6e9ee;
+  border: 1px solid ${(p) => (p.$on ? '#2f8f5a' : '#5a6068')};
+  background: ${(p) => (p.$on ? 'rgba(47,143,90,0.35)' : 'rgba(90,96,104,0.25)')};
+  &:hover { filter: brightness(1.25); }
+  &:disabled { opacity: 0.5; cursor: default; }
+`;
+// 헤더 전체 표시/숨김 버튼.
+const BulkBar = styled.div`
+  display: flex; gap: 6px; margin-bottom: 8px;
+  button {
+    flex: 1; padding: 6px 8px; cursor: pointer; font-size: 11px; font-weight: 700;
+    border-radius: 5px; color: #e6e9ee; border: 1px solid #3a3f48; background: #2a2e36;
+    &:hover { filter: brightness(1.2); }
+    &:disabled { opacity: 0.5; cursor: default; }
+  }
+`;
 const Card = styled.div<{ $placed: boolean; $sel: boolean; $active: boolean }>`
   display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 5px;
   padding: 6px 8px; margin: 2px 0;
@@ -87,9 +123,11 @@ const ActiveBtn = styled.button<{ $on: boolean }>`
   &:hover { filter: brightness(1.15); }
 `;
 
-function NodeView({ node, depth, expanded, toggle, filter, onToggleActive }: {
+function NodeView({ node, depth, expanded, toggle, filter, onToggleActive, onToggleCategory, busy }: {
   node: TreeNode; depth: number; expanded: Set<string>; toggle: (p: string) => void; filter: string;
   onToggleActive: (deviceId: number, active: boolean) => void;
+  onToggleCategory: (node: TreeNode, active: boolean) => void;
+  busy: boolean;
 }) {
   const editMode = useViewerStore((s) => s.editMode);
   const selectedId = useViewerStore((s) => s.selectedDeviceId);
@@ -100,6 +138,8 @@ function NodeView({ node, depth, expanded, toggle, filter, onToggleActive }: {
   const kids = [...node.children.values()].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
   const open = expanded.has(node.path) || filter.length > 0;
   const c = countDevices(node);
+  // 하위 디바이스가 모두 활성이면 on(→클릭 시 전체 숨김), 하나라도 비활성이면 off(→클릭 시 전체 표시).
+  const allActive = c.total > 0 && c.active === c.total;
 
   return (
     <div>
@@ -107,11 +147,21 @@ function NodeView({ node, depth, expanded, toggle, filter, onToggleActive }: {
         <span className="tw">{kids.length || node.devices.length ? (open ? '▾' : '▸') : ''}</span>
         <span className="nm">{node.name}</span>
         <span className="cnt">{c.placed}/{c.total}</span>
+        {c.total > 0 && (
+          <CatBtn
+            $on={allActive}
+            disabled={busy}
+            title={allActive ? '하위 디바이스 전체 숨김' : '하위 디바이스 전체 표시'}
+            onClick={(e) => { e.stopPropagation(); onToggleCategory(node, !allActive); }}
+          >
+            {allActive ? '숨김' : '표시'}
+          </CatBtn>
+        )}
       </Row>
       {open && (
         <>
           {kids.map((k) => (
-            <NodeView key={k.path} node={k} depth={depth + 1} expanded={expanded} toggle={toggle} filter={filter} onToggleActive={onToggleActive} />
+            <NodeView key={k.path} node={k} depth={depth + 1} expanded={expanded} toggle={toggle} filter={filter} onToggleActive={onToggleActive} onToggleCategory={onToggleCategory} busy={busy} />
           ))}
           {node.devices.map((d) => (
             <div key={d.deviceId} style={{ paddingLeft: 6 + (depth + 1) * 14 }}>
@@ -156,7 +206,32 @@ export function DeviceSidebar() {
   const togglePanel = useViewerStore((s) => s.toggleSidebar);
   const editMode = useViewerStore((s) => s.editMode);
   const setActive = useSetActive();
+  const setActiveBulk = useSetActiveBulk();
+  const busy = setActive.isPending || setActiveBulk.isPending;
   const onToggleActive = (deviceId: number, active: boolean) => setActive.mutate({ deviceId, active });
+
+  // 카테고리 행 토글: 단일 categoryId 로 묶이면 CATEGORY scope(백엔드가 하위 소분류 cascade),
+  // 여러 categoryId 가 섞이면 하위 deviceId 를 모아 DEVICES scope 폴백.
+  const onToggleCategory = (node: TreeNode, active: boolean) => {
+    if (busy) return;
+    const devs = collectDevices(node);
+    if (!devs.length) return;
+    const catId = singleCategoryId(devs);
+    const body = catId != null
+      ? { scope: 'CATEGORY' as const, categoryId: catId, active }
+      : { scope: 'DEVICES' as const, deviceIds: devs.map((d) => d.deviceId), active };
+    setActiveBulk.mutate(body, {
+      onError: () => alert('카테고리 일괄 처리에 실패했습니다.'),
+    });
+  };
+
+  const onToggleAll = (active: boolean) => {
+    if (busy) return;
+    setActiveBulk.mutate({ scope: 'ALL', active }, {
+      onError: () => alert('전체 일괄 처리에 실패했습니다.'),
+    });
+  };
+
   const [q, setQ] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggle = (p: string) => setExpanded((s) => { const n = new Set(s); n.has(p) ? n.delete(p) : n.add(p); return n; });
@@ -176,9 +251,13 @@ export function DeviceSidebar() {
         <button onClick={togglePanel}>×</button>
       </Head>
       <Search placeholder="이름 / 자산 / 분류 검색…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <BulkBar>
+        <button disabled={busy} onClick={() => onToggleAll(true)}>전체 표시</button>
+        <button disabled={busy} onClick={() => onToggleAll(false)}>전체 숨김</button>
+      </BulkBar>
       <Scroll>
         {roots.map((r) => (
-          <NodeView key={r.path} node={r} depth={0} expanded={expanded} toggle={toggle} filter={q.trim()} onToggleActive={onToggleActive} />
+          <NodeView key={r.path} node={r} depth={0} expanded={expanded} toggle={toggle} filter={q.trim()} onToggleActive={onToggleActive} onToggleCategory={onToggleCategory} busy={busy} />
         ))}
         {!roots.length && <div style={{ color: '#888', padding: 8 }}>결과 없음</div>}
       </Scroll>

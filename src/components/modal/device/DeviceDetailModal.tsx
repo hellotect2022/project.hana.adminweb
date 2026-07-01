@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui";
 import {
   categoryFetchAPI,
   DEVICE_CATEGORY_QUERY_KEY,
@@ -16,6 +17,7 @@ import {
   fetchUnityAssetsList,
   UNITY_ASSET_LIST_QUERY_KEY,
 } from "@/services/unityAssetService";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /**
  * 장비 상세 보기 + 기본 정보 편집 모달
@@ -102,12 +104,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       setDirty(false);
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "장비 저장에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "장비 저장에 실패했습니다."));
     },
   });
 
@@ -119,12 +116,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       onClose?.();
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "장비 삭제에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "장비 삭제에 실패했습니다."));
     },
   });
 
@@ -183,12 +175,12 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
         <ToolbarActions>
           {!editMode ? (
             <>
-              <EditToggleBtn type="button" onClick={() => setEditMode(true)}>
+              <Button variant="secondary" size="sm" onClick={() => setEditMode(true)}>
                 ✏ 편집
-              </EditToggleBtn>
-              <DeleteBtn type="button" onClick={handleDelete} disabled={isDeleting}>
+              </Button>
+              <Button variant="danger" size="sm" onClick={handleDelete} disabled={isDeleting}>
                 {isDeleting ? "삭제 중…" : "삭제"}
-              </DeleteBtn>
+              </Button>
             </>
           ) : (
             <EditingHint>편집 중 {dirty && <DirtyDot />}</EditingHint>
@@ -412,12 +404,12 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       {/* ── 편집 모드 액션 버튼 ── */}
       {editMode && (
         <ActionRow>
-          <CancelBtn type="button" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel}>
             취소
-          </CancelBtn>
-          <SaveBtn type="button" onClick={handleSave} disabled={!dirty || isSaving}>
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={!dirty || isSaving}>
             {isSaving ? "저장 중…" : "저장"}
-          </SaveBtn>
+          </Button>
         </ActionRow>
       )}
     </Container>
@@ -442,7 +434,7 @@ const PointCount = styled.span`
   color: #64748b;
 `;
 
-const PointsHint = styled.p`
+const PointsHint = styled.p<{ $error?: boolean }>`
   margin: 0;
   font-size: 13px;
   color: ${(p) => (p.$error ? "#dc2626" : "#94a3b8")};
@@ -517,34 +509,6 @@ const ToolbarActions = styled.div`
   gap: 8px;
 `;
 
-const EditToggleBtn = styled.button`
-  padding: 5px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #4a6380;
-  background: #f0f4f8;
-  border: 1px solid #c7d2de;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover { background: #e2eaf2; }
-`;
-
-const DeleteBtn = styled.button`
-  padding: 5px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #dc2626;
-  border: 1px solid #dc2626;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover:not(:disabled) { background: #b91c1c; }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
 const EditingHint = styled.span`
   display: flex;
   align-items: center;
@@ -577,7 +541,7 @@ const SectionTitle = styled.h3`
   border-bottom: 1px solid #e8eaed;
 `;
 
-const Row = styled.div`
+const Row = styled.div<{ $alignTop?: boolean }>`
   display: grid;
   grid-template-columns: 110px 1fr;
   gap: 8px;
@@ -586,7 +550,7 @@ const Row = styled.div`
   border-bottom: 1px solid #f3f4f6;
 `;
 
-const RowLabel = styled.span`
+const RowLabel = styled.span<{ $highlight?: boolean }>`
   font-size: 13px;
   font-weight: 600;
   color: ${(p) => (p.$highlight ? "#2563eb" : "#6b7280")};
@@ -599,7 +563,7 @@ const RowValue = styled.div`
   word-break: break-all;
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ $active?: boolean; $placed?: boolean }>`
   display: inline-block;
   padding: 2px 10px;
   font-size: 12px;
@@ -687,7 +651,7 @@ const AssetSelect = styled.select`
   }
 `;
 
-const AssetStatus = styled.span`
+const AssetStatus = styled.span<{ $error?: boolean }>`
   font-size: 12px;
   color: ${(p) => (p.$error ? "#dc2626" : "#64748b")};
 `;
@@ -713,31 +677,6 @@ const ActionRow = styled.div`
   padding-top: 12px;
   border-top: 1px solid #e5e7eb;
   margin-top: 4px;
-`;
-
-const CancelBtn = styled.button`
-  padding: 8px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover { background: #f3f4f6; }
-`;
-
-const SaveBtn = styled.button`
-  padding: 8px 24px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: #2563eb;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
-  &:hover:not(:disabled) { background: #1d4ed8; }
 `;
 
 const Empty = styled.div`

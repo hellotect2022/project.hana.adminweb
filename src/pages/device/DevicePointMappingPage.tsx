@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
+import { Button } from "@/components/ui";
 import Pagination from "@/components/common/Pagination";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import {
@@ -154,9 +155,13 @@ const DevicePointMappingPage = () => {
           onChange={(e) => setKeywordInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
         />
-        <SearchButton type="button" onClick={handleSearch}>
+        <Button
+          variant="secondary"
+          onClick={handleSearch}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, flexShrink: 0 }}
+        >
           검색
-        </SearchButton>
+        </Button>
         <UnmappedToggle title="저장된 ref 코드가 없는(미매핑) 포인트만 현재 결과에서 표시">
           <input
             type="checkbox"
@@ -171,13 +176,14 @@ const DevicePointMappingPage = () => {
             : `총 ${pagination?.totalElements ?? 0}건 · 매핑됨 ${mappedCount}건 · 미매핑 ${Math.max(0, (pagination?.totalElements ?? 0) - mappedCount)}건`}
           {dirtyRows.length > 0 && ` · 변경 ${dirtyRows.length}건`}
         </Summary>
-        <SaveButton
-          type="button"
+        <Button
+          variant="primary"
           disabled={dirtyRows.length === 0 || isSaving}
           onClick={() => saveMappings()}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, marginLeft: "auto", flexShrink: 0 }}
         >
           {isSaving ? "저장 중…" : `변경 저장 (${dirtyRows.length})`}
-        </SaveButton>
+        </Button>
       </Toolbar>
 
       <HintBox>
@@ -312,22 +318,6 @@ const SearchInput = styled.input`
   line-height: ${TOOLBAR_CONTROL_HEIGHT};
 `;
 
-const SearchButton = styled.button`
-  box-sizing: border-box;
-  height: ${TOOLBAR_CONTROL_HEIGHT};
-  padding: 0 16px;
-  background: #f4f5f7;
-  border: 1px solid #d0d3d8;
-  border-radius: 4px;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-  &:hover {
-    background: #e8eaed;
-  }
-`;
-
 const UnmappedToggle = styled.label`
   display: inline-flex;
   align-items: center;
@@ -352,26 +342,6 @@ const Summary = styled.span`
   line-height: 1.4;
   color: #5c6370;
   white-space: nowrap;
-`;
-
-const SaveButton = styled.button`
-  box-sizing: border-box;
-  height: ${TOOLBAR_CONTROL_HEIGHT};
-  padding: 0 18px;
-  margin-left: auto;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
 `;
 
 const HintBox = styled.p`
@@ -406,7 +376,7 @@ const Table = styled.table`
   }
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $center?: boolean }>`
   padding: 10px 12px;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   background: #f4f5f7;
@@ -415,7 +385,7 @@ const Th = styled.th`
   white-space: nowrap;
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $center?: boolean }>`
   padding: 8px 12px;
   border-bottom: 1px solid #eef0f3;
   text-align: ${(p) => (p.$center ? "center" : "left")};
@@ -444,7 +414,7 @@ const Mono = styled.span`
   word-break: break-all;
 `;
 
-const RefInput = styled.input`
+const RefInput = styled.input<{ $dirty?: boolean }>`
   width: 100%;
   min-width: 120px;
   height: 32px;
@@ -456,7 +426,7 @@ const RefInput = styled.input`
   background: ${(p) => (p.$dirty ? "#fffef5" : "#fff")};
 `;
 
-const StatusBadge = styled.span`
+const StatusBadge = styled.span<{ $mapped?: boolean | string; $dirty?: boolean }>`
   display: inline-block;
   padding: 2px 8px;
   border-radius: 10px;

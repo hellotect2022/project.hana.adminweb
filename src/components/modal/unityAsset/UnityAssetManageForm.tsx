@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import DeviceCategoryPicker from "@/components/device/DeviceCategoryPicker";
+import { Button } from "@/components/ui";
 import { buildAssetNameFromCategories } from "@/utils/categoryKeyUtils";
+import { ASSET_TYPES, DEFAULT_ASSET_TYPE } from "@/constants/assetType";
 
 /**
- * 3D Asset 등록·수정 폼
+ * 장비 에셋 등록·수정 폼
  */
 const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCancel }) => {
   const [assetName, setAssetName] = useState("");
+  const [assetType, setAssetType] = useState<string>(DEFAULT_ASSET_TYPE);
   const [description, setDescription] = useState("");
   const [active, setActive] = useState(true);
   const [selectedMajorId, setSelectedMajorId] = useState(null);
@@ -19,6 +22,7 @@ const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCan
   useEffect(() => {
     if (mode === "edit" && initial) {
       setAssetName(initial.assetName ?? "");
+      setAssetType(initial.assetType ?? DEFAULT_ASSET_TYPE);
       setDescription(initial.description ?? "");
       setActive(initial.active !== false);
       setSelectedMajorId(null);
@@ -28,6 +32,7 @@ const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCan
       setAssetNameTouched(true);
     } else {
       setAssetName("");
+      setAssetType(DEFAULT_ASSET_TYPE);
       setDescription("");
       setActive(true);
       setSelectedMajorId(null);
@@ -88,6 +93,7 @@ const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCan
     if (!name) return;
     const payload = {
       assetName: name,
+      assetType,
       description: description.trim() || null,
       active,
     };
@@ -127,6 +133,16 @@ const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCan
         />
       </CategorySection>
 
+      <FieldRow>
+        <Label $required>에셋 타입</Label>
+        <Select value={assetType} onChange={(e) => setAssetType(e.target.value)}>
+          {ASSET_TYPES.map((t) => (
+            <option key={t.code} value={t.code}>
+              {t.label}
+            </option>
+          ))}
+        </Select>
+      </FieldRow>
       <FieldRow>
         <Label $required>에셋 이름 (asset_name)</Label>
         <InputWrap>
@@ -168,10 +184,12 @@ const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCan
         </CheckLabel>
       </FieldRow>
       <ButtonRow>
-        <CancelButton type="button" onClick={onCancel}>
+        <Button variant="outline" type="button" onClick={onCancel}>
           취소
-        </CancelButton>
-        <SubmitButton type="submit">{mode === "edit" ? "저장" : "등록"}</SubmitButton>
+        </Button>
+        <Button variant="primary" type="submit">
+          {mode === "edit" ? "저장" : "등록"}
+        </Button>
       </ButtonRow>
     </Form>
   );
@@ -222,7 +240,7 @@ const FieldRow = styled.div`
   margin-bottom: 14px;
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   color: #374151;
   padding-top: 8px;
@@ -244,6 +262,18 @@ const Input = styled.input`
   border: 1px solid #d1d5db;
   border-radius: 6px;
   outline: none;
+  &:focus {
+    border-color: #4a90d9;
+  }
+`;
+
+const Select = styled.select`
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
   &:focus {
     border-color: #4a90d9;
   }
@@ -306,32 +336,4 @@ const ButtonRow = styled.div`
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid #e8eaed;
-`;
-
-const CancelButton = styled.button`
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #f3f4f6;
-  }
-`;
-
-const SubmitButton = styled.button`
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1565c0;
-  background: #e3f2fd;
-  border: 1px solid #2196f3;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #bbdefb;
-  }
 `;

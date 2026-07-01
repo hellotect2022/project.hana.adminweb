@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 import {
   categoryFetchAPI,
   createCategoryAPI,
@@ -333,7 +334,7 @@ const CategoryManageForm = () => {
       <Wrap>
         <ErrorBox>
           <p>{error?.message ?? "카테고리를 불러오지 못했습니다."}</p>
-          <RetryBtn type="button" onClick={() => refetch()}>다시 시도</RetryBtn>
+          <Button variant="secondary" onClick={() => refetch()}>다시 시도</Button>
         </ErrorBox>
       </Wrap>
     );
@@ -481,8 +482,9 @@ const CategoryManageForm = () => {
               <SchemaPath>{activeCategory?.fullPath ?? ""}</SchemaPath>
               {categoryInfoDirty && <DirtyBadge>저장 안 됨</DirtyBadge>}
             </CategoryInfoTitle>
-            <SaveCategoryInfoBtn
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={handleSaveCategoryInfo}
               disabled={
                 !categoryInfoDirty ||
@@ -492,7 +494,7 @@ const CategoryManageForm = () => {
               }
             >
               {isUpdatingCategory ? "저장 중…" : "정보 저장"}
-            </SaveCategoryInfoBtn>
+            </Button>
           </CategoryInfoHeader>
           <CategoryInfoGrid>
             <CategoryFieldGroup>
@@ -549,16 +551,17 @@ const CategoryManageForm = () => {
               {schemaDirty && <DirtyBadge>저장 안 됨</DirtyBadge>}
             </SchemaTitle>
             <SchemaActions>
-              <AddSchemaRowBtn type="button" onClick={addSchemaRow}>
+              <Button variant="primary" size="sm" onClick={addSchemaRow}>
                 + 항목 추가
-              </AddSchemaRowBtn>
-              <SaveSchemaBtn
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleSaveSchema}
                 disabled={!schemaDirty || isSavingSchema}
               >
                 {isSavingSchema ? "저장 중…" : "저장"}
-              </SaveSchemaBtn>
+              </Button>
             </SchemaActions>
           </SchemaHeader>
 
@@ -678,17 +681,6 @@ const ErrorBox = styled.div`
   p { margin: 0 0 12px 0; }
 `;
 
-const RetryBtn = styled.button`
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-`;
-
 const FetchHint = styled.div`
   font-size: 12px;
   color: #64748b;
@@ -730,7 +722,7 @@ const PaneTitleText = styled.span`
   color: #111d2c;
 `;
 
-const PaneAddBtn = styled.button`
+const PaneAddBtn = styled.button<{ $active?: boolean }>`
   padding: 3px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -756,7 +748,7 @@ const ListBox = styled.div`
   padding: 6px;
 `;
 
-const ListItem = styled.div`
+const ListItem = styled.div<{ $active?: boolean; type?: string }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -913,25 +905,6 @@ const CategoryInfoHint = styled.p`
   color: #94a3b8;
 `;
 
-const SaveCategoryInfoBtn = styled.button`
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-  &:hover:not(:disabled) {
-    background: #3d5370;
-  }
-`;
-
 // ─── 인라인 추가 행 ───
 const AddRowWrap = styled.div`
   box-sizing: border-box;
@@ -1058,31 +1031,6 @@ const SchemaActions = styled.div`
   gap: 8px;
 `;
 
-const AddSchemaRowBtn = styled.button`
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1d4ed8;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover { background: #dbeafe; }
-`;
-
-const SaveSchemaBtn = styled.button`
-  padding: 6px 18px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
-  &:hover:not(:disabled) { background: #3d5370; }
-`;
-
 const SchemaEmpty = styled.div`
   padding: 28px;
   text-align: center;
@@ -1101,7 +1049,7 @@ const SchemaTable = styled.table`
   font-size: 13px;
 `;
 
-const STh = styled.th`
+const STh = styled.th<{ $center?: boolean }>`
   padding: 9px 12px;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   font-size: 12px;
@@ -1111,7 +1059,7 @@ const STh = styled.th`
   border-bottom: 1px solid #e5e7eb;
 `;
 
-const STd = styled.td`
+const STd = styled.td<{ $center?: boolean }>`
   padding: 6px 8px;
   border-bottom: 1px solid #f3f4f6;
   text-align: ${(p) => (p.$center ? "center" : "left")};

@@ -15,7 +15,9 @@ import {
   updateDeviceSystemSortOrders,
 } from "@/services/deviceSystemService";
 import DeviceSystemForm from "@/components/modal/menu/DeviceSystemForm";
+import { Button } from "@/components/ui";
 import { useModal } from "@/contexts/ModalContext";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 const SMALL_CATEGORY_DEPTH = 2;
 
@@ -106,18 +108,13 @@ const MenuDisplaySettings = () => {
   }, [systems]);
 
   const createSystemMutation = useMutation({
-    mutationFn: ({ systemName, systemCode, sortOrder, categoryIds }) =>
+    mutationFn: ({ systemName, systemCode, sortOrder, categoryIds }: any) =>
       createDeviceSystem({ systemName, systemCode, sortOrder, categoryIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "BMS 시스템 생성에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "BMS 시스템 생성에 실패했습니다."));
     },
   });
 
@@ -127,43 +124,28 @@ const MenuDisplaySettings = () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "BMS 시스템 삭제에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "BMS 시스템 삭제에 실패했습니다."));
     },
   });
 
   const updateSystemMutation = useMutation({
-    mutationFn: ({ systemId, systemName, systemCode, categoryIds }) =>
+    mutationFn: ({ systemId, systemName, systemCode, categoryIds }: any) =>
       updateDeviceSystem(systemId, { systemName, systemCode, categoryIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "BMS 시스템 수정에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "BMS 시스템 수정에 실패했습니다."));
     },
   });
 
   const sortOrdersMutation = useMutation({
-    mutationFn: (payload) => updateDeviceSystemSortOrders(payload),
+    mutationFn: (payload: any) => updateDeviceSystemSortOrders(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "순서 저장에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "순서 저장에 실패했습니다."));
     },
   });
 
@@ -244,140 +226,138 @@ const MenuDisplaySettings = () => {
     <Wrap>
       <ToolbarBar>
         <ToolbarHint>
-          BMS 시스템을 추가하고 소분류 카테고리를 매핑한 뒤, ↑↓ 로 순서를 바꾸고「순서 저장」하세요.
+          시스템을 추가하고 소분류 카테고리를 매핑한 뒤, ↑↓ 로 순서를 바꾸고「순서 저장」하세요.
         </ToolbarHint>
-        <PrimaryBtn
-          type="button"
+        <Button
+          variant="primary"
           onClick={openCreateModal}
           disabled={systemsLoading}
         >
-          시스템 생성
-        </PrimaryBtn>
+          + 시스템 등록
+        </Button>
       </ToolbarBar>
 
-      <MenuSection>
-        <MenuSectionHeader>
-          <MenuTitle>
-            BMS 시스템 목록
-            {systemsLoading ? (
-              <MenuTitleHint> (불러오는 중…)</MenuTitleHint>
-            ) : null}
-            {isOrderDirty ? <DirtyBadge>순서 변경됨</DirtyBadge> : null}
-          </MenuTitle>
-          <SortToolbar>
-            <ToolBtn
-              type="button"
-              onClick={resetLocalOrder}
-              disabled={!isOrderDirty || sortOrdersMutation.isPending}
-            >
-              순서 초기화
-            </ToolBtn>
-            <ToolBtn
-              type="button"
-              $primary
-              onClick={handleSaveSortOrders}
-              disabled={
-                !isOrderDirty ||
-                sortOrdersMutation.isPending ||
-                localSystemRows.length === 0
-              }
-            >
-              {sortOrdersMutation.isPending ? "저장 중…" : "순서 저장"}
-            </ToolBtn>
-          </SortToolbar>
-        </MenuSectionHeader>
-        <MenuTableWrap>
-          <MenuTable>
-            <thead>
+      <MenuSectionHeader>
+        <MenuTitle>
+          {systemsLoading ? (
+            <MenuTitleHint> (불러오는 중…)</MenuTitleHint>
+          ) : null}
+          {isOrderDirty ? <DirtyBadge>순서 변경됨</DirtyBadge> : null}
+        </MenuTitle>
+        <SortToolbar>
+          <Button
+            variant="outline"
+            onClick={resetLocalOrder}
+            disabled={!isOrderDirty || sortOrdersMutation.isPending}
+          >
+            순서 초기화
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleSaveSortOrders}
+            disabled={
+              !isOrderDirty ||
+              sortOrdersMutation.isPending ||
+              localSystemRows.length === 0
+            }
+          >
+            {sortOrdersMutation.isPending ? "저장 중…" : "순서 저장"}
+          </Button>
+        </SortToolbar>
+      </MenuSectionHeader>
+      <MenuTableWrap>
+        <MenuTable>
+          <thead>
+            <tr>
+              <th style={{ width: 88 }}>이동</th>
+              <th>systemId</th>
+              <th>systemName</th>
+              <th>systemCode</th>
+              <th>소분류 카테고리</th>
+              <th>sortOrder</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {localSystemRows.length === 0 ? (
               <tr>
-                <th style={{ width: 88 }}>이동</th>
-                <th>systemId</th>
-                <th>systemName</th>
-                <th>systemCode</th>
-                <th>소분류 카테고리</th>
-                <th>sortOrder</th>
-                <th />
+                <td colSpan={7} style={{ textAlign: "center", color: "#9ca3af" }}>
+                  {systemsLoading
+                    ? "시스템 목록을 불러오는 중입니다."
+                    : "등록된 시스템이 없습니다. 상단「시스템 생성」으로 추가하세요."}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {localSystemRows.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center", color: "#9ca3af" }}>
-                    {systemsLoading
-                      ? "BMS 시스템 목록을 불러오는 중입니다."
-                      : "등록된 시스템이 없습니다. 상단「시스템 생성」으로 추가하세요."}
+            ) : (
+              localSystemRows.map((r, index) => (
+                <tr key={r.systemId}>
+                  <td>
+                    <OrderBtnGroup>
+                      <OrderBtn
+                        type="button"
+                        aria-label="위로"
+                        onClick={() => moveSystemRow(index, "up")}
+                        disabled={
+                          index === 0 ||
+                          sortOrdersMutation.isPending ||
+                          anySystemMutationPending
+                        }
+                      >
+                        ↑
+                      </OrderBtn>
+                      <OrderBtn
+                        type="button"
+                        aria-label="아래로"
+                        onClick={() => moveSystemRow(index, "down")}
+                        disabled={
+                          index >= localSystemRows.length - 1 ||
+                          sortOrdersMutation.isPending ||
+                          anySystemMutationPending
+                        }
+                      >
+                        ↓
+                      </OrderBtn>
+                    </OrderBtnGroup>
+                  </td>
+                  <td>{r.systemId}</td>
+                  <td>{r.systemName}</td>
+                  <td>
+                    <code>{r.systemCode}</code>
+                  </td>
+                  <td>{formatCategoryLabels(r)}</td>
+                  <td>{r.sortOrder}</td>
+                  <td>
+                    <RowActions>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openEditModal(r)}
+                        disabled={anySystemMutationPending}
+                      >
+                        수정
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => handleDeleteSystem(r.systemId)}
+                        disabled={anySystemMutationPending}
+                      >
+                        삭제
+                      </Button>
+                    </RowActions>
                   </td>
                 </tr>
-              ) : (
-                localSystemRows.map((r, index) => (
-                  <tr key={r.systemId}>
-                    <td>
-                      <OrderBtnGroup>
-                        <OrderBtn
-                          type="button"
-                          aria-label="위로"
-                          onClick={() => moveSystemRow(index, "up")}
-                          disabled={
-                            index === 0 ||
-                            sortOrdersMutation.isPending ||
-                            anySystemMutationPending
-                          }
-                        >
-                          ↑
-                        </OrderBtn>
-                        <OrderBtn
-                          type="button"
-                          aria-label="아래로"
-                          onClick={() => moveSystemRow(index, "down")}
-                          disabled={
-                            index >= localSystemRows.length - 1 ||
-                            sortOrdersMutation.isPending ||
-                            anySystemMutationPending
-                          }
-                        >
-                          ↓
-                        </OrderBtn>
-                      </OrderBtnGroup>
-                    </td>
-                    <td>{r.systemId}</td>
-                    <td>{r.systemName}</td>
-                    <td>
-                      <code>{r.systemCode}</code>
-                    </td>
-                    <td>{formatCategoryLabels(r)}</td>
-                    <td>{r.sortOrder}</td>
-                    <td>
-                      <RowActions>
-                        <EditBtn
-                          type="button"
-                          onClick={() => openEditModal(r)}
-                          disabled={anySystemMutationPending}
-                        >
-                          수정
-                        </EditBtn>
-                        <RemoveBtn
-                          type="button"
-                          onClick={() => handleDeleteSystem(r.systemId)}
-                          disabled={anySystemMutationPending}
-                        >
-                          삭제
-                        </RemoveBtn>
-                      </RowActions>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </MenuTable>
-        </MenuTableWrap>
-        <FootNote>
-          생성: <code>POST /api/device-system</code> · 수정:{" "}
-          <code>PUT /api/device-system/{"{systemId}"}</code> · 삭제:{" "}
-          <code>DELETE /api/device-system/{"{systemId}"}</code> · 목록:{" "}
-          <code>GET /api/device-system/all</code> · 순서:{" "}
-          <code>PUT /api/device-system/sort-orders</code>
-        </FootNote>
-      </MenuSection>
+              ))
+            )}
+          </tbody>
+        </MenuTable>
+      </MenuTableWrap>
+      <FootNote>
+        생성: <code>POST /api/device-system</code> · 수정:{" "}
+        <code>PUT /api/device-system/{"{systemId}"}</code> · 삭제:{" "}
+        <code>DELETE /api/device-system/{"{systemId}"}</code> · 목록:{" "}
+        <code>GET /api/device-system/all</code> · 순서:{" "}
+        <code>PUT /api/device-system/sort-orders</code>
+      </FootNote>
     </Wrap>
   );
 };
@@ -406,37 +386,11 @@ const ToolbarHint = styled.p`
   font-size: 13px;
   color: #475569;
   line-height: 1.5;
-  max-width: 520px;
-`;
-
-const PrimaryBtn = styled.button`
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  white-space: nowrap;
-  &:hover:not(:disabled) {
-    filter: brightness(1.06);
-  }
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-`;
-
-const MenuSection = styled.section`
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fafafa;
+  //max-width: 520px;
 `;
 
 const MenuSectionHeader = styled.div`
+  //border: 2px solid black;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -475,24 +429,6 @@ const SortToolbar = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-`;
-
-const ToolBtn = styled.button`
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid ${(p) => (p.$primary ? "#4a6380" : "#cbd5e1")};
-  background: ${(p) => (p.$primary ? "#4a6380" : "#fff")};
-  color: ${(p) => (p.$primary ? "#fff" : "#334155")};
-  cursor: pointer;
-  &:hover:not(:disabled) {
-    filter: brightness(1.03);
-  }
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
 `;
 
 const OrderBtnGroup = styled.div`
@@ -553,37 +489,6 @@ const RowActions = styled.div`
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
-`;
-
-const EditBtn = styled.button`
-  padding: 4px 10px;
-  font-size: 12px;
-  color: #1e40af;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover:not(:disabled) {
-    background: #dbeafe;
-  }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const RemoveBtn = styled.button`
-  padding: 4px 10px;
-  font-size: 12px;
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 4px;
-  cursor: pointer;
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 `;
 
 const FootNote = styled.p`

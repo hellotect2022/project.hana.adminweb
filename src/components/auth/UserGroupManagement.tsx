@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 
 /**
  * 사용자 그룹 관리 UI
@@ -117,10 +118,10 @@ const UserGroupManagement = () => {
               </Field>
             </FormGrid>
             <FormActions>
-              <SecondaryButton type="button" onClick={() => setShowRegister(false)}>
+              <Button variant="outline" onClick={() => setShowRegister(false)}>
                 취소
-              </SecondaryButton>
-              <PrimaryButton type="submit">등록</PrimaryButton>
+              </Button>
+              <Button variant="primary" type="submit">등록</Button>
             </FormActions>
           </RegisterForm>
         </RegisterCard>
@@ -154,10 +155,10 @@ const UserGroupManagement = () => {
                   </Td>
                   <Td $narrow>{row.createdAt}</Td>
                   <Td $narrow>
-                    <GhostButton type="button">수정</GhostButton>
-                    <GhostButton type="button" $danger onClick={() => handleDelete(row.groupId)}>
+                    <Button variant="secondary" size="sm" style={{ marginRight: 6 }}>수정</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(row.groupId)}>
                       삭제
-                    </GhostButton>
+                    </Button>
                   </Td>
                 </tr>
               ))
@@ -205,7 +206,7 @@ const SearchBox = styled.input`
   }
 `;
 
-const PrimaryButton = styled.button`
+const PrimaryButton = styled.button<{ $active?: boolean }>`
   padding: 10px 24px;
   font-size: 15px;
   font-weight: 600;
@@ -218,20 +219,6 @@ const PrimaryButton = styled.button`
   &:hover {
     background-color: #bbdefb;
     border-color: #1976d2;
-  }
-`;
-
-const SecondaryButton = styled.button`
-  padding: 10px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #f3f4f6;
   }
 `;
 
@@ -265,7 +252,7 @@ const Field = styled.div`
   gap: 6px;
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   font-weight: 500;
   color: #374151;
@@ -320,7 +307,7 @@ const Table = styled.table`
   font-size: 14px;
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $narrow?: boolean }>`
   padding: 12px 16px;
   text-align: left;
   font-weight: 600;
@@ -331,7 +318,7 @@ const Th = styled.th`
   ${(p) => p.$narrow && "width: 1%;"}
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $narrow?: boolean }>`
   padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
@@ -352,22 +339,6 @@ const MemberBadge = styled.span`
   font-weight: 600;
   background: #e0f2fe;
   color: #0369a1;
-`;
-
-const GhostButton = styled.button`
-  padding: 4px 10px;
-  margin-right: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: ${(p) => (p.$danger ? "#b91c1c" : "#2196f3")};
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background: ${(p) => (p.$danger ? "#fef2f2" : "#e3f2fd")};
-    text-decoration: underline;
-  }
 `;
 
 const Hint = styled.p`

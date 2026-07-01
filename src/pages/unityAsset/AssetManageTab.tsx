@@ -10,12 +10,24 @@ import {
   UNITY_ASSET_LIST_QUERY_KEY,
   updateUnityAssetAPI,
 } from "@/services/unityAssetService";
+import { ASSET_TYPES, assetTypeLabel } from "@/constants/assetType";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
+import {
+  Button,
+  Input,
+  Select,
+  Badge,
+  Toolbar,
+  FilterGroup,
+  FilterLabel,
+} from "@/components/ui";
 
-/** 3D Asset 관리 탭 */
+/** 장비 에셋 관리 탭 */
 const AssetManageTab = () => {
   const { openModal, closeModal } = useModal();
   const queryClient = useQueryClient();
 
+  const [typeFilter, setTypeFilter] = useState("ALL");
   const [searchField, setSearchField] = useState("assetName");
   const [keywordInput, setKeywordInput] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -41,7 +53,7 @@ const AssetManageTab = () => {
       closeModal();
     },
     onError: (err) => {
-      window.alert(err?.response?.data?.message || err?.message || "등록 중 오류가 발생했습니다.");
+      window.alert(getApiErrorMessage(err, "등록 중 오류가 발생했습니다."));
     },
   });
 
@@ -56,7 +68,7 @@ const AssetManageTab = () => {
       closeModal();
     },
     onError: (err) => {
-      window.alert(err?.response?.data?.message || err?.message || "수정 중 오류가 발생했습니다.");
+      window.alert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다."));
     },
   });
 
@@ -71,7 +83,7 @@ const AssetManageTab = () => {
       closeModal();
     },
     onError: (err) => {
-      window.alert(err?.response?.data?.message || err?.message || "삭제 중 오류가 발생했습니다.");
+      window.alert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다."));
     },
   });
 
@@ -80,17 +92,18 @@ const AssetManageTab = () => {
   };
 
   const filtered = useMemo(() => {
-    if (!searchKeyword) return assets;
     const k = searchKeyword.toLowerCase();
     return assets.filter((row) => {
+      if (typeFilter !== "ALL" && row.assetType !== typeFilter) return false;
+      if (!k) return true;
       if (searchField === "assetName") {
         return row.assetName?.toLowerCase().includes(k);
       }
       return (row.description || "").toLowerCase().includes(k);
     });
-  }, [assets, searchField, searchKeyword]);
+  }, [assets, typeFilter, searchField, searchKeyword]);
 
-  const isDuplicateName = (name, excludeId) =>
+  const isDuplicateName = (name, excludeId = null) =>
     assets.some(
       (a) =>
         a.assetName?.toLowerCase() === name.toLowerCase() &&
@@ -99,7 +112,7 @@ const AssetManageTab = () => {
 
   const openRegisterModal = () => {
     openModal({
-      title: "3D Asset 등록",
+      title: "장비 에셋 등록",
       hideFooter: true,
       wide: true,
       content: (
@@ -120,7 +133,7 @@ const AssetManageTab = () => {
 
   const openEditModal = (row) => {
     openModal({
-      title: "3D Asset 수정",
+      title: "장비 에셋 수정",
       hideFooter: true,
       wide: true,
       content: (
@@ -142,7 +155,7 @@ const AssetManageTab = () => {
 
   const openDeleteModal = (row) => {
     openModal({
-      title: "3D Asset 삭제 확인",
+      title: "장비 에셋 삭제 확인",
       content: (
         <DeleteMessage>
           에셋 <strong>{row.assetName}</strong> 을(를) 삭제할까요?
@@ -173,23 +186,33 @@ const AssetManageTab = () => {
     <>
       <Toolbar>
         <FilterGroup>
+          <FilterLabel>에셋 타입</FilterLabel>
+          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <option value="ALL">전체</option>
+            {ASSET_TYPES.map((t) => (
+              <option key={t.code} value={t.code}>
+                {t.label}
+              </option>
+            ))}
+          </Select>
           <Select value={searchField} onChange={(e) => setSearchField(e.target.value)}>
             <option value="assetName">에셋 이름</option>
             <option value="description">설명</option>
           </Select>
-          <SearchInput
+          <Input
             placeholder="검색어 입력"
+            style={{ width: "min(100%, 260px)" }}
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
           />
-          <SearchButton type="button" onClick={handleSearchClick}>
+          <Button variant="secondary" onClick={handleSearchClick}>
             검색
-          </SearchButton>
+          </Button>
         </FilterGroup>
-        <RegisterButton type="button" onClick={openRegisterModal}>
-          + 3D Asset 등록
-        </RegisterButton>
+        <Button variant="primary" onClick={openRegisterModal}>
+          + 장비 에셋 등록
+        </Button>
       </Toolbar>
 
       <TableWrap>
@@ -198,6 +221,7 @@ const AssetManageTab = () => {
             <tr>
               <Th style={{ width: 70 }}>번호</Th>
               <Th>asset_name</Th>
+              <Th $center style={{ width: 110 }}>타입</Th>
               <Th>설명</Th>
               <Th $center style={{ width: 80 }}>활성</Th>
               <Th style={{ width: 150 }}>수정일</Th>
@@ -207,20 +231,20 @@ const AssetManageTab = () => {
           <tbody>
             {isLoading ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={7} $center>
                   불러오는 중…
                 </Td>
               </tr>
             ) : isError ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={7} $center>
                   {error?.message ?? "목록을 불러오지 못했습니다."}
                 </Td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <Td colSpan={6} $center>
-                  {searchKeyword ? "검색 결과가 없습니다." : "등록된 3D Asset이 없습니다."}
+                <Td colSpan={7} $center>
+                  {searchKeyword ? "검색 결과가 없습니다." : "등록된 장비 에셋이 없습니다."}
                 </Td>
               </tr>
             ) : (
@@ -230,21 +254,24 @@ const AssetManageTab = () => {
                   <Td>
                     <AssetNameCell>{row.assetName}</AssetNameCell>
                   </Td>
+                  <Td $center>
+                    <Badge tone="info">{row.assetTypeLabel || assetTypeLabel(row.assetType)}</Badge>
+                  </Td>
                   <Td>{row.description || "—"}</Td>
                   <Td $center>
-                    <Badge $active={row.active !== false}>
+                    <Badge tone={row.active !== false ? "success" : "danger"}>
                       {row.active !== false ? "활성" : "비활성"}
                     </Badge>
                   </Td>
                   <Td>{formatDate(row.updatedAt || row.createdAt)}</Td>
                   <Td $center>
                     <BtnGroup>
-                      <EditBtn type="button" onClick={() => openEditModal(row)}>
+                      <Button variant="secondary" size="sm" onClick={() => openEditModal(row)}>
                         수정
-                      </EditBtn>
-                      <DeleteBtn type="button" onClick={() => openDeleteModal(row)}>
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => openDeleteModal(row)}>
                         삭제
-                      </DeleteBtn>
+                      </Button>
                     </BtnGroup>
                   </Td>
                 </tr>
@@ -272,77 +299,6 @@ const SmallText = styled.span`
   color: #6b7280;
 `;
 
-const Toolbar = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  background: #ffffff;
-  border: 1px solid #e1e2e5;
-  border-radius: 5px;
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-`;
-
-const Select = styled.select`
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  min-width: 120px;
-`;
-
-const SearchInput = styled.input`
-  padding: 8px 12px;
-  width: min(100%, 260px);
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  outline: none;
-  &::placeholder {
-    color: #9ca3af;
-  }
-`;
-
-const SearchButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    background: #3d5370;
-  }
-`;
-
-const RegisterButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #2563eb;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    background: #1d4ed8;
-  }
-`;
-
 const TableWrap = styled.div`
   overflow-x: auto;
   background: #fff;
@@ -356,7 +312,7 @@ const Table = styled.table`
   font-size: 14px;
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $center?: boolean }>`
   padding: 12px 16px;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   font-weight: 700;
@@ -365,7 +321,7 @@ const Th = styled.th`
   border-bottom: 1px solid #e5e7eb;
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $center?: boolean }>`
   padding: 11px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
@@ -377,46 +333,8 @@ const AssetNameCell = styled.span`
   color: #1e3a5f;
 `;
 
-const Badge = styled.span`
-  display: inline-block;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 12px;
-  background: ${(p) => (p.$active ? "#dcfce7" : "#fee2e2")};
-  color: ${(p) => (p.$active ? "#15803d" : "#dc2626")};
-`;
-
 const BtnGroup = styled.div`
   display: flex;
   gap: 6px;
   justify-content: center;
-`;
-
-const EditBtn = styled.button`
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background: #3d5370;
-  }
-`;
-
-const DeleteBtn = styled.button`
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  background: #dc2626;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background: #b91c1c;
-  }
 `;

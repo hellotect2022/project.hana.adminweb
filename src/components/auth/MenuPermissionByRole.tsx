@@ -13,6 +13,8 @@ import {
   fetchRolesList,
   ROLES_LIST_QUERY_KEY,
 } from "@/services/roleService";
+import { Button } from "@/components/ui";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /**
  * 그룹(역할)별 BMS 시스템 접근 — GET /api/device-system/all
@@ -150,12 +152,7 @@ const MenuPermissionByRole = () => {
       window.alert("저장되었습니다.");
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "저장에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "저장에 실패했습니다."));
     },
   });
 
@@ -226,8 +223,8 @@ const MenuPermissionByRole = () => {
             <code>GET /api/device-system/all</code>
           </RoleHint>
         </ToolbarLeft>
-        <SaveButton
-          type="button"
+        <Button
+          variant="primary"
           onClick={handleSave}
           disabled={
             saveMutation.isPending ||
@@ -238,7 +235,7 @@ const MenuPermissionByRole = () => {
           }
         >
           {saveMutation.isPending ? "저장 중…" : "저장"}
-        </SaveButton>
+        </Button>
       </Toolbar>
 
       {rolesError ? (
@@ -413,24 +410,6 @@ const RoleHint = styled.span`
   }
 `;
 
-const SaveButton = styled.button`
-  padding: 10px 28px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover:not(:disabled) {
-    background: #3d5370;
-  }
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-`;
-
 const ErrorBanner = styled.div`
   padding: 12px 16px;
   background: #fef2f2;
@@ -497,7 +476,7 @@ const ScrollArea = styled.div`
   max-height: calc(100vh - 280px);
 `;
 
-const StatusText = styled.p`
+const StatusText = styled.p<{ $inline?: boolean }>`
   margin: 0 0 12px 0;
   font-size: 14px;
   color: #6b7280;
@@ -529,7 +508,7 @@ const MiniLink = styled.button`
   }
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ $active?: boolean }>`
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
@@ -547,7 +526,7 @@ const MenuTable = styled.table`
   overflow: hidden;
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $narrow?: boolean }>`
   text-align: left;
   padding: 8px 12px;
   background: #f3f4f6;
@@ -557,7 +536,7 @@ const Th = styled.th`
   ${(p) => p.$narrow && "width: 72px; text-align: center;"}
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $narrow?: boolean; $mono?: boolean }>`
   padding: 8px 12px;
   border-bottom: 1px solid #f3f4f6;
   color: #111827;

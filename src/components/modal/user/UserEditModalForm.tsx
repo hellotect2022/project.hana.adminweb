@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 
 /**
  * 모달용 사용자 수정 폼 — Entity User + UserRole(Role) 기준
@@ -102,7 +103,7 @@ const UserEditModalForm = ({ user, onSave, onCancel }) => {
       roleIds: form.roleIds,
     };
     if (form.password) {
-      payload.password = form.password;
+      (payload as any).password = form.password;
     }
     onSave?.(payload);
   };
@@ -249,10 +250,10 @@ const UserEditModalForm = ({ user, onSave, onCancel }) => {
       </Section>
 
       <ButtonRow>
-        <CancelButton type="button" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel}>
           취소
-        </CancelButton>
-        <SaveButton type="submit">저장</SaveButton>
+        </Button>
+        <Button variant="primary" type="submit">저장</Button>
       </ButtonRow>
     </Form>
   );
@@ -288,7 +289,7 @@ const FieldRow = styled.div`
   }
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 13px;
   color: #374151;
   &::after {
@@ -356,31 +357,6 @@ const ButtonRow = styled.div`
   margin-top: 8px;
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
-`;
-
-const CancelButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-`;
-
-const SaveButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #f59e0b;
-  border: 1px solid #d97706;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover {
-    background: #d97706;
-  }
 `;
 
 export default UserEditModalForm;

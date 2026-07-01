@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui";
 import { categoryFetchAPI, DEVICE_CATEGORY_QUERY_KEY, flattenDeviceCategoryTree } from "@/services/deviceService";
 
 /**
@@ -96,11 +97,11 @@ const DeviceRegisterForm = ({ onSuccess, onCancel }) => {
 
       <ButtonRow>
         {onCancel && (
-          <CancelButton type="button" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             취소
-          </CancelButton>
+          </Button>
         )}
-        <SubmitButton type="submit">장비 등록</SubmitButton>
+        <Button variant="primary" type="submit">장비 등록</Button>
       </ButtonRow>
     </Form>
   );
@@ -133,7 +134,7 @@ const FieldRow = styled.div`
   margin-bottom: 16px;
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   color: #374151;
   &::after {
@@ -203,31 +204,6 @@ const ButtonRow = styled.div`
   border-top: 1px solid #e8eaed;
   display: flex;
   gap: 12px;
-`;
-
-const CancelButton = styled.button`
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover { background: #f3f4f6; }
-`;
-
-const SubmitButton = styled.button`
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1565c0;
-  background-color: #e3f2fd;
-  border: 1px solid #2196f3;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  &:hover { background-color: #bbdefb; }
 `;
 
 export default DeviceRegisterForm;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui";
 import {
   categoryFetchAPI,
   DEVICE_CATEGORY_QUERY_KEY,
@@ -131,7 +132,7 @@ const DevicePointMappingModal = ({ device, onClose }) => {
     hasNextPage,
   } = useInfiniteQuery({
     queryKey: ["devicePoints", device.deviceId, keyword],
-    queryFn: ({ pageParam = 0 }) => fetchDevicePointsAPI({page: pageParam, keyword, priorityCodes }),
+    queryFn: ({ pageParam = 0 }) => fetchDevicePointsAPI({ deviceId: device.deviceId, page: pageParam, keyword, priorityCodes }),
     select: (data) =>{
       console.log('data',data);
       return data;
@@ -236,7 +237,7 @@ const DevicePointMappingModal = ({ device, onClose }) => {
           onChange={(e) => setSearchInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
         />
-        <SearchBtn type="button" onClick={handleSearch}>검색</SearchBtn>
+        <Button variant="secondary" onClick={handleSearch}>검색</Button>
         <HintText>
           {isLoading ? "로딩 중…" : `${points.length}개 로드됨${hasNextPage ? " (더 있음)" : " (전체)"}`}
         </HintText>
@@ -309,10 +310,10 @@ const DevicePointMappingModal = ({ device, onClose }) => {
       </PreviewSection>
 
       <ActionRow>
-        <CancelBtn type="button" onClick={onClose}>닫기</CancelBtn>
-        <SaveBtn type="button" onClick={handleSave} disabled={!dirty || isSaving}>
+        <Button variant="outline" onClick={onClose}>닫기</Button>
+        <Button variant="primary" onClick={handleSave} disabled={!dirty || isSaving}>
           {isSaving ? "저장 중…" : "매핑 저장"}
-        </SaveBtn>
+        </Button>
       </ActionRow>
     </Container>
   );
@@ -356,7 +357,7 @@ const InfoItem = styled.div`display: flex; align-items: center; gap: 8px;`;
 const InfoLabel = styled.span`font-size: 12px; font-weight: 600; color: #64748b;`;
 const InfoValue = styled.span`font-size: 13px; color: #111827;`;
 
-const MappingBadge = styled.span`
+const MappingBadge = styled.span<{ $done?: boolean }>`
   padding: 2px 10px;
   font-size: 12px;
   font-weight: 700;
@@ -378,18 +379,6 @@ const SearchInput = styled.input`
   &::placeholder { color: #9ca3af; }
 `;
 
-const SearchBtn = styled.button`
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover { background: #3d5370; }
-`;
-
 const HintText = styled.span`font-size: 12px; color: #94a3b8;`;
 
 const TableWrap = styled.div`
@@ -404,7 +393,7 @@ const MappingTable = styled.table`
   font-size: 13px;
 `;
 
-const MTh = styled.th`
+const MTh = styled.th<{ $center?: boolean }>`
   padding: 9px 12px;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   font-size: 12px;
@@ -415,7 +404,7 @@ const MTh = styled.th`
   white-space: nowrap;
 `;
 
-const MTd = styled.td`
+const MTd = styled.td<{ $center?: boolean }>`
   padding: 8px 10px;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
@@ -440,7 +429,7 @@ const TYPE_COLORS = {
   Bool: { bg: "#ffedd5", color: "#9a3412" },
 };
 
-const TypeBadge = styled.span`
+const TypeBadge = styled.span<{ $type?: string }>`
   display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 700; border-radius: 4px;
   background: ${(p) => TYPE_COLORS[p.$type]?.bg ?? "#f3f4f6"};
   color: ${(p) => TYPE_COLORS[p.$type]?.color ?? "#374151"};
@@ -448,7 +437,7 @@ const TypeBadge = styled.span`
 
 const UnitText = styled.span`font-size: 12px; color: #475569;`;
 
-const StatusBadge = styled.span`
+const StatusBadge = styled.span<{ $ok?: boolean }>`
   display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: 10px;
   background: ${(p) => (p.$ok ? "#dcfce7" : "#f3f4f6")};
   color: ${(p) => (p.$ok ? "#15803d" : "#9ca3af")};
@@ -462,7 +451,7 @@ const ComboWrap = styled.div`
   min-width: 220px;
 `;
 
-const ComboTrigger = styled.button`
+const ComboTrigger = styled.button<{ $mapped?: boolean; $open?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -477,7 +466,7 @@ const ComboTrigger = styled.button`
   &:hover { border-color: #4a90d9; }
 `;
 
-const TriggerLabel = styled.span`
+const TriggerLabel = styled.span<{ $mapped?: boolean }>`
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -485,7 +474,7 @@ const TriggerLabel = styled.span`
   color: ${(p) => (p.$mapped ? "#15803d" : "#9ca3af")};
 `;
 
-const TriggerArrow = styled.span`
+const TriggerArrow = styled.span<{ $open?: boolean }>`
   flex-shrink: 0;
   margin-left: 6px;
   font-size: 12px;
@@ -508,7 +497,7 @@ const DropdownList = styled.div`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 `;
 
-const DropItem = styled.div`
+const DropItem = styled.div<{ $selected?: boolean }>`
   display: flex;
   align-items: center;
   gap: 6px;
@@ -540,7 +529,7 @@ const DropUnit = styled.span`
   color: #94a3b8;
 `;
 
-const LoadMoreItem = styled.div`
+const LoadMoreItem = styled.div<{ disabled?: boolean }>`
   padding: 8px 10px;
   font-size: 12px;
   font-weight: 700;
@@ -602,15 +591,3 @@ const ActionRow = styled.div`
   padding-top: 4px;
 `;
 
-const CancelBtn = styled.button`
-  padding: 9px 22px; font-size: 14px; font-weight: 600;
-  color: #374151; background: #fff; border: 1px solid #d1d5db; border-radius: 7px; cursor: pointer;
-  &:hover { background: #f3f4f6; }
-`;
-
-const SaveBtn = styled.button`
-  padding: 9px 22px; font-size: 14px; font-weight: 700;
-  color: #fff; background: #2563eb; border: none; border-radius: 7px; cursor: pointer;
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
-  &:hover:not(:disabled) { background: #1d4ed8; }
-`;

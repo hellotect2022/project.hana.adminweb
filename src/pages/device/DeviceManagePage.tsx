@@ -2,6 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
+import { Button } from "@/components/ui";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import DeviceDetailModalContent from "@/components/modal/device/DeviceDetailModal";
 import DeviceRegistForm from "@/components/modal/device/DeviceRegistForm";
@@ -20,6 +21,7 @@ import {
   resolveHierarchyCategoryId,
   resolveHierarchyDeviceId,
 } from "@/utils/deviceHierarchyFilterUtils";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 const PAGE_SIZE = 20;
 const DEVICE_OPTION_SIZE = 500;
@@ -100,12 +102,7 @@ const DeviceManagePage = () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_LIST_QUERY_KEY });
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        err?.message ??
-        "장비 삭제에 실패했습니다.";
-      window.alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      window.alert(getApiErrorMessage(err, "장비 삭제에 실패했습니다."));
     },
   });
 
@@ -174,17 +171,25 @@ const DeviceManagePage = () => {
           onChange={(e) => setKeywordInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
         />
-        <SearchButton type="button" onClick={handleSearch}>
+        <Button
+          variant="secondary"
+          onClick={handleSearch}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, flexShrink: 0 }}
+        >
           검색
-        </SearchButton>
+        </Button>
         <Summary>
           총 {pagination?.totalElements ?? 0}건
           {keyword ? ` · 검색: "${keyword}"` : ""}
           {hasHierarchyFilter(appliedFilter) ? " · 카테고리 필터 적용" : ""}
         </Summary>
-        <AddButton type="button" onClick={openRegisterModal}>
+        <Button
+          variant="primary"
+          onClick={openRegisterModal}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, marginLeft: "auto", flexShrink: 0 }}
+        >
           + 장비 추가
-        </AddButton>
+        </Button>
       </Toolbar>
 
       <TableWrap>
@@ -232,24 +237,26 @@ const DeviceManagePage = () => {
                   </Td>
                   <Td $center>
                     <BtnGroup>
-                      <DetailBtn type="button" onClick={() => openDetailModal(device)}>
+                      <Button variant="secondary" size="sm" onClick={() => openDetailModal(device)}>
                         상세보기
-                      </DetailBtn>
-                      <MappingBtn
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
                         onClick={() => openMappingModal(device)}
                         disabled={!device.categoryId}
                         title={!device.categoryId ? "카테고리가 없어 매핑 불가" : "포인트 매핑"}
                       >
                         포인트 매핑
-                      </MappingBtn>
-                      <DeleteBtn
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => handleDeleteDevice(device)}
                         disabled={isDeleting}
                       >
                         삭제
-                      </DeleteBtn>
+                      </Button>
                     </BtnGroup>
                   </Td>
                 </tr>
@@ -300,26 +307,6 @@ const SearchInput = styled.input`
   }
 `;
 
-const SearchButton = styled.button`
-  box-sizing: border-box;
-  height: ${TOOLBAR_CONTROL_HEIGHT};
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  &:hover:not(:disabled) { background: #3d5370; }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
 const Summary = styled.span`
   display: inline-flex;
   align-items: center;
@@ -328,23 +315,6 @@ const Summary = styled.span`
   line-height: 1.4;
   color: #6b7280;
   white-space: nowrap;
-`;
-
-const AddButton = styled.button`
-  box-sizing: border-box;
-  height: ${TOOLBAR_CONTROL_HEIGHT};
-  padding: 0 18px;
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #2563eb;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  &:hover { background: #1d4ed8; }
 `;
 
 const TableWrap = styled.div`
@@ -360,7 +330,7 @@ const Table = styled.table`
   font-size: 14px;
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $center?: boolean }>`
   padding: 12px 16px;
   text-align: left;
   font-weight: 700;
@@ -370,14 +340,14 @@ const Th = styled.th`
   ${(p) => p.$center && "text-align: center;"}
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $center?: boolean }>`
   padding: 11px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
   ${(p) => p.$center && "text-align: center;"}
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ $active?: boolean; $placed?: boolean }>`
   display: inline-block;
   padding: 2px 10px;
   font-size: 12px;
@@ -402,51 +372,3 @@ const BtnGroup = styled.div`
   flex-wrap: wrap;
 `;
 
-const DetailBtn = styled.button`
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover { background: #3d5370; }
-`;
-
-const MappingBtn = styled.button`
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  background: #7c3aed;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover:not(:disabled) { background: #6d28d9; }
-  &:disabled {
-    background: #d1d5db;
-    color: #9ca3af;
-    cursor: not-allowed;
-  }
-`;
-
-const DeleteBtn = styled.button`
-  padding: 4px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  background: #dc2626;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover:not(:disabled) { background: #b91c1c; }
-  &:disabled {
-    background: #d1d5db;
-    color: #9ca3af;
-    cursor: not-allowed;
-  }
-`;

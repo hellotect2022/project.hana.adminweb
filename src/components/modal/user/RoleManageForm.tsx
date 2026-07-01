@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 
 /**
  * 권한(Role / tbl_role) 등록·수정 폼
@@ -66,10 +67,10 @@ const RoleManageForm = ({ mode = "create", initial = null, onSubmit, onCancel })
         />
       </FieldRow>
       <ButtonRow>
-        <CancelButton type="button" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel}>
           취소
-        </CancelButton>
-        <SubmitButton type="submit">{mode === "edit" ? "저장" : "등록"}</SubmitButton>
+        </Button>
+        <Button variant="primary" type="submit">{mode === "edit" ? "저장" : "등록"}</Button>
       </ButtonRow>
     </Form>
   );
@@ -88,7 +89,7 @@ const FieldRow = styled.div`
   margin-bottom: 14px;
 `;
 
-const Label = styled.label`
+const Label = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   color: #374151;
   padding-top: 8px;
@@ -129,31 +130,6 @@ const ButtonRow = styled.div`
   gap: 10px;
   padding-top: 12px;
   border-top: 1px solid #e5e7eb;
-`;
-
-const CancelButton = styled.button`
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  cursor: pointer;
-`;
-
-const SubmitButton = styled.button`
-  padding: 8px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover {
-    background: #3d5370;
-  }
 `;
 
 export default RoleManageForm;

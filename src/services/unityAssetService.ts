@@ -6,6 +6,8 @@ export const UNITY_ASSET_LIST_QUERY_KEY = ["unityAsset", "list"];
  * @typedef {{
  *   assetId: number;
  *   assetName: string;
+ *   assetType?: string;        // 영문 코드 (EQUIPMENT/EFFECT/ZONE/EVACUATION_ROUTE/TOILET_STALL/PARKING_SLOT)
+ *   assetTypeLabel?: string;   // 한글 표시명
  *   description?: string | null;
  *   active?: boolean;
  *   createdAt?: string;
@@ -17,7 +19,7 @@ export const UNITY_ASSET_LIST_QUERY_KEY = ["unityAsset", "list"];
  * GET /unity-assets — 목록 조회
  * @param {{ activeOnly?: boolean }} [params]
  */
-export async function fetchUnityAssetsAPI(params = {}) {
+export async function fetchUnityAssetsAPI(params: { activeOnly?: boolean } = {}) {
   const { data } = await privateApi.get("/unity-assets", {
     params: params.activeOnly ? { activeOnly: true } : undefined,
   });
@@ -45,7 +47,7 @@ export async function fetchUnityAssetByIdAPI(assetId) {
 
 /**
  * POST /unity-assets
- * @param {{ assetName: string; description?: string; active?: boolean }} payload
+ * @param {{ assetName: string; assetType?: string; description?: string; active?: boolean }} payload
  */
 export async function createUnityAssetAPI(payload) {
   const { data } = await privateApi.post("/unity-assets", payload);
@@ -54,7 +56,7 @@ export async function createUnityAssetAPI(payload) {
 
 /**
  * PUT /unity-assets/{assetId}
- * @param {{ assetId: number; assetName: string; description?: string; active?: boolean }} param
+ * @param {{ assetId: number; assetName: string; assetType?: string; description?: string; active?: boolean }} param
  */
 export async function updateUnityAssetAPI({ assetId, ...payload }) {
   const { data } = await privateApi.put(`/unity-assets/${assetId}`, payload);

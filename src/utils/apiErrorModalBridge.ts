@@ -41,6 +41,6 @@ export function createApiError(payload) {
   const err = new Error(payload.message);
   err.name = "ApiError";
   /** @type {ApiErrorPayload} */
-  err.apiError = payload;
+  (err as any).apiError = payload;
   return err;
 }

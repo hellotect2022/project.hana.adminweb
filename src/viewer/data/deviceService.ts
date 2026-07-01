@@ -43,8 +43,20 @@ export async function fetchLocationInfo(): Promise<UnityBuilding[]> {
   return data.data;
 }
 
-// PATCH /api/device/{deviceId} — 장비 부분 수정(여기선 active 토글). DeviceUpdateRequest.active만 전송.
+// PATCH /api/device/{deviceId} — 장비 부분 수정(모달 전체편집용). DeviceUpdateRequest.active만 전송.
 export async function patchDeviceActive(deviceId: number, active: boolean): Promise<DeviceDTO> {
   const { data } = await api.patch<ApiResponse<DeviceDTO>>(`/device/${deviceId}`, { active });
+  return data.data;
+}
+
+// PATCH /api/device/active — 활성/비활성 일괄 처리(전체/카테고리/개별 통합). data = updatedCount.
+export interface BulkActiveRequest {
+  scope: 'ALL' | 'CATEGORY' | 'DEVICES';
+  categoryId?: number;
+  deviceIds?: number[];
+  active: boolean;
+}
+export async function patchDeviceActiveBulk(body: BulkActiveRequest): Promise<number> {
+  const { data } = await api.patch<ApiResponse<number>>('/device/active', body);
   return data.data;
 }

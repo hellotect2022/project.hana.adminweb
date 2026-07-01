@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 import {
   categoryFetchAPI,
   createDeviceAPI,
@@ -13,6 +14,7 @@ import {
   fetchUnityAssetsList,
   UNITY_ASSET_LIST_QUERY_KEY,
 } from "@/services/unityAssetService";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /** @param {{ categoryCode?: string; categoryName: string }} cat */
 function resolveCategoryCode(cat) {
@@ -67,7 +69,7 @@ export function buildPointRowsFromSchema(deviceKey, schemaDefinitions = []) {
 /**
  * @param {{ onSuccess?: (res: unknown, variables: unknown) => void; onCancel?: () => void }} props
  */
-const DeviceRegistForm = ({ onSuccess, onCancel }) => {
+const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a: any[]) => {} }) => {
   const inModal = Boolean(onCancel || onSuccess);
   const queryClient = useQueryClient();
   const [selectedMajorId, setSelectedMajorId] = useState(null);
@@ -182,12 +184,7 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
       }
     },
     onError: (err) => {
-      const msg =
-        err?.response?.data?.message ||
-        err?.response?.data?.data ||
-        err?.message ||
-        "장비 등록 중 오류가 발생했습니다.";
-      setSubmitError(msg);
+      setSubmitError(getApiErrorMessage(err, "장비 등록 중 오류가 발생했습니다."));
     },
   });
 
@@ -255,9 +252,9 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
       <Wrap $inModal={inModal}>
         <ErrorBox>
           <p>{error?.message ?? "카테고리를 불러오지 못했습니다."}</p>
-          <RetryBtn type="button" onClick={() => refetch()}>
+          <Button variant="secondary" onClick={() => refetch()}>
             다시 시도
-          </RetryBtn>
+          </Button>
         </ErrorBox>
       </Wrap>
     );
@@ -479,12 +476,12 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
 
           <ButtonRow>
             {onCancel ? (
-              <ResetBtn type="button" onClick={onCancel}>
+              <Button variant="outline" onClick={onCancel}>
                 취소
-              </ResetBtn>
+              </Button>
             ) : null}
-            <ResetBtn
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => {
                 setDeviceName("");
                 setAssetId("");
@@ -493,10 +490,10 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
               }}
             >
               입력 초기화
-            </ResetBtn>
-            <SubmitBtn type="submit" disabled={!canRegister || isCreating}>
+            </Button>
+            <Button variant="primary" type="submit" disabled={!canRegister || isCreating}>
               {isCreating ? "등록 중…" : "장비 등록"}
-            </SubmitBtn>
+            </Button>
           </ButtonRow>
         </RegisterSection>
       ) : (
@@ -510,7 +507,7 @@ const DeviceRegistForm = ({ onSuccess, onCancel }) => {
 
 export default DeviceRegistForm;
 
-const Wrap = styled.div`
+const Wrap = styled.div<{ $inModal?: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -534,17 +531,6 @@ const ErrorBox = styled.div`
   p {
     margin: 0 0 12px 0;
   }
-`;
-
-const RetryBtn = styled.button`
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
 `;
 
 const FetchHint = styled.div`
@@ -596,7 +582,7 @@ const ListBox = styled.div`
   padding: 6px;
 `;
 
-const ListItem = styled.div`
+const ListItem = styled.div<{ $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -693,7 +679,7 @@ const FieldGrid = styled.div`
   }
 `;
 
-const FieldLabel = styled.label`
+const FieldLabel = styled.label<{ $required?: boolean }>`
   font-size: 14px;
   color: #374151;
   padding-top: 8px;
@@ -739,7 +725,7 @@ const AssetSelect = styled.select`
   }
 `;
 
-const AssetStatus = styled.span`
+const AssetStatus = styled.span<{ $error?: boolean }>`
   font-size: 13px;
   color: ${(p) => (p.$error ? "#dc2626" : "#64748b")};
 `;
@@ -821,7 +807,7 @@ const PointsTable = styled.table`
   font-size: 13px;
 `;
 
-const PTh = styled.th`
+const PTh = styled.th<{ $center?: boolean }>`
   padding: 9px 12px;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   font-size: 12px;
@@ -831,7 +817,7 @@ const PTh = styled.th`
   border-bottom: 1px solid #e5e7eb;
 `;
 
-const PTd = styled.td`
+const PTd = styled.td<{ $center?: boolean }>`
   padding: 8px 12px;
   border-bottom: 1px solid #f3f4f6;
   color: #374151;
@@ -853,7 +839,7 @@ const FullTagName = styled.code`
   word-break: break-all;
 `;
 
-const TypeBadge = styled.span`
+const TypeBadge = styled.span<{ $type?: string }>`
   display: inline-block;
   padding: 2px 8px;
   font-size: 11px;
@@ -906,34 +892,3 @@ const ButtonRow = styled.div`
   background: #f8fafc;
 `;
 
-const ResetBtn = styled.button`
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-  &:hover {
-    background: #f3f4f6;
-  }
-`;
-
-const SubmitBtn = styled.button`
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #2563eb;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-  &:hover:not(:disabled) {
-    background: #1d4ed8;
-  }
-`;

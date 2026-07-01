@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
 import loginBg from '@/assets/image/loginBg.jpg'
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -71,7 +72,13 @@ const LoginPage = () => {
                 />
             </FormGroup>
             
-            <SubmitButton type="submit">Login</SubmitButton>
+            <Button
+                variant="primary"
+                type="submit"
+                style={{ width: 300, height: 38, marginTop: 8 }}
+            >
+                Login
+            </Button>
 
             <CheckboxWrap>
                 <CheckboxLabel>
@@ -188,26 +195,6 @@ const Input = styled.input`
   }
 `;
 
-const SubmitButton = styled.button`
-  height: 38px;
-  width: 300px;
-  margin-top: 8px;
-  border: none;
-  border-radius: 4px;
-  background-color: #009591;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #007a77;
-  }
-`;
-
 const CheckboxWrap = styled.div`
   width: 300px;
   display: flex;
@@ -229,7 +216,7 @@ const HiddenCheckbox = styled.input`
   display: none;
 `;
 
-const CustomCheckbox = styled.span`
+const CustomCheckbox = styled.span<{ checked?: boolean }>`
   width: 18px;
   height: 18px;
   border-radius: 50%;

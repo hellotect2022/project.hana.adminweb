@@ -1,12 +1,16 @@
 import styled from "styled-components";
+import type { ReactNode } from "react";
 
 /**
  * 관리 기능 공통 페이지 템플릿
- * @param {string} title - 페이지 제목
- * @param {string} [description] - 부가 설명 (선택)
- * @param {React.ReactNode} [children] - 본문 내용
  */
-const AdminPageTemplate = ({ title, description, children }) => {
+interface AdminPageTemplateProps {
+  title: ReactNode;
+  description?: ReactNode;
+  children?: ReactNode;
+}
+
+const AdminPageTemplate = ({ title, description, children }: AdminPageTemplateProps) => {
   return (
     <Wrapper>
       <PageHeader>

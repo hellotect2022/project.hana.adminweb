@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { colors, radius, fontSize } from "@/styles/tokens";
 
 /**
  * 현재 페이지 주변만 표시하고, 건너뛴 구간은 … 처리
@@ -124,11 +125,11 @@ const Wrap = styled.div`
 
 const Summary = styled.p`
   margin: 0;
-  font-size: 13px;
-  color: #6b7280;
+  font-size: ${fontSize.sm};
+  color: ${colors.textMuted};
 
   strong {
-    color: #374151;
+    color: ${colors.text};
     font-weight: 600;
   }
 `;
@@ -146,18 +147,18 @@ const NavBtn = styled.button`
   min-width: 52px;
   height: 34px;
   padding: 0 12px;
-  font-size: 13px;
+  font-size: ${fontSize.sm};
   font-weight: 500;
-  color: #374151;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  color: ${colors.text};
+  background: ${colors.surface};
+  border: 1px solid ${colors.border};
+  border-radius: ${radius.md};
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 
   &:hover:not(:disabled) {
-    background: #f3f4f6;
-    border-color: #9ca3af;
+    background: ${colors.surfaceHover};
+    border-color: ${colors.borderHover};
   }
 
   &:disabled {
@@ -166,22 +167,22 @@ const NavBtn = styled.button`
   }
 `;
 
-const PageBtn = styled.button`
+const PageBtn = styled.button<{ $active?: boolean }>`
   min-width: 34px;
   height: 34px;
   padding: 0 8px;
-  font-size: 13px;
+  font-size: ${fontSize.sm};
   font-weight: ${(p) => (p.$active ? "700" : "500")};
-  color: ${(p) => (p.$active ? "#fff" : "#374151")};
-  background: ${(p) => (p.$active ? "#4a6380" : "#fff")};
-  border: 1px solid ${(p) => (p.$active ? "#4a6380" : "#d1d5db")};
-  border-radius: 6px;
+  color: ${(p) => (p.$active ? colors.white : colors.text)};
+  background: ${(p) => (p.$active ? colors.secondary : colors.surface)};
+  border: 1px solid ${(p) => (p.$active ? colors.secondary : colors.border)};
+  border-radius: ${radius.md};
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 
   &:hover:not(:disabled) {
-    background: ${(p) => (p.$active ? "#3d5370" : "#f3f4f6")};
-    border-color: ${(p) => (p.$active ? "#3d5370" : "#9ca3af")};
+    background: ${(p) => (p.$active ? colors.secondaryHover : colors.surfaceHover)};
+    border-color: ${(p) => (p.$active ? colors.secondaryHover : colors.borderHover)};
   }
 `;
 
@@ -191,8 +192,8 @@ const Ellipsis = styled.span`
   justify-content: center;
   min-width: 28px;
   height: 34px;
-  font-size: 14px;
-  color: #9ca3af;
+  font-size: ${fontSize.md};
+  color: ${colors.textSubtle};
   user-select: none;
   letter-spacing: 1px;
 `;

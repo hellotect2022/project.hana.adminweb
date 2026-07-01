@@ -1,7 +1,9 @@
-import { addUserToRoleAPI, fetchUsersExceptRoleAPI, fetchUsersInRoleAPI, removeUserFromRoleAPI } from "@/services/roleService";
+import { addUserToRoleAPI, fetchUsersExceptRoleAPI, fetchUsersInRoleAPI, removeUserFromRoleAPI, ROLES_LIST_QUERY_KEY } from "@/services/roleService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import styled from "styled-components";
+import { Button } from "@/components/ui";
+import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /**
  * 권한(Role)별 소속 사용자 목록 + 검색으로 사용자 추가
@@ -10,8 +12,9 @@ import styled from "styled-components";
  */
 const RoleMembersModalContent = ({
   role,
-  onChange,
-  onClose,
+  onChange = (..._a: any[]) => {},
+  onClose = () => {},
+  embedded = false,
 }) => {
   const [searchKey, setSearchKey] = useState("");
   const queryClient = useQueryClient();
@@ -32,22 +35,26 @@ const RoleMembersModalContent = ({
 
   // 1. 사용자 추가 Mutation
   const { mutate: addMember } = useMutation({
-    mutationFn: ({roleId, userId}) => addUserToRoleAPI(roleId, userId),
+    mutationFn: ({roleId, userId}: any) => addUserToRoleAPI(roleId, userId),
     onSuccess: () => {
-      // 소속 목록과 제외 목록을 모두 새로고침
+      // 소속 목록·제외 목록·역할 카드(소속 인원수) 모두 새로고침
       queryClient.invalidateQueries({ queryKey: ['fetchUserInRoles', role.roleId] });
       queryClient.invalidateQueries({ queryKey: ['fetchUsersExceptRole', role.roleId] });
+      queryClient.invalidateQueries({ queryKey: ROLES_LIST_QUERY_KEY });
       setSearchKey(""); // 검색어 초기화
-    }
+    },
+    onError: (err) => window.alert(getApiErrorMessage(err, "사용자 추가에 실패했습니다.")),
   });
 
   // 2. 사용자 제거 Mutation
   const { mutate: removeMember } = useMutation({
-    mutationFn: ({roleId, userId}) => removeUserFromRoleAPI(roleId, userId),
+    mutationFn: ({roleId, userId}: any) => removeUserFromRoleAPI(roleId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fetchUserInRoles', role.roleId] });
       queryClient.invalidateQueries({ queryKey: ['fetchUsersExceptRole', role.roleId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ROLES_LIST_QUERY_KEY });
+    },
+    onError: (err) => window.alert(getApiErrorMessage(err, "사용자 제거에 실패했습니다.")),
   });
 
   const handleRemove = (userId) => removeMember({roleId: role.roleId, userId:userId})
@@ -62,10 +69,12 @@ const RoleMembersModalContent = ({
   } 
 
   return (
-    <Wrap>
-      <SubTitle>
-        권한: <strong>{role.roleName}</strong>
-      </SubTitle>
+    <Wrap $embedded={embedded}>
+      {!embedded && (
+        <SubTitle>
+          권한: <strong>{role.roleName}</strong>
+        </SubTitle>
+      )}
 
       <Section>
         <SectionLabel>소속 사용자 ({fetchUserInRoles?.length}명)</SectionLabel>
@@ -93,9 +102,9 @@ const RoleMembersModalContent = ({
                   <td>{m.loginId}</td>
                   <td>{m.username}</td>
                   <td className="col-action">
-                    <MiniBtn type="button" $danger onClick={() => handleRemove(m.userId)}>
+                    <Button variant="danger" size="sm" onClick={() => handleRemove(m.userId)}>
                       제거
-                    </MiniBtn>
+                    </Button>
                   </td>
                 </tr>
               ))
@@ -130,29 +139,29 @@ const RoleMembersModalContent = ({
                   <span className="name">{u.username}</span>
                   <span className="id">#{u.userId}</span>
                 </HitInfo>
-                <MiniBtn type="button" onClick={() => handleAdd(u.userId)}>
+                <Button variant="primary" size="sm" onClick={() => handleAdd(u.userId)}>
                   추가
-                </MiniBtn>
+                </Button>
               </HitRow>
             ))
           )}
         </HitList>
       </Section>
 
-      <FooterRow>
-        <FooterBtn type="button" onClick={onClose}>
-          닫기
-        </FooterBtn>
-      </FooterRow>
+      {!embedded && (
+        <FooterRow>
+          <Button variant="outline" onClick={onClose}>
+            닫기
+          </Button>
+        </FooterRow>
+      )}
     </Wrap>
   );
 };
 
-const Wrap = styled.div`
-  width: min(92vw, 640px);
-  max-height: 72vh;
-  overflow-y: hidden;
-  border: 1px solid black;
+const Wrap = styled.div<{ $embedded?: boolean }>`
+  width: ${(p) => (p.$embedded ? "100%" : "min(92vw, 640px)")};
+  max-height: ${(p) => (p.$embedded ? "none" : "72vh")};
 `;
 
 const SubTitle = styled.p`
@@ -273,37 +282,11 @@ const EmptyHits = styled.div`
   text-align: center;
 `;
 
-const MiniBtn = styled.button`
-  padding: 4px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid ${(p) => (p.$danger ? "#fecaca" : "#cbd5e1")};
-  background: ${(p) => (p.$danger ? "#fef2f2" : "#f8fafc")};
-  color: ${(p) => (p.$danger ? "#b91c1c" : "#1e40af")};
-  white-space: nowrap;
-  &:hover {
-    background: ${(p) => (p.$danger ? "#fee2e2" : "#e0e7ff")};
-  }
-`;
-
 const FooterRow = styled.div`
   display: flex;
   justify-content: flex-end;
   padding-top: 12px;
   border-top: 1px solid #e5e7eb;
-`;
-
-const FooterBtn = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
 `;
 
 export default RoleMembersModalContent;

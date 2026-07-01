@@ -6,7 +6,9 @@ import UserEditModalForm from "@/components/modal/user/UserEditModalForm";
 import { useModal } from "@/contexts/ModalContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {createUserAPI, deleteUserAPI, fetchUsersAPI, updateUserAPI } from "@/services/userService";
+import { fetchRolesList, ROLES_LIST_QUERY_KEY } from "@/services/roleService";
 import Pagination from "@/components/common/Pagination";
+import { Button, Input, Select, Badge, Toolbar, FilterGroup } from "@/components/ui";
 
 
 /**
@@ -17,6 +19,7 @@ const UserManagePage = () => {
   const { openModal, closeModal } = useModal();
 
   const [typeFilter, setTypeFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all"); // "all" | roleId
   const [searchField, setSearchField] = useState("loginId");
   const [keywordInput, setKeywordInput] = useState("");
 
@@ -24,7 +27,14 @@ const UserManagePage = () => {
   const [searchKeyword, setSearchKeyword] = useState({});
   
   const queryClient = useQueryClient()
-  // 1. 조회용 
+
+  // 권한그룹 필터용 역할 목록
+  const { data: roles = [] } = useQuery({
+    queryKey: ROLES_LIST_QUERY_KEY,
+    queryFn: fetchRolesList,
+  });
+
+  // 1. 조회용
   const {data:{fetchUsers, pagination}={}} = useQuery({
     queryKey: ['fetchUsers',page, searchKeyword],
     queryFn: () => fetchUsersAPI({page, size:10, ...searchKeyword}),
@@ -78,12 +88,26 @@ const UserManagePage = () => {
     if (typeFilter === 'inactive') isActive = false;
     const searchParam = {
       ...(isActive != null && {active: isActive}),
+      ...(roleFilter !== "all" && { roleId: Number(roleFilter) }),
       ...(trimmedKeyword && {[searchField]:trimmedKeyword})
     }
     //setSearchKeyword(keywordInput.trim());
     setSearchKeyword(searchParam)
     setPage(0)
 
+  };
+
+  const formatDate = (iso) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch {
+      return iso;
+    }
   };
 
   const openRegisterModal = () => {
@@ -126,6 +150,14 @@ const UserManagePage = () => {
     <AdminPageTemplate title="사용자 관리" description="">
       <Toolbar>
         <FilterGroup>
+          <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+            <option value="all">권한그룹 전체</option>
+            {roles.map((r) => (
+              <option key={r.roleId} value={r.roleId}>
+                {r.roleName}
+              </option>
+            ))}
+          </Select>
           <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="all">전체</option>
             <option value="active">활성</option>
@@ -135,36 +167,38 @@ const UserManagePage = () => {
             <option value="loginId">아이디</option>
             <option value="username">이름</option>
           </Select>
-          <SearchInput
+          <Input
             placeholder="검색명을 입력하세요"
+            style={{ width: "min(100%, 260px)" }}
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearchClick()}
           />
-          <SearchButton type="button" onClick={handleSearchClick}>
+          <Button variant="secondary" onClick={handleSearchClick}>
             검색
-          </SearchButton>
+          </Button>
         </FilterGroup>
-        <RegisterButton type="button" onClick={openRegisterModal}>
-          사용자 등록
-        </RegisterButton>
+        <Button variant="primary" onClick={openRegisterModal}>
+          + 사용자 등록
+        </Button>
       </Toolbar>
 
       <TableWrap>
         <Table>
           <thead>
             <tr>
-              <Th>번호</Th>
+              <Th>No</Th>
               <Th>아이디</Th>
               <Th>이름</Th>
-              {/* <Th>그룹명</Th> */}
+              <Th $center>권한그룹</Th>
+              <Th $center>최종 로그인</Th>
               <Th $center>관리</Th>
             </tr>
           </thead>
           <tbody>
             {fetchUsers?.length === 0 ? (
               <tr>
-                <Td colSpan={5}>조건에 맞는 사용자가 없습니다.</Td>
+                <Td colSpan={6} $center>조건에 맞는 사용자가 없습니다.</Td>
               </tr>
             ) : (
               fetchUsers?.map((row) => (
@@ -172,14 +206,25 @@ const UserManagePage = () => {
                   <Td>{row.userId}</Td>
                   <Td>{row.loginId}</Td>
                   <Td>{row.username}</Td>
-                  {/* <Td>{row.roleName}</Td> */}
                   <Td $center>
-                    <EditBtn type="button" onClick={() => openEditModal(row)}>
+                    {row.roles?.length ? (
+                      <RoleBadges>
+                        {row.roles.map((r) => (
+                          <Badge key={r.roleId} tone="info">{r.roleName}</Badge>
+                        ))}
+                      </RoleBadges>
+                    ) : (
+                      "—"
+                    )}
+                  </Td>
+                  <Td $center>{formatDate(row.lastLoginDate)}</Td>
+                  <Td $center>
+                    <Button variant="secondary" size="sm" onClick={() => openEditModal(row)} style={{ marginRight: 8 }}>
                       수정
-                    </EditBtn>
-                    <DeleteBtn type="button" onClick={() => openDeleteModal(row)}>
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => openDeleteModal(row)}>
                       삭제
-                    </DeleteBtn>
+                    </Button>
                   </Td>
                 </tr>
               ))
@@ -195,76 +240,11 @@ const UserManagePage = () => {
   );
 };
 
-const Toolbar = styled.div`
-  display: flex;
+const RoleBadges = styled.div`
+  display: inline-flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  min-height: 50px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  background: #ffffff;
-  border: 1px solid #e1e2e5;
-  border-radius: 5px;
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  //flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-`;
-
-const Select = styled.select`
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  min-width: 100px;
-`;
-
-const SearchInput = styled.input`
-  padding: 8px 12px;
-  width: min(100%, 260px);
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  outline: none;
-  &::placeholder {
-    color: #9ca3af;
-  }
-`;
-
-const SearchButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover {
-    background: #3d5370;
-  }
-`;
-
-const RegisterButton = styled.button`
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #4a6380;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  &:hover {
-    background: #3d5370;
-  }
+  gap: 4px;
+  justify-content: center;
 `;
 
 const TableWrap = styled.div`
@@ -280,7 +260,7 @@ const Table = styled.table`
   font-size: 14px;
 `;
 
-const Th = styled.th`
+const Th = styled.th<{ $center?: boolean }>`
   padding: 12px 16px;
   text-align: left;
   font-weight: 700;
@@ -290,40 +270,11 @@ const Th = styled.th`
   ${(p) => p.$center && "text-align: center;"}
 `;
 
-const Td = styled.td`
+const Td = styled.td<{ $center?: boolean }>`
   padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
   ${(p) => p.$center && "text-align: center;"}
-`;
-
-const EditBtn = styled.button`
-  padding: 4px 14px;
-  margin-right: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #f59e0b;
-  border: 1px solid #d97706;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background: #d97706;
-  }
-`;
-
-const DeleteBtn = styled.button`
-  padding: 4px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-  background: #dc2626;
-  border: 1px solid #b91c1c;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background: #b91c1c;
-  }
 `;
 
 export default UserManagePage;
