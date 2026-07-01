@@ -310,6 +310,60 @@ export async function saveDevicePointRefMappingAPI(items) {
   return data;
 }
 
+/** 포인트 매핑 통계 쿼리 키 (categoryId / keyword 를 뒤에 붙여 사용) */
+export const POINT_MAPPING_STATS_QUERY_KEY = ["device", "points", "mapping", "stats"];
+
+/**
+ * GET /device/points/mapping/stats — 현재 검색 필터 기준 매핑 통계
+ * @param {{ categoryId?: number; keyword?: string }} [params]
+ * @returns {Promise<{ total: number; mapped: number }>}
+ */
+export async function fetchPointMappingStatsAPI({
+  categoryId,
+  keyword,
+}: { categoryId?: number; keyword?: string } = {}) {
+  const { data } = await privateApi.get("/device/points/mapping/stats", {
+    params: {
+      ...(categoryId != null ? { categoryId } : {}),
+      ...(keyword ? { keyword } : {}),
+    },
+  });
+  return data?.data; // { total, mapped }
+}
+
+/**
+ * GET /device/points/mapping/template — 현재 필터 기준 업로드용 xlsx 양식(blob)
+ * @param {{ categoryId?: number; keyword?: string }} [params]
+ * @returns axios response (data: Blob, headers 포함 — 파일명 파싱용)
+ */
+export async function downloadPointMappingTemplateAPI({
+  categoryId,
+  keyword,
+}: { categoryId?: number; keyword?: string } = {}) {
+  const res = await privateApi.get("/device/points/mapping/template", {
+    params: {
+      ...(categoryId != null ? { categoryId } : {}),
+      ...(keyword ? { keyword } : {}),
+    },
+    responseType: "blob",
+  });
+  return res;
+}
+
+/**
+ * POST /device/points/mapping/import — xlsx 업로드로 ref 매핑 일괄 반영
+ * @param {File} file
+ * @returns {Promise<{ total: number; applied: number; failed: Array<{ row: number; pointKey: string; reason: string }> }>}
+ */
+export async function importPointMappingAPI(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const { data } = await privateApi.post("/device/points/mapping/import", fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data?.data; // { total, applied, failed[] }
+}
+
 /**
  * PUT /device/{deviceId}/points/tag-mapping — tagName 매핑 저장
  * @param {{ deviceId: number; mappings: Array<{tagName: string; pointId: number|null}> }} param

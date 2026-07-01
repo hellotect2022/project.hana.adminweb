@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
@@ -8,8 +8,12 @@ import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import {
   DEVICE_LIST_QUERY_KEY,
   DEVICE_POINT_MAPPING_QUERY_KEY,
+  POINT_MAPPING_STATS_QUERY_KEY,
+  downloadPointMappingTemplateAPI,
   fetchDevicePointsForMappingAPI,
   fetchDevicesAPI,
+  fetchPointMappingStatsAPI,
+  importPointMappingAPI,
   saveDevicePointRefMappingAPI,
 } from "@/services/deviceService";
 import {
@@ -45,7 +49,7 @@ const DevicePointMappingPage = () => {
   const appliedDeviceId = resolveHierarchyDeviceId(appliedFilter);
   const appliedCategoryId = resolveHierarchyCategoryId(appliedFilter);
 
-  const { data: { points = [], pagination, mappedCount = 0 } = {}, isLoading, isFetching } =
+  const { data: { points = [], pagination } = {}, isLoading, isFetching } =
     useQuery({
       queryKey: [
         ...DEVICE_POINT_MAPPING_QUERY_KEY,
@@ -76,6 +80,99 @@ const DevicePointMappingPage = () => {
         },
       }),
     });
+
+  // 상단 통계 카드용: 현재 검색 필터(카테고리/검색어) 기준 전체·매핑 집계.
+  // unmapped 토글과 무관하게 항상 정확한 4개 값을 유지한다.
+  const { data: stats = { total: 0, mapped: 0 } } = useQuery({
+    queryKey: [
+      ...POINT_MAPPING_STATS_QUERY_KEY,
+      appliedCategoryId ?? "all",
+      keyword,
+    ],
+    queryFn: () =>
+      fetchPointMappingStatsAPI({
+        categoryId: appliedCategoryId ?? undefined,
+        keyword: keyword || undefined,
+      }),
+  });
+
+  const statTotal = stats?.total ?? 0;
+  const statMapped = stats?.mapped ?? 0;
+  const statUnmapped = Math.max(0, statTotal - statMapped);
+  const statRate = statTotal > 0 ? Math.round((statMapped / statTotal) * 100) : 0;
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleDownloadTemplate = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      const res = await downloadPointMappingTemplateAPI({
+        categoryId: appliedCategoryId ?? undefined,
+        keyword: keyword || undefined,
+      });
+      const disposition =
+        res?.headers?.["content-disposition"] ||
+        res?.headers?.["Content-Disposition"] ||
+        "";
+      let filename = "point-mapping-template.xlsx";
+      const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+      const plain = /filename="?([^";]+)"?/i.exec(disposition);
+      if (star?.[1]) filename = decodeURIComponent(star[1]);
+      else if (plain?.[1]) filename = plain[1];
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      window.alert("양식 다운로드에 실패했습니다.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handlePickFile = () => {
+    if (isImporting) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // 같은 파일 재선택 허용
+    if (!file) return;
+    setIsImporting(true);
+    try {
+      const result = await importPointMappingAPI(file);
+      const total = result?.total ?? 0;
+      const applied = result?.applied ?? 0;
+      const failed = Array.isArray(result?.failed) ? result.failed : [];
+      queryClient.invalidateQueries({ queryKey: DEVICE_POINT_MAPPING_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: POINT_MAPPING_STATS_QUERY_KEY });
+      setDrafts({});
+
+      let msg = `반영 ${applied}/${total}건`;
+      if (failed.length > 0) {
+        const preview = failed
+          .slice(0, 10)
+          .map((f) => `· ${f.row}행 [${f.pointKey ?? "-"}] ${f.reason ?? ""}`)
+          .join("\n");
+        const more = failed.length > 10 ? `\n… 외 ${failed.length - 10}건` : "";
+        msg += `\n실패 ${failed.length}건:\n${preview}${more}`;
+      }
+      window.alert(msg);
+    } catch {
+      window.alert("파일 업로드에 실패했습니다.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   const isRowDirty = (row) => {
     const d = drafts[row.pointId];
@@ -170,21 +267,63 @@ const DevicePointMappingPage = () => {
           />
           미매핑만
         </UnmappedToggle>
-        <Summary>
-          {unmappedOnly
-            ? `미매핑 ${pagination?.totalElements ?? 0}건`
-            : `총 ${pagination?.totalElements ?? 0}건 · 매핑됨 ${mappedCount}건 · 미매핑 ${Math.max(0, (pagination?.totalElements ?? 0) - mappedCount)}건`}
-          {dirtyRows.length > 0 && ` · 변경 ${dirtyRows.length}건`}
-        </Summary>
+        <ToolbarSpacer />
+        <Button
+          variant="secondary"
+          onClick={handleDownloadTemplate}
+          disabled={isDownloading}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, flexShrink: 0 }}
+        >
+          {isDownloading ? "다운로드 중…" : "양식 다운로드"}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={handlePickFile}
+          disabled={isImporting}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, flexShrink: 0 }}
+        >
+          {isImporting ? "업로드 중…" : "파일 업로드"}
+        </Button>
+        <HiddenFileInput
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx"
+          onChange={handleFileSelected}
+        />
         <Button
           variant="primary"
           disabled={dirtyRows.length === 0 || isSaving}
           onClick={() => saveMappings()}
-          style={{ height: TOOLBAR_CONTROL_HEIGHT, marginLeft: "auto", flexShrink: 0 }}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, flexShrink: 0 }}
         >
           {isSaving ? "저장 중…" : `변경 저장 (${dirtyRows.length})`}
         </Button>
       </Toolbar>
+
+      <CardGrid>
+        <Card>
+          <CardLabel>전체 포인트</CardLabel>
+          <CardValue>{statTotal.toLocaleString()}</CardValue>
+        </Card>
+        <Card>
+          <CardLabel>매핑 완료</CardLabel>
+          <CardValue $tone="mapped">{statMapped.toLocaleString()}</CardValue>
+        </Card>
+        <Card>
+          <CardLabel>매핑률</CardLabel>
+          <CardValue>{statRate}%</CardValue>
+        </Card>
+        <Card>
+          <CardLabel>미매핑</CardLabel>
+          <CardValue $tone="unmapped">{statUnmapped.toLocaleString()}</CardValue>
+        </Card>
+        {dirtyRows.length > 0 && (
+          <Card>
+            <CardLabel>변경 대기</CardLabel>
+            <CardValue $tone="dirty">{dirtyRows.length.toLocaleString()}</CardValue>
+          </Card>
+        )}
+      </CardGrid>
 
       <HintBox>
         연계 시스템 포인트의 <code>ref_device_code</code>, <code>ref_point_code</code>를 입력하세요.
@@ -334,14 +473,48 @@ const UnmappedToggle = styled.label`
   &:hover { background: #f2f4f7; }
 `;
 
-const Summary = styled.span`
-  display: inline-flex;
-  align-items: center;
-  height: ${TOOLBAR_CONTROL_HEIGHT};
-  font-size: 13px;
-  line-height: 1.4;
-  color: #5c6370;
-  white-space: nowrap;
+const ToolbarSpacer = styled.div`
+  flex: 1 1 auto;
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+const CardGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+`;
+
+const Card = styled.div`
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+`;
+
+const CardLabel = styled.div`
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 8px;
+`;
+
+const CardValue = styled.div<{ $tone?: "mapped" | "unmapped" | "dirty" }>`
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: ${(p) =>
+    p.$tone === "mapped"
+      ? "#15803d"
+      : p.$tone === "unmapped"
+      ? "#b91c1c"
+      : p.$tone === "dirty"
+      ? "#b45309"
+      : "#111d2c"};
 `;
 
 const HintBox = styled.p`
