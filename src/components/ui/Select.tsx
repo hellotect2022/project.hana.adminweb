@@ -6,6 +6,7 @@ import { colors, radius, fontSize } from "@/styles/tokens";
  *   <Select value={v} onChange={...}><option .../></Select>
  */
 const Select = styled.select`
+  box-sizing: border-box; /* width:100% 시 padding·border 포함 (셀 초과 방지) */
   padding: 8px 12px;
   font-size: ${fontSize.md};
   color: ${colors.textStrong};

@@ -2,6 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
+import { Button } from "@/components/ui";
 import { useModal } from "@/contexts/ModalContext";
 import {
   createEventRuleAPI,
@@ -333,10 +334,10 @@ const RuleEditorForm = ({ rule: initialRule, onClose, onSave }) => {
         </EditorScroll>
 
         <EditorFooter>
-          <CancelBtn type="button" onClick={onClose}>취소</CancelBtn>
-          <SaveBtn type="button" onClick={handleSave} disabled={saving}>
+          <Button variant="outline" onClick={onClose}>취소</Button>
+          <Button variant="primary" onClick={handleSave} disabled={saving}>
             {saving ? "저장 중…" : "저장"}
-          </SaveBtn>
+          </Button>
         </EditorFooter>
     </>
   );
@@ -367,7 +368,7 @@ const EventThresholdPage = () => {
   });
 
   const { mutateAsync: updateRuleAsync } = useMutation({
-    mutationFn: ({ ruleId, payload }) => updateEventRuleAPI({ ruleId, payload }),
+    mutationFn: ({ ruleId, payload }: any) => updateEventRuleAPI({ ruleId, payload }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EVENT_RULES_QUERY_KEY });
     },
@@ -450,9 +451,9 @@ const EventThresholdPage = () => {
             <option value="INACTIVE">비활성만</option>
           </FilterSelect>
         </FilterGroup>
-        <AddRuleBtn type="button" onClick={() => openRuleEditor(null)}>
+        <Button variant="primary" onClick={() => openRuleEditor(null)}>
           + 규칙 추가
-        </AddRuleBtn>
+        </Button>
       </Toolbar>
 
       {/* ── 테이블 */}
@@ -523,8 +524,8 @@ const EventThresholdPage = () => {
                     </Td>
                     <Td $center>
                       <BtnGroup>
-                        <EditBtn type="button" onClick={() => openRuleEditor(rule)}>편집</EditBtn>
-                        <DeleteBtn type="button" onClick={() => handleDelete(rule.ruleId)}>삭제</DeleteBtn>
+                        <Button variant="secondary" size="sm" onClick={() => openRuleEditor(rule)}>편집</Button>
+                        <Button variant="danger" size="sm" onClick={() => handleDelete(rule.ruleId)}>삭제</Button>
                       </BtnGroup>
                     </Td>
                   </tr>
@@ -566,7 +567,7 @@ const Toolbar = styled.div`
 const FilterGroup  = styled.div`display: flex; flex-wrap: wrap; align-items: center; gap: 8px;`;
 const FilterLabel  = styled.span`font-size: 12px; font-weight: 600; color: #64748b;`;
 const FilterChips  = styled.div`display: flex; gap: 4px;`;
-const FilterChip   = styled.button`
+const FilterChip   = styled.button<{ $active?: boolean; $color?: string }>`
   padding: 4px 12px; font-size: 12px; font-weight: 600; border-radius: 16px; cursor: pointer;
   border: 1.5px solid ${(p) => (p.$active ? (p.$color ?? "#4a6380") : "#e5e7eb")};
   background: ${(p) => (p.$active ? (p.$color ? `${p.$color}22` : "#e8ecf1") : "#fff")};
@@ -576,21 +577,16 @@ const FilterChip   = styled.button`
 const FilterSelect = styled.select`
   padding: 5px 10px; font-size: 13px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; outline: none;
 `;
-const AddRuleBtn = styled.button`
-  padding: 8px 20px; font-size: 14px; font-weight: 700; color: #fff; background: #2563eb;
-  border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;
-  &:hover { background: #1d4ed8; }
-`;
 const TableWrap = styled.div`overflow-x: auto; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;`;
 const LoadingMsg   = styled.p`text-align: center; padding: 40px; color: #64748b;`;
 const ErrorMsg     = styled.p`text-align: center; padding: 40px; color: #ef4444;`;
 const RuleTable    = styled.table`width: 100%; border-collapse: collapse; font-size: 13px;`;
-const Th = styled.th`
+const Th = styled.th<{ $center?: boolean }>`
   padding: 10px 14px; text-align: ${(p) => (p.$center ? "center" : "left")};
   font-size: 12px; font-weight: 700; color: #374151; background: #f9fafb;
   border-bottom: 1px solid #e5e7eb; white-space: nowrap;
 `;
-const Td = styled.td`
+const Td = styled.td<{ $center?: boolean }>`
   padding: 10px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: middle;
   text-align: ${(p) => (p.$center ? "center" : "left")};
 `;
@@ -613,23 +609,13 @@ const ActionChip   = styled.span`
   background: #f3f4f6; color: #374151; white-space: nowrap;
 `;
 const TimingText   = styled.span`font-size: 11px; font-family: monospace; color: #64748b;`;
-const ActiveToggleBtn = styled.button`
+const ActiveToggleBtn = styled.button<{ $active?: boolean }>`
   padding: 3px 12px; font-size: 12px; font-weight: 700; border-radius: 12px; border: none; cursor: pointer;
   background: ${(p) => (p.$active ? "#dcfce7" : "#f3f4f6")};
   color: ${(p) => (p.$active ? "#15803d" : "#9ca3af")};
   &:hover { filter: brightness(0.95); }
 `;
 const BtnGroup  = styled.div`display: flex; gap: 5px; justify-content: center;`;
-const EditBtn   = styled.button`
-  padding: 4px 12px; font-size: 12px; font-weight: 600; color: #fff;
-  background: #f59e0b; border: none; border-radius: 4px; cursor: pointer;
-  &:hover { background: #d97706; }
-`;
-const DeleteBtn = styled.button`
-  padding: 4px 12px; font-size: 12px; font-weight: 600; color: #fff;
-  background: #ef4444; border: none; border-radius: 4px; cursor: pointer;
-  &:hover { background: #dc2626; }
-`;
 const SummaryBar  = styled.div`
   display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
   margin-top: 10px; font-size: 12px; color: #64748b;
@@ -655,18 +641,6 @@ const EditorFooter = styled.div`
   justify-content: flex-end;
   gap: 10px;
 `;
-const CancelBtn   = styled.button`
-  padding: 9px 22px; font-size: 14px; font-weight: 600; color: #374151;
-  background: #fff; border: 1px solid #d1d5db; border-radius: 7px; cursor: pointer;
-  &:hover { background: #f3f4f6; }
-`;
-const SaveBtn     = styled.button`
-  padding: 9px 22px; font-size: 14px; font-weight: 700; color: #fff;
-  background: #2563eb; border: none; border-radius: 7px; cursor: pointer;
-  &:disabled { opacity: 0.6; cursor: not-allowed; }
-  &:hover:not(:disabled) { background: #1d4ed8; }
-`;
-
 /* Editor Section */
 const EditorSection        = styled.div`
   padding: 16px 0; border-bottom: 1px solid #f3f4f6; &:last-child { border-bottom: none; }
@@ -676,11 +650,11 @@ const EditorSectionTitleRow = styled.div`
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
 `;
 const FieldGrid   = styled.div`display: grid; grid-template-columns: 1fr 1fr; gap: 12px;`;
-const FieldGroup  = styled.div`
+const FieldGroup  = styled.div<{ $full?: boolean }>`
   display: flex; flex-direction: column; gap: 5px;
   ${(p) => p.$full && "grid-column: span 2;"}
 `;
-const FieldLabel  = styled.label`
+const FieldLabel  = styled.label<{ $required?: boolean }>`
   font-size: 12px; font-weight: 600; color: #374151;
   display: flex; align-items: center; gap: 6px;
   &::after { content: "${(p) => (p.$required ? " *" : "")}"; color: #ef4444; }
@@ -702,7 +676,7 @@ const ActiveCheckbox = styled.input`width: 16px; height: 16px; accent-color: #25
 
 /* Condition Builder */
 const LogicToggleGroup = styled.div`display: flex; gap: 4px;`;
-const LogicToggleBtn   = styled.button`
+const LogicToggleBtn   = styled.button<{ $active?: boolean }>`
   padding: 4px 14px; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer;
   border: 1.5px solid ${(p) => (p.$active ? "#4a6380" : "#e5e7eb")};
   background: ${(p) => (p.$active ? "#4a6380" : "#fff")};
@@ -740,7 +714,7 @@ const AddCondBtn = styled.button`
 
 /* Action Cards */
 const ActionsGrid    = styled.div`display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;`;
-const ActionCard     = styled.div`
+const ActionCard     = styled.div<{ $checked?: boolean }>`
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 14px 8px; cursor: pointer; transition: all 0.15s;
   border: 2px solid ${(p) => (p.$checked ? "#2563eb" : "#e5e7eb")};

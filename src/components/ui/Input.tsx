@@ -7,6 +7,7 @@ import { colors, radius, fontSize } from "@/styles/tokens";
  * styled-components 이므로 모든 input 속성/이벤트가 그대로 전달된다.
  */
 const Input = styled.input`
+  box-sizing: border-box; /* width:100% 시 padding·border 포함 (셀 초과 방지) */
   padding: 8px 12px;
   font-size: ${fontSize.md};
   color: ${colors.textStrong};

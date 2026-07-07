@@ -80,7 +80,7 @@ const CloseRow = styled.div`
 
 const ModalContainer = styled.div<{ $wide?: boolean; $full?: boolean }>`
   background: white;
-  padding: 12px 20px 20px;
+  padding: 10px 20px 20px;
   border-radius: 8px;
   width: ${(p) =>
     p.$full ? "min(96vw, 1240px)" : p.$wide ? "min(92vw, 720px)" : "auto"};
@@ -99,6 +99,7 @@ const ModalHeader = styled.h2`
     font-size: 1.25rem; 
 `;
 const ModalBody = styled.div<{ $alignLeft?: boolean }>`
+  //border:2px solid blue;
   display: ${(p) => (p.$alignLeft ? "block" : "flex")};
   justify-content: ${(p) => (p.$alignLeft ? "stretch" : "center")};
   margin-bottom: ${(p) => (p.$alignLeft ? "0" : "24px")};
@@ -108,6 +109,13 @@ const ModalBody = styled.div<{ $alignLeft?: boolean }>`
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+  //overflow-y: auto;
+  /* 스크롤은 유지하되 스크롤바 표시는 숨김 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
 `;
 const ModalFooter = styled.div`
  display: flex;

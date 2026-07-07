@@ -6,6 +6,7 @@ import DisabledMenuPlaceholder from "@/components/common/DisabledMenuPlaceholder
 import SopTemplateManagePage from "@/pages/sop/SopTemplateManagePage";
 import SopTemplateEditorPage from "@/pages/sop/SopTemplateEditorPage";
 import EventThresholdPage from "@/pages/event/EventThresholdPage";
+import AlarmPolicyPage from "@/pages/event/AlarmPolicyPage";
 import LogHubPage from "@/pages/log/LogHubPage";
 import MenuDisplayPage from "@/pages/menu/MenuDisplayPage";
 import MenuEditPage from "@/pages/menu/MenuEditPage";
@@ -86,57 +87,62 @@ export const menuData = [
     label: "이벤트 관리",
     abbr: "이벤트",
     items: [
-      {
-        title: "유형 관리",
+      // {
+      //   title: "유형 관리",
+      //   //icon: <SvgIcons.Siren/>,
+      //   path: "/event/type",
+      //   disabled: true,
+      //   disabledReason:
+      //     "백엔드에 이벤트 유형 전용 API가 없습니다. 유형·심각도는 임계값(규칙) 설정에서 관리합니다.",
+      //   element: (
+      //     <DisabledMenuPlaceholder
+      //       title="유형 관리"
+      //       description="이벤트 유형을 관리합니다."
+      //       reason="백엔드에 이벤트 유형 전용 API가 없습니다. 유형·심각도는 「임계값 설정」에서 규칙별로 지정합니다."
+      //     />
+      //   ),
+      // },
+      // {
+      //   title: "명칭 관리",
+      //   //icon: <SvgIcons.CheckList/>,
+      //   path: "/event/name",
+      //   disabled: true,
+      //   disabledReason:
+      //     "백엔드에 이벤트 명칭 마스터 API가 없습니다. 규칙 이름·이벤트 인스턴스 명칭은 각각 규칙·런타임에서 설정됩니다.",
+      //   element: (
+      //     <DisabledMenuPlaceholder
+      //       title="명칭 관리"
+      //       description="이벤트 명칭을 관리합니다."
+      //       reason="백엔드에 이벤트 명칭 마스터 API가 없습니다. 규칙 이름은 「임계값 설정」, 발생 시 명칭은 이벤트 인스턴스에서 처리됩니다."
+      //     />
+      //   ),
+      // },
+      // { title: "임계값 설정",
+      //   //icon: <SvgIcons.Layers/>,
+      //   path: "/event/threshold", element: <EventThresholdPage/> },
+      { title: "알람 정책",
         //icon: <SvgIcons.Siren/>,
-        path: "/event/type",
-        disabled: true,
-        disabledReason:
-          "백엔드에 이벤트 유형 전용 API가 없습니다. 유형·심각도는 임계값(규칙) 설정에서 관리합니다.",
-        element: (
-          <DisabledMenuPlaceholder
-            title="유형 관리"
-            description="이벤트 유형을 관리합니다."
-            reason="백엔드에 이벤트 유형 전용 API가 없습니다. 유형·심각도는 「임계값 설정」에서 규칙별로 지정합니다."
-          />
-        ),
+        path: "/event/alarm-policy", 
+        element: <AlarmPolicyPage/> 
       },
-      {
-        title: "명칭 관리",
-        //icon: <SvgIcons.CheckList/>,
-        path: "/event/name",
-        disabled: true,
-        disabledReason:
-          "백엔드에 이벤트 명칭 마스터 API가 없습니다. 규칙 이름·이벤트 인스턴스 명칭은 각각 규칙·런타임에서 설정됩니다.",
-        element: (
-          <DisabledMenuPlaceholder
-            title="명칭 관리"
-            description="이벤트 명칭을 관리합니다."
-            reason="백엔드에 이벤트 명칭 마스터 API가 없습니다. 규칙 이름은 「임계값 설정」, 발생 시 명칭은 이벤트 인스턴스에서 처리됩니다."
-          />
-        ),
-      },
-      { title: "임계값 설정", 
-        //icon: <SvgIcons.Layers/>, 
-        path: "/event/threshold", element: <EventThresholdPage/> },
-      {
-        title: "알림 설정",
-        //icon: <SvgIcons.Bell/>,
-        path: "/event/notification",
-        disabled: true,
-        disabledReason:
-          "알림 전용 API가 없습니다. 알림·알람·SOP 등 동작은 임계값(규칙)의 actions 필드에서 설정합니다.",
-        element: (
-          <DisabledMenuPlaceholder
-            title="알림 설정"
-            description="이벤트 알림 방식을 설정합니다."
-            reason="알림 전용 API가 없습니다. 알림·알람·SOP·제어 연동은 「임계값 설정」 규칙 편집의 동작(actions)에서 선택합니다."
-          />
-        ),
-      },
-      { title: "SOP 템플릿", 
-        //icon: <SvgIcons.CheckList/>, 
-        path: "/sop/templates", element: <SopTemplateManagePage/> },
+      // {
+      //   title: "알림 설정",
+      //   //icon: <SvgIcons.Bell/>,
+      //   path: "/event/notification",
+      //   disabled: true,
+      //   disabledReason:
+      //     "알림 전용 API가 없습니다. 알림·알람·SOP 등 동작은 임계값(규칙)의 actions 필드에서 설정합니다.",
+      //   element: (
+      //     <DisabledMenuPlaceholder
+      //       title="알림 설정"
+      //       description="이벤트 알림 방식을 설정합니다."
+      //       reason="알림 전용 API가 없습니다. 알림·알람·SOP·제어 연동은 「임계값 설정」 규칙 편집의 동작(actions)에서 선택합니다."
+      //     />
+      //   ),
+      // },
+      // { title: "SOP 템플릿", 
+      //   //icon: <SvgIcons.CheckList/>, 
+      //   path: "/sop/templates", element: <SopTemplateManagePage/> },
     ]
   },
   {
