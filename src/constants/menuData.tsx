@@ -18,6 +18,7 @@ import UserManagePage from "@/pages/users/UserManagePage";
 import DeviceCategoryManagePage from "@/pages/device/DeviceCategoryManagePage";
 import DeviceRegistPage from "@/pages/device/DeviceRegistPage";
 import DevicePointMappingPage from "@/pages/device/DevicePointMappingPage";
+import SystemDiagramPage from "@/pages/device/SystemDiagramPage";
 import UnityAssetManagePage from "@/pages/unityAsset/UnityAssetManagePage";
 import ZoneManagePage from "@/pages/zone/ZoneManagePage";
 import SpaceLightManagePage from "@/pages/zone/SpaceLightManagePage";
@@ -78,9 +79,12 @@ export const menuData = [
       { title: "장비 관리", 
         //icon: <SvgIcons.Siren/>, 
         path: "/device/manage", element: <DeviceManagePage/>},
-      { title: "포인트 정보 매핑", 
-        //icon: <SvgIcons.Layers/>, 
+      { title: "포인트 정보 매핑",
+        //icon: <SvgIcons.Layers/>,
         path: "/device/point-mapping", element: <DevicePointMappingPage/>},
+      { title: "계통도",
+        //icon: <SvgIcons.Layers/>,
+        path: "/device/system-diagram", element: <SystemDiagramPage/>},
     ]
   },
   {
