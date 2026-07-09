@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
 import { Button } from "@/components/ui";
+import Pagination from "@/components/common/Pagination";
 import { useModal } from "@/contexts/ModalContext";
 import SystemDiagramModal from "@/components/modal/systemDiagram/SystemDiagramModal";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
@@ -13,6 +14,8 @@ import {
   type SystemDiagram,
 } from "@/services/systemDiagramService";
 
+const PAGE_SIZE = 20;
+
 /**
  * 계통도 관리 (WA-SYSTEM-DIAGRAM) — 장비 관리 그룹
  * 마스터 장비 중심으로 서브 장비와 배선(배관 세그먼트 포함)을 관리한다.
@@ -22,16 +25,32 @@ const SystemDiagramPage = () => {
   const queryClient = useQueryClient();
   const { openModal, closeModal } = useModal();
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
+  const [keyword, setKeyword] = useState("");
+  const [keywordInput, setKeywordInput] = useState("");
 
   const {
-    data: diagrams = [],
+    data: pageData,
     isLoading,
     isError,
     error,
   } = useQuery({
-    queryKey: SYSTEM_DIAGRAM_QUERY_KEY,
-    queryFn: fetchSystemDiagrams,
+    queryKey: [...SYSTEM_DIAGRAM_QUERY_KEY, page, keyword],
+    queryFn: () =>
+      fetchSystemDiagrams({
+        page,
+        size: PAGE_SIZE,
+        keyword: keyword || undefined,
+      }),
   });
+
+  const diagrams = pageData?.content ?? [];
+  const pageInfo = pageData?.page;
+
+  const handleSearch = () => {
+    setKeyword(keywordInput.trim());
+    setPage(0);
+  };
 
   const selected = diagrams.find((d) => d.diagramId === selectedId) ?? null;
 
@@ -74,9 +93,20 @@ const SystemDiagramPage = () => {
     >
       <PanelHead>
         <PanelTitle>계통도 목록</PanelTitle>
-        <Button variant="primary" onClick={() => openEditor(null)}>
-          + 계통도 등록
-        </Button>
+        <HeadControls>
+          <SearchInput
+            placeholder="계통도명·코드 검색"
+            value={keywordInput}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <Button variant="secondary" onClick={handleSearch}>
+            검색
+          </Button>
+          <Button variant="primary" onClick={() => openEditor(null)}>
+            + 계통도 등록
+          </Button>
+        </HeadControls>
       </PanelHead>
 
       <TableWrap>
@@ -108,7 +138,9 @@ const SystemDiagramPage = () => {
             ) : diagrams.length === 0 ? (
               <tr>
                 <Td colSpan={7} $center>
-                  등록된 계통도가 없습니다. "+ 계통도 등록"으로 추가하세요.
+                  {keyword
+                    ? `"${keyword}" 검색 결과가 없습니다.`
+                    : '등록된 계통도가 없습니다. "+ 계통도 등록"으로 추가하세요.'}
                 </Td>
               </tr>
             ) : (
@@ -166,6 +198,10 @@ const SystemDiagramPage = () => {
           </tbody>
         </Table>
       </TableWrap>
+
+      {pageInfo && (
+        <Pagination data={pageInfo} onPageChange={setPage} />
+      )}
 
       {/* 선택 계통도 상세 — 서브 장비 + 배선 */}
       {selected && (
@@ -255,6 +291,25 @@ const PanelTitle = styled.h3`
   font-size: 15px;
   font-weight: 700;
   color: #111d2c;
+`;
+
+const HeadControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const SearchInput = styled.input`
+  box-sizing: border-box;
+  min-width: 220px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  &::placeholder { color: #9ca3af; }
+  &:focus { border-color: #4a90d9; }
 `;
 
 const TableWrap = styled.div`

@@ -41,6 +41,8 @@ import privateApi from "./api";
  *   displayOrder: number;
  *   active: boolean;
  *   isLeaf: boolean;
+ *   assetId: number | null;
+ *   assetName: string | null;
  *   schemaDefinitions: Array<object>;
  * }} DeviceCategoryFlat
  */
@@ -79,7 +81,7 @@ export async function categoryFetchAPI() {
 
 /**
  * POST /device/device-categories — 카테고리 생성
- * @param {{ categoryName: string; categoryNameEn?: string; categoryCode: string; parentId?: number; description?: string; displayOrder?: number; active?: boolean }} payload
+ * @param {{ categoryName: string; categoryNameEn?: string; categoryCode: string; parentId?: number; description?: string; displayOrder?: number; active?: boolean; assetId?: number | null }} payload
  */
 export async function createCategoryAPI(payload) {
   const { data } = await privateApi.post("/device/device-categories", payload);
@@ -88,7 +90,7 @@ export async function createCategoryAPI(payload) {
 
 /**
  * PUT /device/device-categories/{categoryId} — 카테고리 수정
- * @param {{ categoryId: number; payload: object }} param
+ * @param {{ categoryId: number; payload: { categoryName?: string; categoryNameEn?: string | null; categoryCode?: string; active?: boolean; assetId?: number | null } }} param
  */
 export async function updateCategoryAPI({ categoryId, payload }) {
   const { data } = await privateApi.put(`/device/device-categories/${categoryId}`, payload);

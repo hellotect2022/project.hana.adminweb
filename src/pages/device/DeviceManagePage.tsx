@@ -24,7 +24,6 @@ import {
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 const PAGE_SIZE = 20;
-const DEVICE_OPTION_SIZE = 500;
 
 const DeviceManagePage = () => {
   const { openModal, closeModal } = useModal();
@@ -36,11 +35,8 @@ const DeviceManagePage = () => {
   const [draftFilter, setDraftFilter] = useState(EMPTY_HIERARCHY_FILTER);
   const [appliedFilter, setAppliedFilter] = useState(EMPTY_HIERARCHY_FILTER);
 
-  const { data: deviceOptions = [] } = useQuery({
-    queryKey: [...DEVICE_LIST_QUERY_KEY, "options"],
-    queryFn: () => fetchDevicesAPI({ page: 0, size: DEVICE_OPTION_SIZE }),
-    select: (res) => res.data?.content ?? [],
-  });
+  // 장비 드롭다운은 DeviceHierarchyFilter 가 소분류별로 서버에서 직접 조회한다.
+  // (과거 500-cap 목록 프리페치 → 앞 500개 밖 장비 누락 버그 제거)
 
   const appliedDeviceId = resolveHierarchyDeviceId(appliedFilter);
   const appliedCategoryId = resolveHierarchyCategoryId(appliedFilter);
@@ -161,7 +157,6 @@ const DeviceManagePage = () => {
     <AdminPageTemplate title="장비 관리" description="등록된 장비 목록을 조회하고 새 장비를 추가합니다.">
       <Toolbar>
         <DeviceHierarchyFilter
-          devices={deviceOptions}
           value={draftFilter}
           onChange={setDraftFilter}
         />

@@ -10,10 +10,6 @@ import {
   flattenDeviceCategoryTree,
   sortByDisplayOrder,
 } from "@/services/deviceService";
-import {
-  fetchUnityAssetsList,
-  UNITY_ASSET_LIST_QUERY_KEY,
-} from "@/services/unityAssetService";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /** @param {{ categoryCode?: string; categoryName: string }} cat */
@@ -77,7 +73,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
   const [selectedSmallId, setSelectedSmallId] = useState(null);
   const [deviceName, setDeviceName] = useState("");
   const [deviceDescription, setDeviceDescription] = useState("");
-  const [assetId, setAssetId] = useState("");
   const [submitError, setSubmitError] = useState("");
 
   const {
@@ -94,17 +89,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
       if (!res?.success) throw new Error(res?.message || "카테고리 조회 실패");
       return res.data ?? [];
     },
-  });
-
-  const {
-    data: assets = [],
-    isLoading: isAssetsLoading,
-    isError: isAssetsError,
-    error: assetsError,
-  } = useQuery({
-    queryKey: UNITY_ASSET_LIST_QUERY_KEY,
-    queryFn: () => fetchUnityAssetsList({ activeOnly: true }),
-    enabled: Boolean(selectedSmallId),
   });
 
   const flat = useMemo(() => flattenDeviceCategoryTree(categoryTree), [categoryTree]);
@@ -178,7 +162,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
         onSuccess(res, variables);
       } else {
         setDeviceName("");
-        setAssetId("");
         setSubmitError("");
         alert(message);
       }
@@ -194,7 +177,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     setSelectedSmallId(null);
     setDeviceName("");
     setDeviceDescription("");
-    setAssetId("");
     setSubmitError("");
   };
   const pickMid = (id) => {
@@ -202,14 +184,12 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     setSelectedSmallId(null);
     setDeviceName("");
     setDeviceDescription("");
-    setAssetId("");
     setSubmitError("");
   };
   const pickSmall = (id) => {
     setSelectedSmallId(id);
     setDeviceName("");
     setDeviceDescription("");
-    setAssetId("");
     setSubmitError("");
   };
 
@@ -224,7 +204,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
       description: deviceDescription.trim(),
       deviceKey,
       categoryId: selectedSmallId,
-      assetId: assetId ? Number(assetId) : null,
       active: true,
       points: pointRows.map(({ tagName, pointKey, schemaTagName, pointName, pointType, unit, tagDesc, isDisplay }) => ({
         tagName,
@@ -360,30 +339,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
               </KeyHint>
             </KeyFieldWrap>
 
-            <FieldLabel>3D 에셋 (asset_name)</FieldLabel>
-            <AssetFieldWrap>
-              {isAssetsLoading ? (
-                <AssetStatus>에셋 목록 불러오는 중…</AssetStatus>
-              ) : isAssetsError ? (
-                <AssetStatus $error>{assetsError?.message ?? "에셋 목록을 불러오지 못했습니다."}</AssetStatus>
-              ) : (
-                <AssetSelect
-                  value={assetId}
-                  onChange={(e) => setAssetId(e.target.value)}
-                >
-                  <option value="">— 3D 에셋 선택 (선택) —</option>
-                  {assets.map((a) => (
-                    <option key={a.assetId} value={String(a.assetId)}>
-                      {a.assetName}
-                    </option>
-                  ))}
-                </AssetSelect>
-              )}
-              <KeyHint>
-                Unity 3D 모델 에셋을 선택합니다. 미선택 시 3D 표시용 에셋 없이 등록됩니다.
-              </KeyHint>
-            </AssetFieldWrap>
-
             <FieldLabel $required>장비 설명 (deviceDescription)</FieldLabel>
             <KeyFieldWrap>
               <FieldInput
@@ -484,7 +439,6 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
               variant="outline"
               onClick={() => {
                 setDeviceName("");
-                setAssetId("");
                 setSubmitError("");
                 setDeviceDescription("");
               }}
@@ -708,26 +662,6 @@ const KeyFieldWrap = styled.div`
   display: flex;
   flex-direction: column;
   gap: 6px;
-`;
-
-const AssetFieldWrap = styled(KeyFieldWrap)``;
-
-const AssetSelect = styled.select`
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  outline: none;
-  &:focus {
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
-  }
-`;
-
-const AssetStatus = styled.span<{ $error?: boolean }>`
-  font-size: 13px;
-  color: ${(p) => (p.$error ? "#dc2626" : "#64748b")};
 `;
 
 const KeyInput = styled.input`

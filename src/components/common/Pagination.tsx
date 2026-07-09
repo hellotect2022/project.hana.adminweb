@@ -59,7 +59,7 @@ const Pagination = ({
   onPageChange,
   showSummary = true,
   siblingCount = 2,
-  hideOnSinglePage = true,
+  hideOnSinglePage = false,
 }) => {
   if (!data) return null;
 

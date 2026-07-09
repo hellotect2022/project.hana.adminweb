@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
-import { Button } from "@/components/ui";
+import { Button, SearchableSelect } from "@/components/ui";
 import {
   categoryFetchAPI,
   createCategoryAPI,
@@ -13,6 +13,10 @@ import {
   updateCategoryAPI,
   updateCategorySchemaAPI,
 } from "@/services/deviceService";
+import {
+  fetchUnityAssetsList,
+  UNITY_ASSET_LIST_QUERY_KEY,
+} from "@/services/unityAssetService";
 
 // 스키마 type 선택지
 const SCHEMA_TYPES = ["AI", "DI", "DO", "AO", "FUNCTION", "String", "Bool"];
@@ -134,7 +138,34 @@ const CategoryManageForm = () => {
   const [editCategoryName, setEditCategoryName] = useState("");
   const [editCategoryNameEn, setEditCategoryNameEn] = useState("");
   const [editCategoryCode, setEditCategoryCode] = useState("");
+  const [editAssetId, setEditAssetId] = useState("");
   const [categoryInfoDirty, setCategoryInfoDirty] = useState(false);
+
+  // ─── 기본 3D 에셋 후보(PIPE 제외: 카테고리 기본에셋은 장비 메시) ───
+  const {
+    data: assets = [],
+    isLoading: isAssetsLoading,
+    isError: isAssetsError,
+    error: assetsError,
+  } = useQuery({
+    queryKey: UNITY_ASSET_LIST_QUERY_KEY,
+    queryFn: () => fetchUnityAssetsList({ activeOnly: true }),
+  });
+
+  const selectableAssets = useMemo(
+    () => assets.filter((a) => a?.assetType !== "PIPE"),
+    [assets]
+  );
+
+  // 기본 3D 에셋 SearchableSelect 옵션
+  const assetOptions = useMemo(
+    () =>
+      selectableAssets.map((a) => ({
+        value: a.assetId,
+        label: a.assetName,
+      })),
+    [selectableAssets]
+  );
 
   // ─── 계층 목록 ───
   const majors = useMemo(
@@ -185,6 +216,7 @@ const CategoryManageForm = () => {
       setEditCategoryName("");
       setEditCategoryNameEn("");
       setEditCategoryCode("");
+      setEditAssetId("");
       setCategoryInfoDirty(false);
       setSchemaRows([]);
       setSchemaDirty(false);
@@ -193,6 +225,7 @@ const CategoryManageForm = () => {
     setEditCategoryName(activeCategory.categoryName ?? "");
     setEditCategoryNameEn(activeCategory.categoryNameEn ?? "");
     setEditCategoryCode(activeCategory.categoryCode ?? "");
+    setEditAssetId(activeCategory.assetId != null ? String(activeCategory.assetId) : "");
     setCategoryInfoDirty(false);
     const rows = (activeCategory.schemaDefinitions ?? []).map((s) => ({
       _key: Math.random().toString(36).slice(2),
@@ -259,7 +292,7 @@ const CategoryManageForm = () => {
   const handleAddConfirm = (level, { categoryName, categoryNameEn, categoryCode }) => {
     const parentId =
       level === "major" ? null : level === "mid" ? selectedMajorId : selectedMidId;
-    createCategory({ categoryName, categoryNameEn, categoryCode, parentId, active: true });
+    createCategory({ categoryName, categoryNameEn, categoryCode, parentId, active: true, assetId: null });
   };
 
   const handleSaveCategoryInfo = () => {
@@ -271,6 +304,7 @@ const CategoryManageForm = () => {
         categoryNameEn: editCategoryNameEn.trim() || null,
         categoryCode: editCategoryCode.trim(),
         active: activeCategory?.active ?? true,
+        assetId: editAssetId ? Number(editAssetId) : null,
       },
     });
   };
@@ -534,9 +568,31 @@ const CategoryManageForm = () => {
                 placeholder="deviceKey 조합용 (필수)"
               />
             </CategoryFieldGroup>
+            <CategoryFieldGroup>
+              <CategoryFieldLabel>기본 3D 에셋 (asset)</CategoryFieldLabel>
+              {isAssetsError ? (
+                <AssetStatus $error>
+                  {assetsError?.message ?? "에셋 목록을 불러오지 못했습니다."}
+                </AssetStatus>
+              ) : (
+                <SearchableSelect
+                  options={assetOptions}
+                  value={editAssetId}
+                  onChange={(v) => {
+                    setEditAssetId(v);
+                    setCategoryInfoDirty(true);
+                  }}
+                  placeholder="에셋 검색/선택"
+                  loading={isAssetsLoading}
+                  emptyText="선택 가능한 에셋이 없습니다"
+                  noMatchText="검색 결과 없음"
+                />
+              )}
+            </CategoryFieldGroup>
           </CategoryInfoGrid>
           <CategoryInfoHint>
             코드명은 장비 등록 시 deviceKey(대_중_소_장비이름) 조합에 사용됩니다. 영문이름은 표시·관리용이며 선택입니다.
+            기본 3D 에셋은 이 카테고리에 속한 장비의 3D 렌더 기본 모델입니다.
           </CategoryInfoHint>
         </CategoryInfoSection>
       )}
@@ -897,6 +953,12 @@ const CategoryFieldInput = styled.input`
   &:focus {
     border-color: #4a6380;
   }
+`;
+
+const AssetStatus = styled.span<{ $error?: boolean }>`
+  font-size: 12px;
+  padding-top: 8px;
+  color: ${(p) => (p.$error ? "#dc2626" : "#64748b")};
 `;
 
 const CategoryInfoHint = styled.p`

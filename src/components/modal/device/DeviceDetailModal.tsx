@@ -13,10 +13,6 @@ import {
   patchDeviceAPI,
 } from "@/services/deviceService";
 import DeviceSmallCategorySelect from "@/components/device/DeviceSmallCategorySelect";
-import {
-  fetchUnityAssetsList,
-  UNITY_ASSET_LIST_QUERY_KEY,
-} from "@/services/unityAssetService";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
 /**
@@ -33,7 +29,6 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
     description: device?.description ?? "",
     active: device?.active ?? true,
     categoryId: device?.categoryId ? String(device.categoryId) : "",
-    assetId: device?.assetId != null ? String(device.assetId) : "",
   });
   const [dirty, setDirty] = useState(false);
 
@@ -45,22 +40,10 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       description: device.description ?? "",
       active: device.active ?? true,
       categoryId: device.categoryId ? String(device.categoryId) : "",
-      assetId: device.assetId != null ? String(device.assetId) : "",
     });
     setDirty(false);
     setEditMode(false);
   }, [device]);
-
-  const {
-    data: assets = [],
-    isLoading: isAssetsLoading,
-    isError: isAssetsError,
-    error: assetsError,
-  } = useQuery({
-    queryKey: UNITY_ASSET_LIST_QUERY_KEY,
-    queryFn: () => fetchUnityAssetsList({ activeOnly: true }),
-    enabled: editMode,
-  });
 
   // ── 카테고리 목록 ──
   const { data: flatCategories = [] } = useQuery({
@@ -133,7 +116,6 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
         description: form.description || null,
         active: form.active,
         categoryId: form.categoryId ? Number(form.categoryId) : null,
-        assetId: form.assetId ? Number(form.assetId) : null,
       },
     });
   };
@@ -153,7 +135,6 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       description: device.description ?? "",
       active: device.active ?? true,
       categoryId: device.categoryId ? String(device.categoryId) : "",
-      assetId: device.assetId != null ? String(device.assetId) : "",
     });
     setDirty(false);
     setEditMode(false);
@@ -271,29 +252,8 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
         <Row>
           <RowLabel>3D 에셋</RowLabel>
           <RowValue>
-            {editMode ? (
-              isAssetsLoading ? (
-                <AssetStatus>에셋 목록 불러오는 중…</AssetStatus>
-              ) : isAssetsError ? (
-                <AssetStatus $error>
-                  {assetsError?.message ?? "에셋 목록을 불러오지 못했습니다."}
-                </AssetStatus>
-              ) : (
-                <AssetSelect
-                  value={form.assetId}
-                  onChange={(e) => handleChange("assetId", e.target.value)}
-                >
-                  <option value="">— 3D 에셋 없음 —</option>
-                  {assets.map((a) => (
-                    <option key={a.assetId} value={String(a.assetId)}>
-                      {a.assetName}
-                    </option>
-                  ))}
-                </AssetSelect>
-              )
-            ) : (
-              device.assetName || "-"
-            )}
+            {device.assetName || "-"}
+            <AssetSourceHint>카테고리 기본 에셋 기준</AssetSourceHint>
           </RowValue>
         </Row>
         <Row>
@@ -636,24 +596,11 @@ const CategoryEditHint = styled.span`
   color: #64748b;
 `;
 
-const AssetSelect = styled.select`
-  width: 100%;
-  padding: 6px 10px;
-  font-size: 13px;
-  border: 1px solid #d1d5db;
-  border-radius: 5px;
-  background: #fff;
-  outline: none;
-  cursor: pointer;
-  &:focus {
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.12);
-  }
-`;
-
-const AssetStatus = styled.span<{ $error?: boolean }>`
-  font-size: 12px;
-  color: ${(p) => (p.$error ? "#dc2626" : "#64748b")};
+const AssetSourceHint = styled.span`
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 11px;
+  color: #94a3b8;
 `;
 
 const CategoryPath = styled.span`

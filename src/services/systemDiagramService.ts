@@ -92,14 +92,67 @@ export interface SystemDiagramPayload {
   wirings: DiagramWiringPayloadItem[];
 }
 
+/** 페이지 메타 (ApiResponse.PageResponse.PageInfo) */
+export interface PageInfo {
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
+/** 페이지 응답 (ApiResponse.PageResponse<T>) — data.content + data.page */
+export interface PageResponse<T> {
+  content: T[];
+  page: PageInfo;
+}
+
+/** 목록 조회 파라미터 */
+export interface SystemDiagramListParams {
+  page?: number;
+  size?: number;
+  /** 계통도명/코드 부분일치(선택) */
+  keyword?: string;
+  /** Spring Pageable sort(기본 sortOrder,asc) */
+  sort?: string;
+}
+
 export const SYSTEM_DIAGRAM_QUERY_KEY = ["system-diagram", "list"];
 export const systemDiagramKey = (diagramId: number) => ["system-diagram", diagramId];
 
-/** GET /api/system-diagram → List<SystemDiagramResponse> */
-export async function fetchSystemDiagrams(): Promise<SystemDiagram[]> {
-  const { data } = await privateApi.get("/system-diagram");
+const EMPTY_PAGE_INFO: PageInfo = {
+  totalElements: 0,
+  totalPages: 0,
+  number: 0,
+  size: 20,
+  first: true,
+  last: true,
+};
+
+/**
+ * GET /api/system-diagram?keyword=&page=&size=&sort=
+ * → ApiResponse.PageResponse<SystemDiagramResponse> ({ content, page })
+ */
+export async function fetchSystemDiagrams({
+  page = 0,
+  size = 20,
+  keyword,
+  sort,
+}: SystemDiagramListParams = {}): Promise<PageResponse<SystemDiagram>> {
+  const { data } = await privateApi.get("/system-diagram", {
+    params: {
+      page,
+      size,
+      ...(keyword ? { keyword } : {}),
+      ...(sort ? { sort } : {}),
+    },
+  });
   if (!data?.success) throw new Error(data?.message || "계통도 목록 조회 실패");
-  return data.data ?? [];
+  return {
+    content: data.data?.content ?? [],
+    page: data.data?.page ?? { ...EMPTY_PAGE_INFO, size },
+  };
 }
 
 /** GET /api/system-diagram/{id} → SystemDiagramResponse */

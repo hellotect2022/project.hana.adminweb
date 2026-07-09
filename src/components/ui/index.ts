@@ -22,3 +22,9 @@ export type { IconButtonProps, IconButtonSize } from "./IconButton";
 
 export { default as Toggle } from "./Toggle";
 export type { ToggleProps } from "./Toggle";
+
+export { default as SearchableSelect } from "./SearchableSelect";
+export type {
+  SearchableSelectProps,
+  SearchableSelectOption,
+} from "./SearchableSelect";

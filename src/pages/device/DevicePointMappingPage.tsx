@@ -6,12 +6,10 @@ import { Button } from "@/components/ui";
 import Pagination from "@/components/common/Pagination";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import {
-  DEVICE_LIST_QUERY_KEY,
   DEVICE_POINT_MAPPING_QUERY_KEY,
   POINT_MAPPING_STATS_QUERY_KEY,
   downloadPointMappingTemplateAPI,
   fetchDevicePointsForMappingAPI,
-  fetchDevicesAPI,
   fetchPointMappingStatsAPI,
   importPointMappingAPI,
   saveDevicePointRefMappingAPI,
@@ -24,7 +22,6 @@ import {
 } from "@/utils/deviceHierarchyFilterUtils";
 
 const PAGE_SIZE = 50;
-const DEVICE_OPTION_SIZE = 500;
 
 const norm = (v) => (v ?? "").trim();
 
@@ -40,11 +37,8 @@ const DevicePointMappingPage = () => {
   /** @type {[Record<number, { refDeviceCode: string; refPointCode: string }>, Function]} */
   const [drafts, setDrafts] = useState({});
 
-  const { data: devices = [] } = useQuery({
-    queryKey: [...DEVICE_LIST_QUERY_KEY, "options"],
-    queryFn: () => fetchDevicesAPI({ page: 0, size: DEVICE_OPTION_SIZE }),
-    select: (res) => res.data?.content ?? [],
-  });
+  // 장비 드롭다운은 DeviceHierarchyFilter 가 소분류별로 서버에서 직접 조회한다.
+  // (과거 500-cap 목록 프리페치 → 앞 500개 밖 장비 누락 버그 제거)
 
   const appliedDeviceId = resolveHierarchyDeviceId(appliedFilter);
   const appliedCategoryId = resolveHierarchyCategoryId(appliedFilter);
@@ -242,7 +236,6 @@ const DevicePointMappingPage = () => {
     >
       <Toolbar>
         <DeviceHierarchyFilter
-          devices={devices}
           value={draftFilter}
           onChange={setDraftFilter}
         />

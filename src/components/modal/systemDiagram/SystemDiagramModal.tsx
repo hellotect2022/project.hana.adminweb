@@ -15,7 +15,7 @@ import {
   DEVICE_CATEGORY_QUERY_KEY,
   DEVICE_LIST_QUERY_KEY,
   categoryFetchAPI,
-  fetchDevicesAPI,
+  fetchDeviceByIdAPI,
   flattenDeviceCategoryTree,
 } from "@/services/deviceService";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
@@ -107,6 +107,30 @@ function buildInitialWirings(diagram?: SystemDiagram | null): WiringDraft[] {
     }));
 }
 
+/**
+ * 수정 모드 시드: 응답(SystemDiagramResponse)에 이미 들어있는 장비명으로 id→name 맵을
+ * 구성한다. 500-cap 목록에 의존하지 않으므로 앞 500개 밖 장비도 정확히 표시된다.
+ */
+function buildInitialNameMap(
+  diagram?: SystemDiagram | null
+): Record<number, string> {
+  const m: Record<number, string> = {};
+  if (!diagram) return m;
+  if (diagram.masterDeviceId != null && diagram.masterDeviceName) {
+    m[diagram.masterDeviceId] = diagram.masterDeviceName;
+  }
+  diagram.devices?.forEach((d) => {
+    if (d.deviceId != null && d.deviceName) m[d.deviceId] = d.deviceName;
+  });
+  diagram.wirings?.forEach((w) => {
+    if (w.fromDeviceId != null && w.fromDeviceName)
+      m[w.fromDeviceId] = w.fromDeviceName;
+    if (w.toDeviceId != null && w.toDeviceName)
+      m[w.toDeviceId] = w.toDeviceName;
+  });
+  return m;
+}
+
 interface Props {
   /** 수정 대상. null 이면 신규 등록 */
   diagram?: SystemDiagram | null;
@@ -141,12 +165,16 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
     buildInitialWirings(diagram)
   );
 
-  // 장비 목록 (마스터/서브/배선 from·to 선택용) — deviceService 재사용
-  const { data: deviceRes } = useQuery({
-    queryKey: [...DEVICE_LIST_QUERY_KEY, "system-diagram-picker"],
-    queryFn: () => fetchDevicesAPI({ page: 0, size: 500 }),
+  // 수정 모드: 원본 마스터 장비를 단건 조회(GET /device/{id})해 categoryId 확보.
+  // 500-cap 목록에 의존하지 않으므로 앞 500개 밖 마스터도 대/중/소를 역산할 수 있다.
+  const editMasterId =
+    isEdit && diagram?.masterDeviceId != null ? diagram.masterDeviceId : null;
+  const { data: masterDeviceRes } = useQuery({
+    queryKey: [...DEVICE_LIST_QUERY_KEY, "system-diagram-master", editMasterId],
+    queryFn: () => fetchDeviceByIdAPI(Number(editMasterId)),
+    enabled: editMasterId != null,
   });
-  const devices: any[] = deviceRes?.data?.content ?? [];
+  const masterDevice: any = masterDeviceRes?.data ?? null;
 
   // 카테고리 트리 — 수정 모드 진입 시 masterDeviceId → 대/중/소 역산용
   // (DeviceHierarchyFilter 내부 쿼리와 동일 키라 react-query 가 캐시 공유)
@@ -163,26 +191,56 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
     [categoryTree]
   );
 
-  // 수정 모드: 기존 masterDeviceId 로 마스터 cascade 초깃값 1회 세팅
+  // 수정 모드: 단건 조회한 원본 마스터의 categoryId 로 대/중/소 cascade 초깃값 1회 세팅.
+  // 합성 배열 [{ deviceId, categoryId }] 을 넘겨 기존 역산 유틸을 그대로 재사용한다.
   const masterInitRef = useRef(false);
   useEffect(() => {
     if (masterInitRef.current) return;
-    if (!isEdit || !masterDeviceId) {
+    if (editMasterId == null) {
       masterInitRef.current = true;
       return;
     }
-    // 데이터 로드 대기 (둘 다 있어야 역산 가능)
-    if (!devices.length || !flatCategories.length) return;
+    // 단건 조회 결과 + 카테고리 트리 둘 다 로드돼야 역산 가능
+    if (!masterDevice || !flatCategories.length) return;
     setMasterFilter(
-      deriveHierarchyFilterFromDevice(masterDeviceId, devices, flatCategories)
+      deriveHierarchyFilterFromDevice(
+        editMasterId,
+        [
+          {
+            deviceId: Number(editMasterId),
+            categoryId: masterDevice.categoryId ?? null,
+          },
+        ],
+        flatCategories
+      )
     );
     masterInitRef.current = true;
-  }, [isEdit, masterDeviceId, devices, flatCategories]);
-  const deviceNameById = useMemo(() => {
-    const m = new Map<number, string>();
-    devices.forEach((d) => m.set(d.deviceId, d.deviceName));
-    return m;
-  }, [devices]);
+  }, [editMasterId, masterDevice, flatCategories]);
+  // id→장비명 맵(병합형 state). 수정 모드는 응답 값으로 시드하고, 신규 선택 시
+  // cascade 가 넘겨준 장비 객체로 병합한다. 500-cap 목록에 의존하지 않는다.
+  const [deviceNameById, setDeviceNameById] = useState<Record<number, string>>(
+    () => buildInitialNameMap(diagram)
+  );
+
+  // cascade 에서 방금 고른 장비 객체를 맵에 병합(해제 시 null → 무시).
+  const rememberDeviceName = (device: any | null) => {
+    if (!device || device.deviceId == null || !device.deviceName) return;
+    setDeviceNameById((prev) =>
+      prev[device.deviceId] === device.deviceName
+        ? prev
+        : { ...prev, [device.deviceId]: device.deviceName }
+    );
+  };
+
+  // 단건 조회한 마스터 장비명으로 라벨 보강(응답 시드에 없을 경우 대비).
+  useEffect(() => {
+    if (masterDevice?.deviceId == null || !masterDevice.deviceName) return;
+    setDeviceNameById((prev) =>
+      prev[masterDevice.deviceId] === masterDevice.deviceName
+        ? prev
+        : { ...prev, [masterDevice.deviceId]: masterDevice.deviceName }
+    );
+  }, [masterDevice]);
 
   // 배관(PIPE) 에셋 목록 — unityAssetService 재사용, assetType === "PIPE" 만
   const { data: assets = [] } = useQuery({
@@ -202,16 +260,9 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
     return ids;
   }, [masterDeviceId, subDeviceIds]);
 
-  // 서브 후보 = 마스터·이미 추가된 서브 제외
-  const subCandidates = useMemo(
-    () =>
-      devices.filter(
-        (d) =>
-          String(d.deviceId) !== masterDeviceId &&
-          !subDeviceIds.includes(String(d.deviceId))
-      ),
-    [devices, masterDeviceId, subDeviceIds]
-  );
+  // 서브 후보 제외 대상 = 마스터 + 이미 추가된 서브 (memberDeviceIds 재사용).
+  // DeviceHierarchyFilter 가 소분류별 장비를 서버에서 직접 조회하므로,
+  // 여기서 사전 필터링(subCandidates) 대신 excludeDeviceIds 로 제외만 전달한다.
 
   // 마스터 cascade 변경: 최종 선택된 deviceId 를 masterDeviceId 에 반영
   const handleMasterFilterChange = (v: typeof EMPTY_HIERARCHY_FILTER) => {
@@ -392,14 +443,14 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
             <Label $required>마스터 장비</Label>
             <CascadeWrap>
               <DeviceHierarchyFilter
-                devices={devices}
                 value={masterFilter}
                 onChange={handleMasterFilterChange}
+                onDevicePicked={rememberDeviceName}
               />
               <PickHint>
                 {masterDeviceId
                   ? `선택됨: ${
-                      deviceNameById.get(Number(masterDeviceId)) ??
+                      deviceNameById[Number(masterDeviceId)] ??
                       `Device#${masterDeviceId}`
                     }`
                   : "대>중>소 순으로 좁혀 장비 하나를 선택하세요."}
@@ -437,9 +488,10 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
           <SectionTitle>② 서브 장비 (마스터 제외)</SectionTitle>
           <PickerRow>
             <DeviceHierarchyFilter
-              devices={subCandidates}
+              excludeDeviceIds={memberDeviceIds}
               value={subFilter}
               onChange={setSubFilter}
+              onDevicePicked={rememberDeviceName}
             />
             <Button
               type="button"
@@ -456,7 +508,7 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
             <ChipList>
               {subDeviceIds.map((id) => (
                 <DeviceChip key={id}>
-                  {deviceNameById.get(Number(id)) ?? `Device#${id}`}
+                  {deviceNameById[Number(id)] ?? `Device#${id}`}
                   <ChipRemove
                     type="button"
                     onClick={() => removeSubDevice(id)}
@@ -540,7 +592,7 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
                       <option value="">선택</option>
                       {memberDeviceIds.map((id) => (
                         <option key={id} value={id}>
-                          {deviceNameById.get(id) ?? `Device#${id}`}
+                          {deviceNameById[id] ?? `Device#${id}`}
                           {String(id) === masterDeviceId ? " (마스터)" : ""}
                         </option>
                       ))}
@@ -558,7 +610,7 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
                       <option value="">선택</option>
                       {memberDeviceIds.map((id) => (
                         <option key={id} value={id}>
-                          {deviceNameById.get(id) ?? `Device#${id}`}
+                          {deviceNameById[id] ?? `Device#${id}`}
                           {String(id) === masterDeviceId ? " (마스터)" : ""}
                         </option>
                       ))}
