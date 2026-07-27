@@ -1,3 +1,4 @@
+import { showConfirm } from "@/utils/dialogBridge";
 import { useState } from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui";
@@ -66,8 +67,9 @@ const UserGroupManagement = () => {
     setShowRegister(false);
   };
 
-  const handleDelete = (groupId) => {
-    if (!window.confirm("이 그룹을 삭제할까요?")) return;
+  const handleDelete = async (groupId) => {
+    const ok = await showConfirm("이 그룹을 삭제할까요?");
+    if (!ok) return;
     // 필요 API: DELETE 그룹
     setGroups((prev) => prev.filter((g) => g.groupId !== groupId));
   };

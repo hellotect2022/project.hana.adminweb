@@ -1,5 +1,7 @@
 import Modal from "@/components/modal/Modal";
 import { setApiErrorModalHandler } from "@/utils/apiErrorModalBridge";
+import { setDialogHandlers } from "@/utils/dialogBridge";
+import type { DialogOptions } from "@/utils/dialogBridge";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -10,7 +12,9 @@ type ModalConfig = {
     title: ReactNode;
     content: ReactNode;
     onConfirm: (() => void) | null;
+    onCancel: (() => void) | null;
     hideFooter: boolean;
+    hideCancel: boolean;
     wide: boolean;
     full: boolean;
 };
@@ -21,7 +25,9 @@ export const ModalProvider = ({children}) => {
         title: "",
         content: "",
         onConfirm: null,
+        onCancel: null,
         hideFooter: false,
+        hideCancel: false,
         wide: false,
         full: false,
     })
@@ -37,7 +43,9 @@ export const ModalProvider = ({children}) => {
                 title,
                 content,
                 onConfirm: hideFooter ? null : onConfirm,
+                onCancel: null,
                 hideFooter,
+                hideCancel: false,
                 wide: full ? false : wide,
                 full,
             })
@@ -50,10 +58,50 @@ export const ModalProvider = ({children}) => {
             ...prev,
             isOpen: false,
             hideFooter: false,
+            hideCancel: false,
             wide: false,
             full: false,
         }))
     }, [])
+
+    // 전역 알림 모달(확인 1버튼) — 기존 alert() 대체
+    const showAlert = useCallback((message: string, options?: DialogOptions) => {
+        return new Promise<void>((resolve) => {
+            setModalConfig({
+                isOpen: true,
+                title: options?.title ?? "알림",
+                content: <DialogMessageBody message={message} />,
+                onConfirm: () => resolve(),
+                onCancel: () => resolve(),
+                hideFooter: false,
+                hideCancel: true,
+                wide: false,
+                full: false,
+            });
+        });
+    }, []);
+
+    // 전역 확인 모달(취소/확인) — 기존 confirm() 대체, Promise<boolean>
+    const showConfirm = useCallback((message: string, options?: DialogOptions) => {
+        return new Promise<boolean>((resolve) => {
+            setModalConfig({
+                isOpen: true,
+                title: options?.title ?? "확인",
+                content: <DialogMessageBody message={message} />,
+                onConfirm: () => resolve(true),
+                onCancel: () => resolve(false),
+                hideFooter: false,
+                hideCancel: false,
+                wide: false,
+                full: false,
+            });
+        });
+    }, []);
+
+    useEffect(() => {
+        setDialogHandlers({ alert: showAlert, confirm: showConfirm });
+        return () => setDialogHandlers(null);
+    }, [showAlert, showConfirm]);
 
     useEffect(() => {
         setApiErrorModalHandler(({ message, errorCode }) => {
@@ -64,7 +112,9 @@ export const ModalProvider = ({children}) => {
                     <ApiErrorModalBody message={message} errorCode={errorCode} />
                 ),
                 onConfirm: null,
+                onCancel: null,
                 hideFooter: false,
+                hideCancel: false,
                 wide: false,
                 full: false,
             });
@@ -86,6 +136,14 @@ export const ModalProvider = ({children}) => {
 }
 
 export const useModal = () => useContext(ModalContext);
+
+function DialogMessageBody({ message }: { message: string }) {
+    return (
+        <p style={{ margin: 0, color: "#374151", whiteSpace: "pre-wrap", textAlign: "center" }}>
+            {message}
+        </p>
+    );
+}
 
 function ApiErrorModalBody({ message, errorCode }) {
     return (

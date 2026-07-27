@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,14 +48,14 @@ const ColliderManageTab = () => {
     mutationFn: createZoneAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "등록에 실패했습니다.");
+        showAlert(res?.message || "등록에 실패했습니다.");
         return;
       }
       invalidateZones();
       closeModal();
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "등록 중 오류가 발생했습니다."));
+      showAlert(getApiErrorMessage(err, "등록 중 오류가 발생했습니다."));
     },
   });
 
@@ -62,14 +63,14 @@ const ColliderManageTab = () => {
     mutationFn: updateZoneAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "수정에 실패했습니다.");
+        showAlert(res?.message || "수정에 실패했습니다.");
         return;
       }
       invalidateZones();
       closeModal();
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다."));
+      showAlert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다."));
     },
   });
 
@@ -106,7 +107,7 @@ const ColliderManageTab = () => {
             // 전체 목록이 아닌 경우 다른 층의 중복은 못 잡으므로 서버 검사에 위임,
             // 여기서는 현재 목록 기준으로만 1차 안내
             if (!floorIdParam && isDuplicateMesh(payload.zoneMeshName)) {
-              window.alert("이미 같은 mesh_name이 있습니다.");
+              showAlert("이미 같은 mesh_name이 있습니다.");
               return;
             }
             createZone(payload);
@@ -129,7 +130,7 @@ const ColliderManageTab = () => {
           onCancel={closeModal}
           onSubmit={(payload) => {
             if (!floorIdParam && isDuplicateMesh(payload.zoneMeshName, payload.zoneId)) {
-              window.alert("이미 같은 mesh_name이 있습니다.");
+              showAlert("이미 같은 mesh_name이 있습니다.");
               return;
             }
             updateZone(payload);

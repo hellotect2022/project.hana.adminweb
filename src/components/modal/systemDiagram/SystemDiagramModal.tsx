@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -274,7 +275,7 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
     const picked = subFilter.deviceId;
     if (!picked) return;
     if (picked === masterDeviceId) {
-      window.alert("마스터 장비는 서브 장비로 추가할 수 없습니다.");
+      showAlert("마스터 장비는 서브 장비로 추가할 수 없습니다.");
       return;
     }
     if (subDeviceIds.includes(picked)) return;
@@ -335,50 +336,50 @@ const SystemDiagramModal = ({ diagram, onClose }: Props) => {
         : createSystemDiagram(payload),
     onSuccess: (res: any) => {
       if (res?.success === false) {
-        window.alert(res?.message || "저장에 실패했습니다.");
+        showAlert(res?.message || "저장에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: SYSTEM_DIAGRAM_QUERY_KEY });
       onClose();
     },
     onError: (err) =>
-      window.alert(getApiErrorMessage(err, "계통도 저장 중 오류가 발생했습니다.")),
+      showAlert(getApiErrorMessage(err, "계통도 저장 중 오류가 발생했습니다.")),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!diagramName.trim()) {
-      window.alert("계통도명을 입력하세요.");
+      showAlert("계통도명을 입력하세요.");
       return;
     }
     if (!masterDeviceId) {
-      window.alert("마스터 장비를 선택하세요.");
+      showAlert("마스터 장비를 선택하세요.");
       return;
     }
 
     // 배선 검증: 이름·from·to 필수, from/to 는 계통도 소속 장비여야 함
     for (const w of wirings) {
       if (!w.wiringName.trim()) {
-        window.alert("배선명을 입력하세요.");
+        showAlert("배선명을 입력하세요.");
         return;
       }
       if (!w.fromDeviceId || !w.toDeviceId) {
-        window.alert(`배선 "${w.wiringName}" 의 from/to 장비를 선택하세요.`);
+        showAlert(`배선 "${w.wiringName}" 의 from/to 장비를 선택하세요.`);
         return;
       }
       if (
         !memberDeviceIds.includes(Number(w.fromDeviceId)) ||
         !memberDeviceIds.includes(Number(w.toDeviceId))
       ) {
-        window.alert(
+        showAlert(
           `배선 "${w.wiringName}" 의 from/to 는 계통도 소속 장비(마스터+서브)여야 합니다.`
         );
         return;
       }
       for (const s of w.segments) {
         if (!s.assetId) {
-          window.alert(`배선 "${w.wiringName}" 의 세그먼트 배관 에셋을 선택하세요.`);
+          showAlert(`배선 "${w.wiringName}" 의 세그먼트 배관 에셋을 선택하세요.`);
           return;
         }
       }

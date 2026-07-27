@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { addUserToRoleAPI, fetchUsersExceptRoleAPI, fetchUsersInRoleAPI, removeUserFromRoleAPI, ROLES_LIST_QUERY_KEY } from "@/services/roleService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -43,7 +44,7 @@ const RoleMembersModalContent = ({
       queryClient.invalidateQueries({ queryKey: ROLES_LIST_QUERY_KEY });
       setSearchKey(""); // 검색어 초기화
     },
-    onError: (err) => window.alert(getApiErrorMessage(err, "사용자 추가에 실패했습니다.")),
+    onError: (err) => showAlert(getApiErrorMessage(err, "사용자 추가에 실패했습니다.")),
   });
 
   // 2. 사용자 제거 Mutation
@@ -54,7 +55,7 @@ const RoleMembersModalContent = ({
       queryClient.invalidateQueries({ queryKey: ['fetchUsersExceptRole', role.roleId] });
       queryClient.invalidateQueries({ queryKey: ROLES_LIST_QUERY_KEY });
     },
-    onError: (err) => window.alert(getApiErrorMessage(err, "사용자 제거에 실패했습니다.")),
+    onError: (err) => showAlert(getApiErrorMessage(err, "사용자 제거에 실패했습니다.")),
   });
 
   const handleRemove = (userId) => removeMember({roleId: role.roleId, userId:userId})

@@ -1,3 +1,4 @@
+import { showConfirm } from "@/utils/dialogBridge";
 import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -409,8 +410,9 @@ const EventThresholdPage = () => {
     });
   };
 
-  const handleDelete = (ruleId) => {
-    if (!window.confirm("이 규칙을 삭제할까요?")) return;
+  const handleDelete = async (ruleId) => {
+    const ok = await showConfirm("이 규칙을 삭제할까요?");
+    if (!ok) return;
     deleteRule(ruleId);
   };
 

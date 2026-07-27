@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -208,39 +209,39 @@ const AlarmPolicyModal = ({ policy, onClose }: Props) => {
         : createAlarmPolicy(payload),
     onSuccess: (res: any) => {
       if (res?.success === false) {
-        window.alert(res?.message || "저장에 실패했습니다.");
+        showAlert(res?.message || "저장에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: ALARM_POLICY_QUERY_KEY });
       onClose();
     },
     onError: (err) =>
-      window.alert(getApiErrorMessage(err, "알람 정책 저장 중 오류가 발생했습니다.")),
+      showAlert(getApiErrorMessage(err, "알람 정책 저장 중 오류가 발생했습니다.")),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!policyName.trim()) {
-      window.alert("정책명을 입력하세요.");
+      showAlert("정책명을 입력하세요.");
       return;
     }
     if (scope === "DEVICE" && !deviceId) {
-      window.alert("대상 디바이스를 선택하세요.");
+      showAlert("대상 디바이스를 선택하세요.");
       return;
     }
     if (scope === "CATEGORY" && !categoryId) {
-      window.alert("대상 카테고리(소분류)를 선택하세요.");
+      showAlert("대상 카테고리(소분류)를 선택하세요.");
       return;
     }
     if (!tagName.trim()) {
-      window.alert("대상 태그(tagName)를 입력하세요.");
+      showAlert("대상 태그(tagName)를 입력하세요.");
       return;
     }
 
     const enabledLevels = levels.filter((l) => l.enabled);
     if (enabledLevels.length === 0) {
-      window.alert("심각도 레벨을 최소 1개 이상 사용 설정하세요.");
+      showAlert("심각도 레벨을 최소 1개 이상 사용 설정하세요.");
       return;
     }
 

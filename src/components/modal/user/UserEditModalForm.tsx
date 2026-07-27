@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui";
@@ -87,7 +88,7 @@ const UserEditModalForm = ({ user, onSave, onCancel }) => {
     e.preventDefault();
     if (form.password || form.passwordConfirm) {
       if (form.password !== form.passwordConfirm) {
-        window.alert("새 비밀번호와 확인이 일치하지 않습니다.");
+        showAlert("새 비밀번호와 확인이 일치하지 않습니다.");
         return;
       }
     }

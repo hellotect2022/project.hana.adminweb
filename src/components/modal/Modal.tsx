@@ -3,18 +3,28 @@ import { SvgIcons } from "../common/Icon";
 import { Button } from "@/components/ui";
 
 const Modal = ({ config, onClose }) => {
-  const { isOpen, title, content, onConfirm, hideFooter, wide, full } = config;
+  const { isOpen, title, content, onConfirm, onCancel, hideFooter, hideCancel, wide, full } = config;
   if (!isOpen) return null;
 
   const showFooter = !hideFooter;
 
+  // 취소/닫기(X) → onCancel(있으면) 후 닫기. 확인 → onConfirm 후 닫기.
+  const handleCancel = () => {
+    if (onCancel) onCancel();
+    onClose();
+  };
+  const handleConfirm = () => {
+    if (onConfirm) onConfirm();
+    onClose();
+  };
+
   return (
-    <Backdrop 
+    <Backdrop
     // onClick={onClose}
     >
       <ModalContainer $wide={wide} $full={full} onClick={(e) => e.stopPropagation()}>
         <CloseRow>
-          <button type="button" aria-label="닫기" onClick={onClose}>
+          <button type="button" aria-label="닫기" onClick={handleCancel}>
             <SvgIcons.Cross />
           </button>
         </CloseRow>
@@ -22,21 +32,20 @@ const Modal = ({ config, onClose }) => {
         <ModalBody $alignLeft={hideFooter || wide || full}>{content}</ModalBody>
         {showFooter && (
           <ModalFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              style={{ width: 137, height: 36 }}
-            >
-              취소
-            </Button>
+            {!hideCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                style={{ width: 137, height: 36 }}
+              >
+                취소
+              </Button>
+            )}
             <Button
               type="button"
               variant="primary"
-              onClick={() => {
-                if (onConfirm) onConfirm();
-                onClose();
-              }}
+              onClick={handleConfirm}
               style={{ width: 137, height: 36 }}
             >
               확인

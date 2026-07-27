@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { showAlert, showConfirm } from "@/utils/dialogBridge";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
 import {
@@ -15,6 +16,7 @@ import {
   updateDeviceSystemSortOrders,
 } from "@/services/deviceSystemService";
 import DeviceSystemForm from "@/components/modal/menu/DeviceSystemForm";
+import SubSystemPanel from "@/components/menu/SubSystemPanel";
 import { Button } from "@/components/ui";
 import { useModal } from "@/contexts/ModalContext";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
@@ -51,42 +53,34 @@ const MenuDisplaySettings = () => {
       .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }, [categoryTree]);
 
-  const { data: systems = [], isLoading: systemsLoading } = useQuery({
+  const { data: systems, isLoading: systemsLoading } = useQuery({
     queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY,
     queryFn: fetchAllDeviceSystems,
+    // 정렬을 쿼리에서 수행 → 결과 참조가 렌더 간 안정(react-query 메모이즈).
+    // 기본값 []를 제거해 로딩 중 매 렌더 새 배열 생성으로 인한 무한루프를 방지.
+    select: (data) => [...data].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
   });
 
-  const sortedSystems = useMemo(() => {
-    return [...systems].sort(
-      (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-    );
-  }, [systems]);
-
   const [localSystemRows, setLocalSystemRows] = useState([]);
+  const [expandedSystemId, setExpandedSystemId] = useState<number | null>(null);
 
   useEffect(() => {
-    const ordered = [...systems].sort(
-      (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
-    );
-    setLocalSystemRows(ordered.map((m) => ({ ...m })));
+    if (!systems) return; // 로딩(undefined) 구간 스킵
+    setLocalSystemRows(systems.map((m) => ({ ...m })));
   }, [systems]);
 
-  const isOrderDirty = useMemo(() => {
-    if (localSystemRows.length !== sortedSystems.length) return false;
-    return localSystemRows.some(
-      (r, i) => r.systemId !== sortedSystems[i]?.systemId
-    );
-  }, [localSystemRows, sortedSystems]);
+  // 펼쳐진 시스템의 최신(안정) 참조 — SubSystemPanel effect 안전성 확보.
+  const expandedSystem = useMemo(
+    () => (systems ?? []).find((s) => s.systemId === expandedSystemId) ?? null,
+    [systems, expandedSystemId]
+  );
 
-  const formatCategoryLabels = (row) => {
-    if (row.categories?.length) {
-      return row.categories.map((c) => c.categoryName).join(", ");
-    }
-    if (!row.categoryIds?.length) return "—";
-    return row.categoryIds
-      .map((id) => smallCategories.find((c) => c.categoryId === id)?.categoryName ?? id)
-      .join(", ");
-  };
+  const isOrderDirty = useMemo(() => {
+    if (!systems || localSystemRows.length !== systems.length) return false;
+    return localSystemRows.some(
+      (r, i) => r.systemId !== systems[i]?.systemId
+    );
+  }, [localSystemRows, systems]);
 
   const moveSystemRow = (index, direction) => {
     setLocalSystemRows((prev) => {
@@ -99,22 +93,22 @@ const MenuDisplaySettings = () => {
   };
 
   const resetLocalOrder = () => {
-    setLocalSystemRows(sortedSystems.map((m) => ({ ...m })));
+    setLocalSystemRows((systems ?? []).map((m) => ({ ...m })));
   };
 
   const nextSortOrder = useMemo(() => {
-    if (!systems.length) return 1;
+    if (!systems?.length) return 1;
     return Math.max(...systems.map((m) => m.sortOrder ?? 0)) + 1;
   }, [systems]);
 
   const createSystemMutation = useMutation({
-    mutationFn: ({ systemName, systemCode, sortOrder, categoryIds }: any) =>
-      createDeviceSystem({ systemName, systemCode, sortOrder, categoryIds }),
+    mutationFn: ({ systemName, systemCode, sortOrder, active, categoryIds }: any) =>
+      createDeviceSystem({ systemName, systemCode, sortOrder, active, categoryIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "BMS 시스템 생성에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "BMS 시스템 생성에 실패했습니다."));
     },
   });
 
@@ -124,18 +118,18 @@ const MenuDisplaySettings = () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "BMS 시스템 삭제에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "BMS 시스템 삭제에 실패했습니다."));
     },
   });
 
   const updateSystemMutation = useMutation({
-    mutationFn: ({ systemId, systemName, systemCode, categoryIds }: any) =>
-      updateDeviceSystem(systemId, { systemName, systemCode, categoryIds }),
+    mutationFn: ({ systemId, systemName, systemCode, active, categoryIds }: any) =>
+      updateDeviceSystem(systemId, { systemName, systemCode, active, categoryIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "BMS 시스템 수정에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "BMS 시스템 수정에 실패했습니다."));
     },
   });
 
@@ -145,7 +139,7 @@ const MenuDisplaySettings = () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_SYSTEM_ALL_QUERY_KEY });
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "순서 저장에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "순서 저장에 실패했습니다."));
     },
   });
 
@@ -170,12 +164,14 @@ const MenuDisplaySettings = () => {
             systemName: "",
             systemCode: "",
             sortOrder: String(nextSortOrder),
+            active: true,
             categoryIds: [],
           }}
           smallCategories={smallCategories}
           categoriesLoading={categoriesLoading}
           categoriesError={categoriesError}
           categoriesErr={categoriesErr}
+          hasSubSystems={false}
           onClose={closeModal}
           onSubmit={(data) => createSystemMutation.mutateAsync(data)}
         />
@@ -183,14 +179,15 @@ const MenuDisplaySettings = () => {
     });
   };
 
-  const handleDeleteSystem = (systemId) => {
-    if (!window.confirm("이 BMS 시스템을 서버에서 삭제할까요?")) return;
+  const handleDeleteSystem = async (systemId) => {
+    const ok = await showConfirm("이 BMS 시스템을 서버에서 삭제할까요?");
+    if (!ok) return;
     deleteSystemMutation.mutate(systemId);
   };
 
   const openEditModal = (row) => {
     openModal({
-      title: "BMS 시스템 수정",
+      title: "시스템 수정",
       hideFooter: true,
       wide: true,
       content: (
@@ -199,12 +196,14 @@ const MenuDisplaySettings = () => {
           initialValues={{
             systemName: row.systemName ?? "",
             systemCode: row.systemCode ?? "",
+            active: row.active ?? true,
             categoryIds: row.categoryIds ?? [],
           }}
           smallCategories={smallCategories}
           categoriesLoading={categoriesLoading}
           categoriesError={categoriesError}
           categoriesErr={categoriesErr}
+          hasSubSystems={(row.subSystems?.length ?? 0) > 0}
           onClose={closeModal}
           onSubmit={(data) =>
             updateSystemMutation.mutateAsync({
@@ -226,7 +225,7 @@ const MenuDisplaySettings = () => {
     <Wrap>
       <ToolbarBar>
         <ToolbarHint>
-          시스템을 추가하고 소분류 카테고리를 매핑한 뒤, ↑↓ 로 순서를 바꾸고「순서 저장」하세요.
+          시스템을 추가하고「펼치기」로 서브시스템을 등록해 소분류 카테고리를 매핑하거나, 시스템 「수정」에서 소분류를 직접 매핑(2단)할 수 있습니다. 두 방식은 배타적으로 사용하세요. ↑↓ 로 순서를 바꾸고「순서 저장」합니다.
         </ToolbarHint>
         <Button
           variant="primary"
@@ -273,7 +272,8 @@ const MenuDisplaySettings = () => {
               <th>systemId</th>
               <th>systemName</th>
               <th>systemCode</th>
-              <th>소분류 카테고리</th>
+              <th>서브시스템</th>
+              <th>직접 매핑 소분류</th>
               <th>sortOrder</th>
               <th />
             </tr>
@@ -281,15 +281,23 @@ const MenuDisplaySettings = () => {
           <tbody>
             {localSystemRows.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: "center", color: "#9ca3af" }}>
+                <td colSpan={8} style={{ textAlign: "center", color: "#9ca3af" }}>
                   {systemsLoading
                     ? "시스템 목록을 불러오는 중입니다."
                     : "등록된 시스템이 없습니다. 상단「시스템 생성」으로 추가하세요."}
                 </td>
               </tr>
             ) : (
-              localSystemRows.map((r, index) => (
-                <tr key={r.systemId}>
+              localSystemRows.map((r, index) => {
+                const isExpanded = expandedSystemId === r.systemId;
+                const subCount = r.subSystems?.length ?? 0;
+                const directCategories = r.categories ?? [];
+                const directNames = directCategories
+                  .map((c) => c.categoryName)
+                  .filter(Boolean);
+                return (
+                <Fragment key={r.systemId}>
+                <tr>
                   <td>
                     <OrderBtnGroup>
                       <OrderBtn
@@ -323,7 +331,30 @@ const MenuDisplaySettings = () => {
                   <td>
                     <code>{r.systemCode}</code>
                   </td>
-                  <td>{formatCategoryLabels(r)}</td>
+                  <td>
+                    <ExpandBtn
+                      type="button"
+                      $expanded={isExpanded}
+                      onClick={() =>
+                        setExpandedSystemId((prev) =>
+                          prev === r.systemId ? null : r.systemId
+                        )
+                      }
+                    >
+                      <Caret aria-hidden>{isExpanded ? "▼" : "▶"}</Caret>
+                      서브시스템 {subCount}
+                    </ExpandBtn>
+                  </td>
+                  <td>
+                    {directNames.length > 0 ? (
+                      <DirectMapCell title={directNames.join(", ")}>
+                        <DirectCountBadge>{directNames.length}</DirectCountBadge>
+                        <DirectNames>{directNames.join(", ")}</DirectNames>
+                      </DirectMapCell>
+                    ) : (
+                      <MutedDash>—</MutedDash>
+                    )}
+                  </td>
                   <td>{r.sortOrder}</td>
                   <td>
                     <RowActions>
@@ -346,17 +377,37 @@ const MenuDisplaySettings = () => {
                     </RowActions>
                   </td>
                 </tr>
-              ))
+                {isExpanded && expandedSystem?.systemId === r.systemId ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: 0, background: "#f1f5f9" }}>
+                      <SubPanelWrap>
+                        <SubSystemPanel
+                          system={expandedSystem}
+                          smallCategories={smallCategories}
+                          categoriesLoading={categoriesLoading}
+                          categoriesError={categoriesError}
+                          categoriesErr={categoriesErr}
+                        />
+                      </SubPanelWrap>
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
+                );
+              })
             )}
           </tbody>
         </MenuTable>
       </MenuTableWrap>
       <FootNote>
-        생성: <code>POST /api/device-system</code> · 수정:{" "}
-        <code>PUT /api/device-system/{"{systemId}"}</code> · 삭제:{" "}
-        <code>DELETE /api/device-system/{"{systemId}"}</code> · 목록:{" "}
-        <code>GET /api/device-system/all</code> · 순서:{" "}
+        시스템: <code>GET /api/device-system/all</code> ·{" "}
+        <code>POST/PUT/DELETE /api/device-system</code> ·{" "}
         <code>PUT /api/device-system/sort-orders</code>
+        <br />
+        서브시스템:{" "}
+        <code>GET /api/device-system/sub-systems?systemId=</code> ·{" "}
+        <code>POST/PUT/DELETE /api/device-system/sub-systems</code> ·{" "}
+        <code>PUT /api/device-system/sub-systems/sort-orders</code>
       </FootNote>
     </Wrap>
   );
@@ -489,6 +540,66 @@ const RowActions = styled.div`
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+`;
+
+const ExpandBtn = styled.button<{ $expanded?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid ${(p) => (p.$expanded ? "#4a6380" : "#cbd5e1")};
+  border-radius: 6px;
+  background: ${(p) => (p.$expanded ? "#eef2f7" : "#fff")};
+  color: ${(p) => (p.$expanded ? "#3d5370" : "#334155")};
+  cursor: pointer;
+  &:hover {
+    background: ${(p) => (p.$expanded ? "#e8edf3" : "#f1f5f9")};
+  }
+`;
+
+const Caret = styled.span`
+  font-size: 10px;
+  line-height: 1;
+`;
+
+const DirectMapCell = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+`;
+
+const DirectCountBadge = styled.span`
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: #4a6380;
+  color: #fff;
+`;
+
+const DirectNames = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #475569;
+`;
+
+const MutedDash = styled.span`
+  color: #cbd5e1;
+`;
+
+const SubPanelWrap = styled.div`
+  padding: 10px 14px 14px;
 `;
 
 const FootNote = styled.p`

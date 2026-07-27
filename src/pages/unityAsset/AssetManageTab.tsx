@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,14 +47,14 @@ const AssetManageTab = () => {
     mutationFn: createUnityAssetAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "등록에 실패했습니다.");
+        showAlert(res?.message || "등록에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: UNITY_ASSET_LIST_QUERY_KEY });
       closeModal();
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "등록 중 오류가 발생했습니다."));
+      showAlert(getApiErrorMessage(err, "등록 중 오류가 발생했습니다."));
     },
   });
 
@@ -61,14 +62,14 @@ const AssetManageTab = () => {
     mutationFn: updateUnityAssetAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "수정에 실패했습니다.");
+        showAlert(res?.message || "수정에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: UNITY_ASSET_LIST_QUERY_KEY });
       closeModal();
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다."));
+      showAlert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다."));
     },
   });
 
@@ -76,14 +77,14 @@ const AssetManageTab = () => {
     mutationFn: deleteUnityAssetAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "삭제에 실패했습니다.");
+        showAlert(res?.message || "삭제에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: UNITY_ASSET_LIST_QUERY_KEY });
       closeModal();
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다."));
+      showAlert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다."));
     },
   });
 
@@ -121,7 +122,7 @@ const AssetManageTab = () => {
           onCancel={closeModal}
           onSubmit={(payload) => {
             if (isDuplicateName(payload.assetName)) {
-              window.alert("이미 같은 asset_name이 있습니다.");
+              showAlert("이미 같은 asset_name이 있습니다.");
               return;
             }
             createAsset(payload);
@@ -143,7 +144,7 @@ const AssetManageTab = () => {
           onCancel={closeModal}
           onSubmit={(payload) => {
             if (isDuplicateName(payload.assetName, payload.assetId)) {
-              window.alert("이미 같은 asset_name이 있습니다.");
+              showAlert("이미 같은 asset_name이 있습니다.");
               return;
             }
             updateAsset(payload);

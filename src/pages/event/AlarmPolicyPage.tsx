@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,7 +78,7 @@ const AlarmPolicyPage = () => {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ALARM_POLICY_QUERY_KEY }),
     onError: (err) =>
-      window.alert(getApiErrorMessage(err, "이펙트 설정 저장 중 오류가 발생했습니다.")),
+      showAlert(getApiErrorMessage(err, "이펙트 설정 저장 중 오류가 발생했습니다.")),
   });
 
   const { mutate: removePolicy } = useMutation({
@@ -87,7 +88,7 @@ const AlarmPolicyPage = () => {
       closeModal();
     },
     onError: (err) =>
-      window.alert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다.")),
+      showAlert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다.")),
   });
 
   const openEditor = (policy: AlarmPolicy | null) => {

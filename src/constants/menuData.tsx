@@ -19,6 +19,8 @@ import DeviceCategoryManagePage from "@/pages/device/DeviceCategoryManagePage";
 import DeviceRegistPage from "@/pages/device/DeviceRegistPage";
 import DevicePointMappingPage from "@/pages/device/DevicePointMappingPage";
 import SystemDiagramPage from "@/pages/device/SystemDiagramPage";
+import CommandPointPage from "@/pages/command/CommandPointPage";
+import DeviceControlPage from "@/pages/command/DeviceControlPage";
 import UnityAssetManagePage from "@/pages/unityAsset/UnityAssetManagePage";
 import ZoneManagePage from "@/pages/zone/ZoneManagePage";
 import SpaceLightManagePage from "@/pages/zone/SpaceLightManagePage";
@@ -88,6 +90,18 @@ export const menuData = [
     ]
   },
   {
+    label: "디바이스 제어",
+    abbr: "제어",
+    items: [
+      { title: "제어 포인트 관리",
+        //icon: <SvgIcons.Siren/>,
+        path: "/command/points", element: <CommandPointPage/>},
+      { title: "디바이스 제어",
+        //icon: <SvgIcons.Siren/>,
+        path: "/command/control", element: <DeviceControlPage/>},
+    ]
+  },
+  {
     label: "이벤트 관리",
     abbr: "이벤트",
     items: [
@@ -144,9 +158,9 @@ export const menuData = [
       //     />
       //   ),
       // },
-      // { title: "SOP 템플릿", 
-      //   //icon: <SvgIcons.CheckList/>, 
-      //   path: "/sop/templates", element: <SopTemplateManagePage/> },
+      { title: "SOP 템플릿",
+        //icon: <SvgIcons.CheckList/>,
+        path: "/sop/templates", element: <SopTemplateManagePage/> },
     ]
   },
   {

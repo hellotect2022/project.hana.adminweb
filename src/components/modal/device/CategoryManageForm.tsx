@@ -1,3 +1,4 @@
+import { showConfirm } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -319,9 +320,10 @@ const CategoryManageForm = () => {
     </ItemTextCol>
   );
 
-  const handleDelete = (e, categoryId, level) => {
+  const handleDelete = async (e, categoryId, level) => {
     e.stopPropagation();
-    if (!window.confirm("이 카테고리를 삭제할까요?\n하위 카테고리도 함께 삭제됩니다.")) return;
+    const ok = await showConfirm("이 카테고리를 삭제할까요?\n하위 카테고리도 함께 삭제됩니다.");
+    if (!ok) return;
     deleteCategory(categoryId);
     if (level === "major") { setSelectedMajorId(null); setSelectedMidId(null); setSelectedSmallId(null); }
     if (level === "mid") { setSelectedMidId(null); setSelectedSmallId(null); }

@@ -1,3 +1,4 @@
+import { showAlert, showConfirm } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,7 +88,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       setDirty(false);
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "장비 저장에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "장비 저장에 실패했습니다."));
     },
   });
 
@@ -99,7 +100,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       onClose?.();
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "장비 삭제에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "장비 삭제에 실패했습니다."));
     },
   });
 
@@ -120,10 +121,11 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
     });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (isDeleting) return;
     const label = device.deviceName || `ID #${device.deviceId}`;
-    if (!window.confirm(`장비 "${label}" 을(를) 삭제할까요?\n연결된 포인트·이벤트 규칙도 함께 삭제됩니다.`)) {
+    const ok = await showConfirm(`장비 "${label}" 을(를) 삭제할까요?\n연결된 포인트·이벤트 규칙도 함께 삭제됩니다.`);
+    if (!ok) {
       return;
     }
     removeDevice(device.deviceId);

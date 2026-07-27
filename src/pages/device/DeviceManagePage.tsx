@@ -1,3 +1,4 @@
+import { showAlert, showConfirm } from "@/utils/dialogBridge";
 import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -98,13 +99,14 @@ const DeviceManagePage = () => {
       queryClient.invalidateQueries({ queryKey: DEVICE_LIST_QUERY_KEY });
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "장비 삭제에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "장비 삭제에 실패했습니다."));
     },
   });
 
-  const handleDeleteDevice = (device) => {
+  const handleDeleteDevice = async (device) => {
     const label = device.deviceName || `ID #${device.deviceId}`;
-    if (!window.confirm(`장비 "${label}" 을(를) 삭제할까요?\n연결된 포인트·이벤트 규칙도 함께 삭제됩니다.`)) {
+    const ok = await showConfirm(`장비 "${label}" 을(를) 삭제할까요?\n연결된 포인트·이벤트 규칙도 함께 삭제됩니다.`);
+    if (!ok) {
       return;
     }
     removeDevice(device.deviceId);
@@ -134,8 +136,8 @@ const DeviceManagePage = () => {
         <DeviceRegistForm
           onCancel={closeModal}
           onSuccess={(res) => {
-            window.alert(res?.message || "장비가 등록되었습니다.");
-            closeModal();
+            showAlert(res?.message || "장비가 등록되었습니다.");
+            //closeModal();
           }}
         />
       ),

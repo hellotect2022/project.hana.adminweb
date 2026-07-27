@@ -17,19 +17,16 @@ function renderCategoryPath(fullPath, categoryName) {
 }
 
 /**
- * BMS 시스템 생성/수정 폼 (공통 Modal 본문)
- * 시스템은 { systemName, systemCode, sortOrder, active } 와
- * 선택적으로 "직접 소분류 매핑"(categoryIds — subSystem 없이 2단)을 관리한다.
- * subSystem 밑 매핑은 이 폼에서 건드리지 않는다(서브시스템 패널 담당).
+ * 서브시스템 생성/수정 폼 (공통 Modal 본문)
+ * 소분류 카테고리 다중 매핑(categoryIds)을 소유한다.
  */
-const DeviceSystemForm = ({
+const SubSystemForm = ({
   mode,
   initialValues,
-  smallCategories = [],
-  categoriesLoading = false,
-  categoriesError = false,
+  smallCategories,
+  categoriesLoading,
+  categoriesError,
   categoriesErr,
-  hasSubSystems = false,
   onClose,
   onSubmit,
 }) => {
@@ -58,6 +55,7 @@ const DeviceSystemForm = ({
     () => new Set(initialValues.categoryIds ?? [])
   );
   useEffect(() => {
+    console.log('언제호출?')
     setPinnedIds(new Set(form.categoryIds ?? []));
     // form.categoryIds 는 의도적으로 의존성에서 제외(스냅샷). 검색어 변경 시에만 재정렬.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,13 +83,11 @@ const DeviceSystemForm = ({
   };
 
   const handleSubmit = async () => {
-    const systemName = form.systemName.trim();
-    const systemCode = form.systemCode.trim();
-    if (!systemName || !systemCode) {
-      showAlert("시스템명과 시스템 코드를 입력하세요.");
+    const subSystemName = form.subSystemName.trim();
+    if (!subSystemName) {
+      showAlert("서브시스템명을 입력하세요.");
       return;
     }
-    const categoryIds = form.categoryIds ?? [];
     let payload;
     if (mode === "create") {
       const sortOrder = parseInt(form.sortOrder, 10);
@@ -99,9 +95,18 @@ const DeviceSystemForm = ({
         showAlert("정렬 순서는 1 이상의 숫자로 입력하세요.");
         return;
       }
-      payload = { systemName, systemCode, sortOrder, active: form.active ?? true, categoryIds };
+      payload = {
+        subSystemName,
+        sortOrder,
+        active: form.active ?? true,
+        categoryIds: form.categoryIds ?? [],
+      };
     } else {
-      payload = { systemName, systemCode, active: form.active ?? true, categoryIds };
+      payload = {
+        subSystemName,
+        active: form.active ?? true,
+        categoryIds: form.categoryIds ?? [],
+      };
     }
     setPending(true);
     try {
@@ -118,30 +123,20 @@ const DeviceSystemForm = ({
     <FormWrap>
       <FormGrid>
         <Field>
-          <label htmlFor="ds-name">systemName</label>
+          <label htmlFor="ss-name">subSystemName</label>
           <TextInput
-            id="ds-name"
-            value={form.systemName}
-            onChange={(e) => setForm((f) => ({ ...f, systemName: e.target.value }))}
-            placeholder="표시 이름"
-            autoComplete="off"
-          />
-        </Field>
-        <Field>
-          <label htmlFor="ds-code">systemCode</label>
-          <TextInput
-            id="ds-code"
-            value={form.systemCode}
-            onChange={(e) => setForm((f) => ({ ...f, systemCode: e.target.value }))}
-            placeholder="고유 코드 (영문·숫자 등)"
+            id="ss-name"
+            value={form.subSystemName}
+            onChange={(e) => setForm((f) => ({ ...f, subSystemName: e.target.value }))}
+            placeholder="서브시스템 표시 이름"
             autoComplete="off"
           />
         </Field>
         {mode === "create" && (
           <Field $narrow>
-            <label htmlFor="ds-sort">sortOrder</label>
+            <label htmlFor="ss-sort">sortOrder</label>
             <TextInput
-              id="ds-sort"
+              id="ss-sort"
               type="number"
               min={1}
               value={form.sortOrder}
@@ -164,7 +159,7 @@ const DeviceSystemForm = ({
 
       <CategorySection>
         <CategorySectionHeader>
-          <CategorySectionTitle>직접 소분류 매핑 (서브시스템 없이 2단)</CategorySectionTitle>
+          <CategorySectionTitle>소분류 카테고리 매핑</CategorySectionTitle>
           {!categoriesLoading && !categoriesError && smallCategories.length > 0 && (
             <CategoryBadges>
               <Badge $tone="primary">선택 {selectedCount}</Badge>
@@ -176,19 +171,6 @@ const DeviceSystemForm = ({
             </CategoryBadges>
           )}
         </CategorySectionHeader>
-
-        <GuideHint>
-          서브시스템(3단)을 쓰는 시스템은 여기서 직접 매핑하지 마세요. 직접 매핑과
-          서브시스템은 <b>둘 중 하나</b>만 사용합니다. 한 소분류는 한 시스템에 한 번만
-          매핑됩니다.
-        </GuideHint>
-        {hasSubSystems && (
-          <WarnHint>
-            이 시스템에는 이미 서브시스템이 있습니다. 직접 매핑을 추가하면 두 방식이
-            혼용됩니다(권장하지 않음). 같은 소분류를 직접·서브시스템에 동시 매핑하면
-            저장이 거부될 수 있습니다.
-          </WarnHint>
-        )}
 
         {!categoriesLoading && !categoriesError && smallCategories.length > 0 && (
           <SearchWrap>
@@ -263,7 +245,7 @@ const DeviceSystemForm = ({
   );
 };
 
-export default DeviceSystemForm;
+export default SubSystemForm;
 
 const FormWrap = styled.div`
   display: flex;
@@ -375,27 +357,6 @@ const Badge = styled.span<{ $tone?: string }>`
   border-radius: 999px;
   color: ${(p) => (p.$tone === "primary" ? "#fff" : "#64748b")};
   background: ${(p) => (p.$tone === "primary" ? "#4a6380" : "#e2e8f0")};
-`;
-
-const GuideHint = styled.p`
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.5;
-  b {
-    color: #475569;
-  }
-`;
-
-const WarnHint = styled.p`
-  margin: 0 0 10px;
-  padding: 8px 10px;
-  font-size: 12px;
-  color: #92400e;
-  line-height: 1.5;
-  background: #fef3c7;
-  border: 1px solid #fde68a;
-  border-radius: 8px;
 `;
 
 const SearchWrap = styled.div`

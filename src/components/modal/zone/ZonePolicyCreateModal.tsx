@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -56,7 +57,7 @@ const ZonePolicyCreateModal = ({ systemType, onClose }) => {
     mutationFn: createZonePolicyWithZoneAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "등록에 실패했습니다.");
+        showAlert(res?.message || "등록에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: ZONE_POLICY_QUERY_KEY });
@@ -64,7 +65,7 @@ const ZonePolicyCreateModal = ({ systemType, onClose }) => {
       queryClient.invalidateQueries({ queryKey: UNITY_LOCATION_TREE_QUERY_KEY });
       onClose?.();
     },
-    onError: (err) => window.alert(getApiErrorMessage(err, "구역 등록 중 오류가 발생했습니다.")),
+    onError: (err) => showAlert(getApiErrorMessage(err, "구역 등록 중 오류가 발생했습니다.")),
   });
 
   const handleBuildingChange = (e) => {
@@ -75,15 +76,15 @@ const ZonePolicyCreateModal = ({ systemType, onClose }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!floorId) {
-      window.alert("층을 선택하세요.");
+      showAlert("층을 선택하세요.");
       return;
     }
     if (!zoneName.trim()) {
-      window.alert("구역명을 입력하세요.");
+      showAlert("구역명을 입력하세요.");
       return;
     }
     if (!zoneMeshName.trim()) {
-      window.alert("mesh_collider ID를 입력하세요.");
+      showAlert("mesh_collider ID를 입력하세요.");
       return;
     }
     create({

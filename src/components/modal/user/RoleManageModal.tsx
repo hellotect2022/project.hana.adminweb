@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -34,7 +35,7 @@ const RoleManageModal = ({ mode = "create", initial = null, onClose }) => {
         setSavedMsg("권한이 등록되었습니다. 이제 소속 사용자를 추가할 수 있습니다.");
       }
     },
-    onError: (err) => window.alert(getApiErrorMessage(err, "권한 등록에 실패했습니다.")),
+    onError: (err) => showAlert(getApiErrorMessage(err, "권한 등록에 실패했습니다.")),
   });
 
   const { mutate: updateRole, isPending: isUpdating } = useMutation({
@@ -43,14 +44,14 @@ const RoleManageModal = ({ mode = "create", initial = null, onClose }) => {
       queryClient.invalidateQueries({ queryKey: ROLES_LIST_QUERY_KEY });
       setSavedMsg("저장되었습니다.");
     },
-    onError: (err) => window.alert(getApiErrorMessage(err, "권한 수정에 실패했습니다.")),
+    onError: (err) => showAlert(getApiErrorMessage(err, "권한 수정에 실패했습니다.")),
   });
 
   const handleSaveInfo = (e) => {
     e.preventDefault();
     const name = roleName.trim();
     if (!name) {
-      window.alert("권한명을 입력하세요.");
+      showAlert("권한명을 입력하세요.");
       return;
     }
     if (role?.roleId) {

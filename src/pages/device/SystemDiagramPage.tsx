@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,7 +59,7 @@ const SystemDiagramPage = () => {
     mutationFn: deleteSystemDiagram,
     onSuccess: (res: any) => {
       if (res?.success === false) {
-        window.alert(res?.message || "삭제에 실패했습니다.");
+        showAlert(res?.message || "삭제에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: SYSTEM_DIAGRAM_QUERY_KEY });
@@ -66,7 +67,7 @@ const SystemDiagramPage = () => {
     },
     // 참조 장비 등으로 백엔드가 409 반환 시 서버 메시지 노출
     onError: (err) =>
-      window.alert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다.")),
+      showAlert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다.")),
   });
 
   const openEditor = (diagram: SystemDiagram | null) => {

@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -126,7 +127,7 @@ const DevicePointMappingPage = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      window.alert("양식 다운로드에 실패했습니다.");
+      showAlert("양식 다운로드에 실패했습니다.");
     } finally {
       setIsDownloading(false);
     }
@@ -160,9 +161,9 @@ const DevicePointMappingPage = () => {
         const more = failed.length > 10 ? `\n… 외 ${failed.length - 10}건` : "";
         msg += `\n실패 ${failed.length}건:\n${preview}${more}`;
       }
-      window.alert(msg);
+      showAlert(msg);
     } catch {
-      window.alert("파일 업로드에 실패했습니다.");
+      showAlert("파일 업로드에 실패했습니다.");
     } finally {
       setIsImporting(false);
     }
@@ -217,7 +218,7 @@ const DevicePointMappingPage = () => {
       if (res?.success !== false) {
         setDrafts({});
         queryClient.invalidateQueries({ queryKey: DEVICE_POINT_MAPPING_QUERY_KEY });
-        window.alert(res?.message || "SI 포인트 매핑이 저장되었습니다.");
+        showAlert(res?.message || "SI 포인트 매핑이 저장되었습니다.");
       }
     },
   });

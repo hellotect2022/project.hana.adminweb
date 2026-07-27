@@ -1,3 +1,4 @@
+import { showAlert, showConfirm } from "@/utils/dialogBridge";
 import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,10 +59,10 @@ const SystemLogRetentionPage = () => {
     onSuccess: () => {
       setDraft({});
       queryClient.invalidateQueries({ queryKey: LOG_RETENTION_QUERY_KEY });
-      window.alert("저장되었습니다.");
+      showAlert("저장되었습니다.");
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "저장에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "저장에 실패했습니다."));
     },
   });
 
@@ -69,12 +70,12 @@ const SystemLogRetentionPage = () => {
     mutationFn: runLogRetentionPurge,
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["audit"] });
-      window.alert(
+      showAlert(
         `정리 완료.\n접속 로그 ${result?.deletedAccessRows ?? 0}건, 사용 로그 ${result?.deletedUsageRows ?? 0}건 삭제 (적용 보관일: 접속 ${result?.accessRetentionDaysApplied ?? "-"}일 / 사용 ${result?.usageRetentionDaysApplied ?? "-"}일)`
       );
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "정리 실행에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "정리 실행에 실패했습니다."));
     },
   });
 
@@ -87,12 +88,11 @@ const SystemLogRetentionPage = () => {
     setDraft((d) => ({ ...d, [policyKey]: Math.min(3650, Math.max(1, n)) }));
   };
 
-  const handlePurgeNow = () => {
-    if (
-      !window.confirm(
-        "보관 일수보다 오래된 로그를 지금 삭제할까요? (배치와 동일한 기준입니다.)"
-      )
-    ) {
+  const handlePurgeNow = async () => {
+    const ok = await showConfirm(
+      "보관 일수보다 오래된 로그를 지금 삭제할까요? (배치와 동일한 기준입니다.)"
+    );
+    if (!ok) {
       return;
     }
     purgeMutation.mutate();

@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useMemo, useState } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
@@ -221,14 +222,14 @@ export function DeviceSidebar() {
       ? { scope: 'CATEGORY' as const, categoryId: catId, active }
       : { scope: 'DEVICES' as const, deviceIds: devs.map((d) => d.deviceId), active };
     setActiveBulk.mutate(body, {
-      onError: () => alert('카테고리 일괄 처리에 실패했습니다.'),
+      onError: () => showAlert('카테고리 일괄 처리에 실패했습니다.'),
     });
   };
 
   const onToggleAll = (active: boolean) => {
     if (busy) return;
     setActiveBulk.mutate({ scope: 'ALL', active }, {
-      onError: () => alert('전체 일괄 처리에 실패했습니다.'),
+      onError: () => showAlert('전체 일괄 처리에 실패했습니다.'),
     });
   };
 

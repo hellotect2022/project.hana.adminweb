@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -73,12 +74,12 @@ const ZoneManagePage = () => {
     mutationFn: updateZoneAPI,
     onSuccess: (res) => {
       if (res?.success === false) {
-        window.alert(res?.message || "수정에 실패했습니다.");
+        showAlert(res?.message || "수정에 실패했습니다.");
         return;
       }
       queryClient.invalidateQueries({ queryKey: UNITY_LOCATION_TREE_QUERY_KEY });
     },
-    onError: (err) => window.alert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다.")),
+    onError: (err) => showAlert(getApiErrorMessage(err, "수정 중 오류가 발생했습니다.")),
   });
 
   const toggleFloor = (floorId) => {
@@ -108,11 +109,11 @@ const ZoneManagePage = () => {
   const handleSave = () => {
     if (!selected) return;
     if (!editName.trim()) {
-      window.alert("Zone명을 입력하세요.");
+      showAlert("Zone명을 입력하세요.");
       return;
     }
     if (!editMesh.trim()) {
-      window.alert("mesh_collider ID를 입력하세요.");
+      showAlert("mesh_collider ID를 입력하세요.");
       return;
     }
     updateZone({

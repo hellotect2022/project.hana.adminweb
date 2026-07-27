@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -149,10 +150,10 @@ const MenuPermissionByRole = () => {
       if (roleId != null) {
         queryClient.invalidateQueries({ queryKey: PERM_QUERY_KEY(roleId) });
       }
-      window.alert("저장되었습니다.");
+      showAlert("저장되었습니다.");
     },
     onError: (err) => {
-      window.alert(getApiErrorMessage(err, "저장에 실패했습니다."));
+      showAlert(getApiErrorMessage(err, "저장에 실패했습니다."));
     },
   });
 
@@ -175,11 +176,11 @@ const MenuPermissionByRole = () => {
 
   const handleSave = () => {
     if (roleId == null) {
-      window.alert("권한(역할)을 선택하세요.");
+      showAlert("권한(역할)을 선택하세요.");
       return;
     }
     if (!sortedSystems.length) {
-      window.alert("BMS 시스템 목록이 없습니다.");
+      showAlert("BMS 시스템 목록이 없습니다.");
       return;
     }
     saveMutation.mutate();
@@ -307,7 +308,7 @@ const MenuPermissionByRole = () => {
                     <Th $narrow>systemId</Th>
                     <Th>systemName</Th>
                     <Th>systemCode</Th>
-                    <Th>소분류</Th>
+                    <Th>서브시스템</Th>
                     <Th $narrow>sortOrder</Th>
                   </tr>
                 </thead>
@@ -329,8 +330,8 @@ const MenuPermissionByRole = () => {
                         <code>{m.systemCode}</code>
                       </Td>
                       <Td>
-                        {(m.categories ?? [])
-                          .map((c) => c.categoryName)
+                        {(m.subSystems ?? [])
+                          .map((s) => s.subSystemName)
                           .join(", ") || "—"}
                       </Td>
                       <Td $narrow>{m.sortOrder}</Td>

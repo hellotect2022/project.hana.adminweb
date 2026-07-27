@@ -63,6 +63,7 @@ import privateApi from "./api";
  *   createdAt: string;
  *   updatedAt: string;
  *   set: boolean;
+ *   commandPoints?: Array<{ commandPointId: number; label: string; tagName: string | null; onValue: string; offValue: string }>;
  * }} DeviceDTO
  */
 

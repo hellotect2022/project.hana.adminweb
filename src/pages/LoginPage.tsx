@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@/components/ui";
@@ -33,7 +34,7 @@ const LoginPage = () => {
             openModal({title:"로그인", content:"로그인 성공!", onConfirm:()=> navigate("/manage/user")})
         }catch (err) {
             console.error("Login Error:",err)
-            alert("로그인 정보가 올바르지 않습니다.")
+            showAlert("로그인 정보가 올바르지 않습니다.")
         }
     }
 

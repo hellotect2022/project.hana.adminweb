@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Button } from "@/components/ui";
@@ -43,7 +44,7 @@ const ColliderManageForm = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!floorId) {
-      window.alert("층을 선택하세요.");
+      showAlert("층을 선택하세요.");
       return;
     }
     const name = zoneName.trim();

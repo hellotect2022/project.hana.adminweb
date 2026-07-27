@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -163,7 +164,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
       } else {
         setDeviceName("");
         setSubmitError("");
-        alert(message);
+        showAlert(message);
       }
     },
     onError: (err) => {

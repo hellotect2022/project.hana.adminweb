@@ -1,3 +1,4 @@
+import { showAlert } from "@/utils/dialogBridge";
 import { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import DeviceCategoryPicker from "@/components/device/DeviceCategoryPicker";
@@ -80,7 +81,7 @@ const UnityAssetManageForm = ({ mode = "create", initial = null, onSubmit, onCan
   const handleResetFromCategory = () => {
     const { major, mid, small } = selectionCtx;
     if (!small) {
-      window.alert("소분류를 먼저 선택하세요.");
+      showAlert("소분류를 먼저 선택하세요.");
       return;
     }
     applyAutoAssetName(major, mid, small);
