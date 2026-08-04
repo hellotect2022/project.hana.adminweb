@@ -123,7 +123,8 @@ const DeviceControlPage = () => {
     try {
       const result = await controlDevice({
         commandPointId: cp.commandPointId,
-        value,
+        // 백엔드 계약: "1"=ON / "0"=OFF (UI 상태 on/off → 1/0 매핑)
+        value: value === "on" ? "1" : "0",
       });
       if (result.success) {
         // 성공 후 목록 재조회로 스냅샷 현재값 갱신(best-effort)

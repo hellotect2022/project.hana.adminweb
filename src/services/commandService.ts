@@ -39,13 +39,14 @@ export interface CommandPointResponse {
   updatedAt?: string;
 }
 
-/** 제어 명령 값 */
+/** 제어 명령 값 (UI 내부 상태·버튼 표시용) */
 export type ControlValue = "on" | "off";
 
-/** 제어 명령 요청 (DeviceControlRequest) */
+/** 제어 명령 요청 (DeviceControlRequest) — API 전송값은 "1"(ON)/"0"(OFF) */
 export interface DeviceControlRequest {
   commandPointId: number;
-  value: ControlValue;
+  /** 백엔드 계약: "1"=ON / "0"=OFF (서버가 제어포인트 onValue/offValue 로 매핑) */
+  value: "1" | "0";
 }
 
 /** 제어 명령 결과 (DeviceControlResponse) */
@@ -70,6 +71,9 @@ export const commandPointsQueryKey = (deviceId: number | string) => [
   String(deviceId),
 ];
 
+/** 제어 포인트 페이지 목록 쿼리 키 (장비 비의존, 페이지네이션) */
+export const COMMAND_POINTS_PAGE_QUERY_KEY = ["command", "points", "page"];
+
 /** GET /api/command/points?deviceId= → List<CommandPointResponse> */
 export async function fetchCommandPoints(
   deviceId: number
@@ -79,6 +83,34 @@ export async function fetchCommandPoints(
   });
   if (!data?.success) throw new Error(data?.message || "제어 포인트 조회 실패");
   return data.data ?? [];
+}
+
+/**
+ * GET /api/command/points/page?keyword=&categoryId=&page=&size=
+ * → ApiResponse<PageResponse<CommandPointResponse>> (디바이스 목록 /device/all 과 동일 형태)
+ * 장비 선택 없이 제어 포인트 자체를 페이지네이션으로 조회한다.
+ * @returns 전체 ApiResponse (res.data.content / res.data.page 로 소비 — DeviceManagePage 방식)
+ */
+export async function getCommandPointsPage({
+  keyword,
+  categoryId,
+  page = 0,
+  size = 20,
+}: {
+  keyword?: string;
+  categoryId?: number;
+  page?: number;
+  size?: number;
+} = {}) {
+  const { data } = await privateApi.get("/command/points/page", {
+    params: {
+      page,
+      size,
+      ...(keyword ? { keyword } : {}),
+      ...(categoryId != null ? { categoryId } : {}),
+    },
+  });
+  return data;
 }
 
 /** POST /api/command/points (CommandPointRequest) → CommandPointResponse */

@@ -4,11 +4,8 @@ import styled from "styled-components";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
 import SopTemplatePreview from "@/components/sop/SopTemplatePreview";
 import {
-  fetchSopMeta,
   fetchSopTemplate,
   sopTemplateKey,
-  SOP_META_QUERY_KEY,
-  type SopMeta,
   type SopTemplateBody,
 } from "@/services/sopService";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
@@ -25,14 +22,6 @@ const SopTemplatePreviewPage = () => {
     queryKey: sopTemplateKey(templateId ?? ""),
     queryFn: () => fetchSopTemplate(Number(templateId)),
     enabled: Boolean(templateId),
-  });
-
-  // SOP 메타(색 팔레트) — 실패 시 조용히 fallback
-  const { data: sopMeta } = useQuery<SopMeta>({
-    queryKey: SOP_META_QUERY_KEY,
-    queryFn: fetchSopMeta,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
   });
 
   const body: SopTemplateBody | null =
@@ -60,7 +49,6 @@ const SopTemplatePreviewPage = () => {
         <SopTemplatePreview
           body={body}
           eventName={template?.title || template?.templateName}
-          variantColors={sopMeta?.variant}
         />
       )}
     </AdminPageTemplate>

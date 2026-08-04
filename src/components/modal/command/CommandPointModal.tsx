@@ -1,8 +1,10 @@
 import { showAlert } from "@/utils/dialogBridge";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Input, SearchableSelect, Toggle } from "@/components/ui";
+import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
+import { EMPTY_HIERARCHY_FILTER } from "@/utils/deviceHierarchyFilterUtils";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 import {
   deviceLogicalPointsQueryKey,
@@ -10,6 +12,7 @@ import {
 } from "@/services/deviceService";
 import {
   commandPointsQueryKey,
+  COMMAND_POINTS_PAGE_QUERY_KEY,
   createCommandPoint,
   updateCommandPoint,
   type CommandPointRequest,
@@ -30,7 +33,8 @@ interface LogicalPoint {
 }
 
 interface Props {
-  deviceId: number;
+  /** 수정(edit) 모드에서 고정된 대상 디바이스. create 모드에선 미지정(모달 내 계층 선택). */
+  deviceId?: number;
   deviceName?: string | null;
   /** 수정 대상. null 이면 신규 등록 */
   commandPoint?: CommandPointResponse | null;
@@ -43,9 +47,28 @@ interface Props {
  * 표시명·ON/OFF 전송값·정렬·활성을 설정한다.
  * ref_device_code / ref_point_code(=XN 코드)를 함께 노출해 매핑을 검증한다.
  */
-const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Props) => {
+const CommandPointModal = ({
+  deviceId: propDeviceId,
+  deviceName: propDeviceName,
+  commandPoint,
+  onClose,
+}: Props) => {
   const queryClient = useQueryClient();
   const isEdit = !!commandPoint?.commandPointId;
+
+  // create 모드: 모달 내부 대>중>소>장비 계층 선택 / edit 모드: prop 으로 고정
+  const [hier, setHier] = useState(EMPTY_HIERARCHY_FILTER);
+  const [pickedDevice, setPickedDevice] = useState<any | null>(null);
+
+  const deviceId: number | undefined = isEdit
+    ? propDeviceId
+    : hier.deviceId
+    ? Number(hier.deviceId)
+    : undefined;
+  const deviceName: string | null | undefined = isEdit
+    ? propDeviceName
+    : pickedDevice?.deviceName ??
+      (deviceId != null ? `Device#${deviceId}` : undefined);
 
   const [pointId, setPointId] = useState<string>(
     commandPoint?.pointId != null ? String(commandPoint.pointId) : ""
@@ -58,9 +81,16 @@ const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Prop
   );
   const [active, setActive] = useState(commandPoint?.active ?? true);
 
-  // 해당 디바이스의 논리 포인트 목록 (제어 대상 후보)
+  // create 모드에서 대상 장비가 바뀌면 선택 포인트/표시명 초기화
+  useEffect(() => {
+    if (isEdit) return;
+    setPointId("");
+    setLabel("");
+  }, [deviceId, isEdit]);
+
+  // 선택된 디바이스의 논리 포인트 목록 (제어 대상 후보)
   const { data: pointsRes, isLoading: pointsLoading } = useQuery({
-    queryKey: deviceLogicalPointsQueryKey(deviceId),
+    queryKey: deviceLogicalPointsQueryKey(deviceId ?? "none"),
     queryFn: () => fetchDeviceLogicalPointsAPI(deviceId),
     enabled: !!deviceId,
   });
@@ -106,7 +136,9 @@ const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Prop
         showAlert(res?.message || "저장에 실패했습니다.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: commandPointsQueryKey(deviceId) });
+      if (deviceId != null)
+        queryClient.invalidateQueries({ queryKey: commandPointsQueryKey(deviceId) });
+      queryClient.invalidateQueries({ queryKey: COMMAND_POINTS_PAGE_QUERY_KEY });
       onClose();
     },
     onError: (err) =>
@@ -115,6 +147,10 @@ const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Prop
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (deviceId == null) {
+      showAlert("대상 장비를 선택하세요.");
+      return;
+    }
     if (!pointId) {
       showAlert("제어에 사용할 포인트를 선택하세요.");
       return;
@@ -143,6 +179,21 @@ const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Prop
 
   return (
     <Form onSubmit={handleSubmit}>
+      {/* create 모드: 대>중>소>장비 선택 (edit 모드는 prop 으로 고정) */}
+      {!isEdit && (
+        <DevicePickWrap>
+          <Label $required>대상 장비 (대 › 중 › 소 → 장비 선택)</Label>
+          <DeviceHierarchyFilter
+            value={hier}
+            onChange={(v) => {
+              setHier(v);
+              if (!v.deviceId) setPickedDevice(null);
+            }}
+            onDevicePicked={setPickedDevice}
+          />
+        </DevicePickWrap>
+      )}
+
       {deviceName && (
         <DeviceInfo>
           대상 디바이스: <strong>{deviceName}</strong>
@@ -156,7 +207,12 @@ const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Prop
           value={pointId}
           onChange={handlePointChange}
           loading={pointsLoading}
-          placeholder="tagName·포인트명으로 검색"
+          disabled={deviceId == null}
+          placeholder={
+            deviceId == null
+              ? "먼저 대상 장비를 선택하세요"
+              : "tagName·포인트명으로 검색"
+          }
           emptyText="이 디바이스에 등록된 포인트가 없습니다"
           noMatchText="검색 결과 없음"
         />
@@ -249,6 +305,13 @@ const CommandPointModal = ({ deviceId, deviceName, commandPoint, onClose }: Prop
 export default CommandPointModal;
 
 const Form = styled.form``;
+
+const DevicePickWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+`;
 
 const DeviceInfo = styled.div`
   margin-bottom: 14px;

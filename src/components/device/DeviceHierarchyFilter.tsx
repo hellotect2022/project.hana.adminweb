@@ -25,6 +25,7 @@ import {
  *   value: import("@/utils/deviceHierarchyFilterUtils").DeviceHierarchyFilterValue;
  *   onChange: (value: import("@/utils/deviceHierarchyFilterUtils").DeviceHierarchyFilterValue) => void;
  *   onDevicePicked?: (device: import("@/services/deviceService").DeviceDTO | null) => void; // 방금 선택된 장비 객체(해제 시 null). 라벨 캡처용(선택 사항).
+ *   hideDevice?: boolean; // true 면 장비 검색란을 숨김(대>중>소 카테고리 선택 전용, 예: scope=CATEGORY).
  * }} props
  */
 const DeviceHierarchyFilter = ({
@@ -32,6 +33,7 @@ const DeviceHierarchyFilter = ({
   value,
   onChange,
   onDevicePicked = undefined,
+  hideDevice = false,
 }) => {
   const { majorId, midId, smallId, deviceId } = value;
 
@@ -183,19 +185,21 @@ const DeviceHierarchyFilter = ({
         </CascadeSelect>
       </CascadeField>
 
-      <CascadeField>
-        <CascadeLabel>장비</CascadeLabel>
-        <SearchableSelect
-          options={deviceOptions}
-          value={deviceId}
-          onChange={handleDeviceChange}
-          placeholder={devicePlaceholder}
-          disabled={!smallId}
-          loading={devicesLoading}
-          emptyText="해당 소분류에 장비 없음"
-          noMatchText="검색 결과 없음"
-        />
-      </CascadeField>
+      {!hideDevice && (
+        <CascadeField>
+          <CascadeLabel>장비</CascadeLabel>
+          <SearchableSelect
+            options={deviceOptions}
+            value={deviceId}
+            onChange={handleDeviceChange}
+            placeholder={devicePlaceholder}
+            disabled={!smallId}
+            loading={devicesLoading}
+            emptyText="해당 소분류에 장비 없음"
+            noMatchText="검색 결과 없음"
+          />
+        </CascadeField>
+      )}
     </CascadeGroup>
   );
 };

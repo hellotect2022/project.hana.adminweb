@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import styled from "styled-components";
+import { useSopMeta } from "@/services/sopService";
 import type {
   ButtonOption,
   FrameComponent,
-  SopGroupNode,
+  GroupComponent,
   SopLeafComponent,
+  SopMeta,
   SopNode,
   SopTemplateBody,
   StepComponent,
@@ -28,21 +30,22 @@ import type {
  *     · 필수(체크 대상) = COMPLETE_ACTION + BUTTON_GROUP. 필수 전부 체크되면 다음 STEP.
  *     · COMPLETE_ACTION 완료 클릭 → 체크 토글.
  *     · BUTTON_GROUP 옵션 클릭 → 그 그룹 체크 + 선택 id 기록(흐름 라우팅) + 선택적 부수효과 로그.
- * - 전이(흐름): 버튼 action 이 아니라 STEP.next 가 결정한다.
- *     · next.rules 에서 when === 선택된 버튼 id 첫 매칭 → 그 goto
- *     · 없으면 next.default / 그것도 없으면 순번상 다음 STEP.
- *     · 대상이 "CLOSE" → 즉시 종료 / 정수면 그 STEP(앞으로 점프 시 사이 STEP LOCKED→SKIPPED).
- * - check(체크)·chosen·선택 id(lastChosenId)는 런타임 STATE 에만 (템플릿 저장 ❌).
- * - StepState(LOCKED/PENDING/SUCCESS/SKIPPED) 시각화 / Variant 고정 팔레트(meta 우선)
+ * - 전이(흐름): 버튼 action 이 아니라 STEP 최상위 rules[] 가 결정한다.
+ *     · 충족 id 집합 = 체크된 COMPLETE_ACTION.id ∪ 선택된 BUTTON_GROUP 옵션 id (컨테이너 재귀).
+ *     · rules 중 when(id 배열) 이 전부 충족되는 첫 규칙 → next(STEP no) 로 이동.
+ *     · 규칙 next 생략 → SOP 종료. 매칭 규칙 없으면 순번상 다음 STEP.
+ *     · 앞으로 점프 시 사이 STEP LOCKED→SKIPPED.
+ * - check(체크)·chosen 은 런타임 STATE 에만 (템플릿 저장 ❌).
+ * - StepState(LOCKED/PENDING/SUCCESS/SKIPPED) 시각화 / Variant 색 팔레트는
+ *   서버 메타(GET /api/sop/meta)의 variant(HEX)로 구동. 클라 하드코딩 색/라벨 없음.
  */
 
 interface RuntimeState {
   order: number[];
   stepState: Record<number, StepState>;
   completed: Record<string, boolean>;
+  /** 컴포넌트 key → 선택된 BUTTON_GROUP 옵션 id (하이라이트 + 전이 충족 id) */
   chosen: Record<string, string>;
-  /** STEP 번호 → 그 STEP 에서 마지막으로 선택된 버튼 id (STEP.next 라우팅 기준) */
-  lastChosenId: Record<number, string>;
   focus: number | null;
 }
 
@@ -52,33 +55,14 @@ interface LogEntry {
   msg: string;
 }
 
-const VALID: Record<string, StepState> = {
-  LOCKED: "LOCKED",
-  PENDING: "PENDING",
-  SUCCESS: "SUCCESS",
-  SKIPPED: "SKIPPED",
-};
-
-/* ── Variant 고정 팔레트 (fallback, HTML 원본 동일) ──
- * props.variantColors(= meta.variant, {Variant:hex}) 미전달 시 이 값을 사용해
- * 컴포넌트 단독 동작을 보장한다. */
-const DEFAULT_VARIANT_COLORS: Record<Variant, string> = {
-  PRIMARY: "#3557a6",
-  SUCCESS: "#1c8f74",
-  DANGER: "#d83b3b",
-  WARN: "#d99a2b",
-  INFO: "#3f5ad6",
-  NEUTRAL: "#3f4a5e",
-};
-
-/* ── 노드 판별 ── */
-const isGroupNode = (n: SopNode): n is SopGroupNode =>
-  !!n && (n as SopGroupNode).group != null;
+/* ── 노드 판별 (GROUP·FRAME 모두 componentType + components 동일 구조) ── */
+const isGroupNode = (n: SopNode): n is GroupComponent =>
+  !!n && (n as GroupComponent).componentType === "GROUP";
 const isFrameNode = (n: SopNode): n is FrameComponent =>
-  !!n && !isGroupNode(n) && (n as FrameComponent).componentType === "FRAME";
+  !!n && (n as FrameComponent).componentType === "FRAME";
 const isStepNode = (n: SopNode): n is StepComponent =>
-  !!n && !isGroupNode(n) && (n as StepComponent).componentType === "STEP";
-/* leaf(콘텐츠 5종)만 통과 — 컨테이너(STEP/group/FRAME) 제외 */
+  !!n && (n as StepComponent).componentType === "STEP";
+/* leaf(콘텐츠 5종)만 통과 — 컨테이너(STEP/GROUP/FRAME) 제외 */
 const asLeaf = (n: SopNode): SopLeafComponent | null =>
   isStepNode(n) || isGroupNode(n) || isFrameNode(n)
     ? null
@@ -87,36 +71,64 @@ const ctOf = (n: SopNode): string =>
   (n as { componentType?: string }).componentType || "";
 
 /* ── key 계산 (HTML contKey 와 동일 규칙, path 접두 재귀) ──
- * group 컨테이너 키 = prefix + "g" + (id|g{i}) / FRAME 컨테이너 키 = prefix + "f" + (id|f{i}).
+ * GROUP 컨테이너 키 = prefix + "g" + (id|g{i}) / FRAME 컨테이너 키 = prefix + "f" + (id|f{i}).
  * STEP 시작 prefix = "s"+no. leaf 키 = prefix + "i" + i. */
 const contKey = (prefix: string, n: SopNode, i: number): string =>
   isGroupNode(n)
-    ? prefix + "g" + (n.group?.id || "g" + i)
+    ? prefix + "g" + ((n as GroupComponent).id || "g" + i)
     : prefix + "f" + ((n as FrameComponent).id || "f" + i);
-/* group/FRAME 컨테이너의 자식 배열(둘 다 아니면 null) */
+/* GROUP/FRAME 컨테이너의 자식 배열(둘 다 아니면 null) */
 const childrenOf = (n: SopNode): SopNode[] | null =>
-  isGroupNode(n)
-    ? n.group.components || []
-    : isFrameNode(n)
-    ? n.components || []
+  isGroupNode(n) || isFrameNode(n)
+    ? (n as GroupComponent | FrameComponent).components || []
     : null;
 
 /* root steps[] 중 STEP 컨테이너만 추출 */
 const stepsOf = (body: SopTemplateBody | null): StepComponent[] =>
   (body?.steps || []).filter(isStepNode);
 
-/* 상태 시드 */
-function seedState(body: SopTemplateBody | null): RuntimeState {
+/* 상태 시드. validStates = 서버 메타 stepState 키 집합(유효 상태 판별). */
+function seedState(
+  body: SopTemplateBody | null,
+  validStates: Set<string>
+): RuntimeState {
   const order: number[] = [];
   const stepState: Record<number, StepState> = {};
   stepsOf(body).forEach((s) => {
     order.push(s.no);
-    stepState[s.no] = (s.state && VALID[s.state]) || "LOCKED";
+    stepState[s.no] =
+      s.state && validStates.has(s.state) ? (s.state as StepState) : "LOCKED";
   });
   let focus: number | null =
     order.find((no) => stepState[no] === "PENDING") ?? null;
   if (focus == null) focus = order[0] ?? null;
-  return { order, stepState, completed: {}, chosen: {}, lastChosenId: {}, focus };
+  return { order, stepState, completed: {}, chosen: {}, focus };
+}
+
+/* 이 STEP 의 충족 id 집합 = 체크된 COMPLETE_ACTION.id ∪ 선택된 BUTTON_GROUP 옵션 id
+ * (group/FRAME 컨테이너 재귀). STEP.rules 전이 평가 기준. HTML satisfiedIds 와 동일. */
+function satisfiedIds(s: RuntimeState, step: StepComponent): Set<string> {
+  const set = new Set<string>();
+  const walk = (nodes: SopNode[], prefix: string) => {
+    (nodes || []).forEach((c, i) => {
+      const kids = childrenOf(c);
+      if (kids) {
+        walk(kids, contKey(prefix, c, i));
+        return;
+      }
+      const key = prefix + "i" + i;
+      const ct = ctOf(c);
+      if (ct === "COMPLETE_ACTION") {
+        const id = (c as { id?: string }).id;
+        if (s.completed[key] && id != null) set.add(id);
+      } else if (ct === "BUTTON_GROUP") {
+        const oid = s.chosen[key];
+        if (oid != null) set.add(oid);
+      }
+    });
+  };
+  walk(step.components || [], "s" + step.no);
+  return set;
 }
 
 /* 이 STEP 의 필수(체크 대상) 컴포넌트 key 목록 = COMPLETE_ACTION + BUTTON_GROUP
@@ -154,32 +166,71 @@ const between = (s: RuntimeState, a: number, b: number): number[] => {
   return i < 0 || j < 0 ? [] : s.order.slice(i + 1, j);
 };
 
-const SopTemplatePreview = ({
-  body,
-  parseError = null,
-  eventName,
-  variantColors,
-}: {
+interface PreviewProps {
   body: SopTemplateBody | null;
   parseError?: string | null;
   eventName?: string;
-  /** 서버(meta) Variant→hex 팔레트. 미전달 시 하드코딩 fallback 사용. */
-  variantColors?: Partial<Record<Variant, string>>;
-}) => {
-  const [state, setState] = useState<RuntimeState>(() => seedState(body));
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+}
 
-  // 서버 팔레트 + fallback 병합 (미전달/부분전달 모두 안전)
+/**
+ * SOP 미리보기 (wrapper) — 서버 메타(GET /api/sop/meta)를 소비해 렌더러에 주입.
+ * 메타 로딩 전에는 placeholder 를 표시(알람 UI 와 동일 패턴). 색/enum 값의
+ * 단일 출처는 서버 메타이며 클라 하드코딩 팔레트는 없다.
+ */
+const SopTemplatePreview = (props: PreviewProps) => {
+  const { data: meta, isError } = useSopMeta();
+
+  if (props.parseError) {
+    return (
+      <Wrap>
+        <ParseError>{props.parseError}</ParseError>
+      </Wrap>
+    );
+  }
+  if (isError) {
+    return (
+      <Wrap>
+        <Empty>SOP 메타 정보를 불러오지 못했습니다.</Empty>
+      </Wrap>
+    );
+  }
+  if (!meta) {
+    return (
+      <Wrap>
+        <Empty>불러오는 중…</Empty>
+      </Wrap>
+    );
+  }
+  return <SopTemplatePreviewInner {...props} meta={meta} />;
+};
+
+const SopTemplatePreviewInner = ({
+  body,
+  parseError = null,
+  eventName,
+  meta,
+}: PreviewProps & { meta: SopMeta }) => {
+  // 서버 메타 variant(HEX) → 렌더 팔레트. 클라 하드코딩 없음.
   const palette = useMemo<Record<Variant, string>>(
-    () => ({ ...DEFAULT_VARIANT_COLORS, ...(variantColors ?? {}) }),
-    [variantColors]
+    () => ({ ...(meta.variant as Record<Variant, string>) }),
+    [meta]
   );
+  // 유효 stepState 집합(메타 키)
+  const validStates = useMemo(
+    () => new Set(Object.keys(meta.stepState)),
+    [meta]
+  );
+
+  const [state, setState] = useState<RuntimeState>(() =>
+    seedState(body, validStates)
+  );
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
   // body 변경 시 상태 재시드
   useEffect(() => {
-    setState(seedState(body));
+    setState(seedState(body, validStates));
     setLogs([]);
-  }, [body]);
+  }, [body, validStates]);
 
   const steps = useMemo<StepComponent[]>(() => stepsOf(body), [body]);
 
@@ -212,7 +263,6 @@ const SopTemplatePreview = ({
     stepState: { ...prev.stepState },
     completed: { ...prev.completed },
     chosen: { ...prev.chosen },
-    lastChosenId: { ...prev.lastChosenId },
   });
   const pad = (n: number) => String(n).padStart(2, "0");
   const completeStep = (s: RuntimeState, no: number | null) => {
@@ -229,28 +279,32 @@ const SopTemplatePreview = ({
     openStep(s, nextNo(s, step.no));
   };
 
-  /* STEP.next 평가: rules(선택 버튼 id 매칭) 우선 → default → (없으면 순번 다음).
-   * "CLOSE" | number | null(순번 다음) 반환. HTML resolveNext 와 동일. */
+  /* STEP.rules 평가: when(id 배열) 이 전부 충족되는 첫 규칙 → next(STEP no).
+   * next 생략 → "END"(종료). 매칭 규칙 없으면 null(순번 다음). HTML resolveNext 와 동일. */
   const resolveNext = (
     s: RuntimeState,
     step: StepComponent
-  ): number | "CLOSE" | null => {
-    const nx = step.next;
-    if (nx && Array.isArray(nx.rules)) {
-      const chosen = s.lastChosenId[step.no];
-      const rule = nx.rules.find((r) => r.when === chosen);
-      if (rule) return rule.goto;
+  ): number | "END" | null => {
+    const rules = step.rules;
+    if (Array.isArray(rules)) {
+      const sat = satisfiedIds(s, step);
+      const rule = rules.find(
+        (r) =>
+          Array.isArray(r.when) &&
+          r.when.length > 0 &&
+          r.when.every((id) => sat.has(id))
+      );
+      if (rule) return rule.next != null ? Number(rule.next) : "END";
     }
-    if (nx && nx.default != null) return nx.default;
     return null; // 순번상 다음
   };
 
-  /* 전이 실행 (STEP.next 결과 적용). HTML advanceVia 와 동일. */
+  /* 전이 실행 (STEP.rules 결과 적용). HTML advanceVia 와 동일. */
   const advanceVia = (s: RuntimeState, step: StepComponent) => {
     const t = resolveNext(s, step);
-    if (t === "CLOSE") {
+    if (t === "END") {
       completeStep(s, step.no);
-      pushLog("CLOSE", "종료(next=CLOSE)");
+      pushLog("END", "종료(규칙 next 없음)");
       return;
     }
     if (t == null) {
@@ -267,7 +321,7 @@ const SopTemplatePreview = ({
     pushLog("ADVANCE", "→ STEP " + pad(ti) + " (사이 SKIPPED)");
   };
 
-  /* 필수 항목 전부 체크되면 STEP.next 로 전이. HTML tryAdvance 와 동일. */
+  /* 필수 항목 전부 체크되면 STEP.rules 로 전이. HTML tryAdvance 와 동일. */
   const tryAdvance = (s: RuntimeState, step: StepComponent) => {
     if (s.stepState[step.no] !== "PENDING" || !stepComplete(s, step)) return;
     advanceVia(s, step);
@@ -284,14 +338,13 @@ const SopTemplatePreview = ({
     });
   };
 
-  /* BUTTON_GROUP 옵션 선택 — 흐름은 STEP.next 가 결정, 버튼은 선택(id)만 + 선택적 부수효과 */
+  /* BUTTON_GROUP 옵션 선택 — 흐름은 STEP.rules 가 결정, 버튼은 선택(id)만 + 선택적 부수효과 */
   const clickButton = (step: StepComponent, key: string, opt: ButtonOption) => {
     setState((prev) => {
       const s = cloneState(prev);
       const oid = opt.id != null ? opt.id : opt.label;
       s.completed[key] = true; // 버튼그룹 체크됨
-      s.chosen[key] = oid; // 하이라이트용
-      s.lastChosenId[step.no] = oid; // STEP.next 라우팅 기준
+      s.chosen[key] = oid; // 하이라이트 + 전이 충족 id
       const a = opt.action;
       if (a && a.kind && a.kind !== "NONE")
         pushLog(a.kind, "'" + opt.label + "' 부수효과");
@@ -407,7 +460,7 @@ const SopTemplatePreview = ({
       if (isStepNode(c)) return; // STEP 중첩 미허용
       if (isGroupNode(c)) {
         const key = contKey(prefix, c, i);
-        const children = renderNodes(c.group.components || [], step, key);
+        const children = renderNodes(c.components || [], step, key);
         if (children.length > 0) out.push(<GroupWrap key={key}>{children}</GroupWrap>);
       } else if (isFrameNode(c)) {
         const key = contKey(prefix, c, i);
@@ -468,7 +521,7 @@ const SopTemplatePreview = ({
         <ResetBtn
           type="button"
           onClick={() => {
-            setState(seedState(body));
+            setState(seedState(body, validStates));
             setLogs([]);
           }}
         >

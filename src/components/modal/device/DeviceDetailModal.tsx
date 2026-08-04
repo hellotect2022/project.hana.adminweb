@@ -12,9 +12,21 @@ import {
   fetchDeviceLogicalPointsAPI,
   flattenDeviceCategoryTree,
   patchDeviceAPI,
+  useDevicePropertyTypes,
 } from "@/services/deviceService";
 import DeviceSmallCategorySelect from "@/components/device/DeviceSmallCategorySelect";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
+
+/** device.propertyInfo(객체) → 입력용 문자열 맵 (type 제외, null→"") */
+function propertyInfoToStrings(pi) {
+  const out = {};
+  if (!pi || typeof pi !== "object") return out;
+  Object.entries(pi).forEach(([k, v]) => {
+    if (k === "type") return;
+    out[k] = v == null ? "" : String(v);
+  });
+  return out;
+}
 
 /**
  * 장비 상세 보기 + 기본 정보 편집 모달
@@ -63,6 +75,44 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
     return cat ? (cat.fullPath || cat.categoryName) : `ID: ${form.categoryId}`;
   }, [flatCategories, form.categoryId]);
 
+  // ── property_info (카테고리 propertyType 기반) ──
+  const { data: propertyTypes = [] } = useDevicePropertyTypes();
+  const [propertyInfo, setPropertyInfo] = useState<Record<string, string>>(() =>
+    propertyInfoToStrings(device?.propertyInfo)
+  );
+
+  // 선택된 카테고리(소분류)의 propertyType → 동적 필드
+  const selectedCategory = useMemo(
+    () => flatCategories.find((c) => String(c.categoryId) === form.categoryId) ?? null,
+    [flatCategories, form.categoryId]
+  );
+  const propertyType: string | null = selectedCategory?.propertyType ?? null;
+  const propTemplate = useMemo<Record<string, any> | null>(
+    () => propertyTypes.find((p) => p.type === propertyType)?.template ?? null,
+    [propertyTypes, propertyType]
+  );
+  const propFields = useMemo<string[]>(
+    () => (propTemplate ? Object.keys(propTemplate).filter((k) => k !== "type") : []),
+    [propTemplate]
+  );
+  const showPropertyInfo =
+    !!propertyType && propertyType !== "GENERIC" && propFields.length > 0;
+
+  // 카테고리 변경 시: 같은 카테고리면 기존 propertyInfo 프리필, 바뀌면 필드 재생성(빈값)
+  useEffect(() => {
+    const origCatId = device?.categoryId != null ? String(device.categoryId) : "";
+    if (form.categoryId && form.categoryId === origCatId) {
+      setPropertyInfo(propertyInfoToStrings(device?.propertyInfo));
+    } else {
+      setPropertyInfo({});
+    }
+  }, [form.categoryId, device]);
+
+  const handlePropChange = (key, value) => {
+    setPropertyInfo((prev) => ({ ...prev, [key]: value }));
+    setDirty(true);
+  };
+
   const {
     data: devicePoints = [],
     isLoading: isPointsLoading,
@@ -110,15 +160,23 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
   };
 
   const handleSave = () => {
-    patchDevice({
-      deviceId: device.deviceId,
-      payload: {
-        deviceName: form.deviceName || null,
-        description: form.description || null,
-        active: form.active,
-        categoryId: form.categoryId ? Number(form.categoryId) : null,
-      },
-    });
+    const payload: Record<string, any> = {
+      deviceName: form.deviceName || null,
+      description: form.description || null,
+      active: form.active,
+      categoryId: form.categoryId ? Number(form.categoryId) : null,
+    };
+    // property_info: propertyType 이 있고 GENERIC 이 아니면 type + 입력값으로 조립.
+    // (type 은 카테고리에서 자동 결정. GENERIC/null 이면 생략 → 백엔드가 기존 값 유지)
+    if (showPropertyInfo && propertyType) {
+      const entries: Record<string, any> = {};
+      propFields.forEach((k) => {
+        const v = propertyInfo[k];
+        entries[k] = v != null && v !== "" ? v : null;
+      });
+      payload.propertyInfo = { type: propertyType, ...entries };
+    }
+    patchDevice({ deviceId: device.deviceId, payload });
   };
 
   const handleDelete = async () => {
@@ -138,6 +196,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       active: device.active ?? true,
       categoryId: device.categoryId ? String(device.categoryId) : "",
     });
+    setPropertyInfo(propertyInfoToStrings(device?.propertyInfo));
     setDirty(false);
     setEditMode(false);
   };
@@ -274,6 +333,40 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
         </Row>
       </Section>
 
+      {/* ── 장비 속성 (property_info) ── */}
+      {showPropertyInfo && (
+        <Section>
+          <SectionTitle>
+            장비 속성
+            <PropTypeBadge>{propertyType}</PropTypeBadge>
+          </SectionTitle>
+          {propFields.map((k) => {
+            const isPassword = k.toLowerCase().includes("password");
+            const val = propertyInfo[k] ?? "";
+            return (
+              <Row key={k}>
+                <RowLabel>{k}</RowLabel>
+                <RowValue>
+                  {editMode ? (
+                    <Input
+                      type={isPassword ? "password" : "text"}
+                      value={val}
+                      onChange={(e) => handlePropChange(k, e.target.value)}
+                      placeholder={k}
+                      autoComplete={isPassword ? "new-password" : "off"}
+                    />
+                  ) : isPassword ? (
+                    val ? "••••••" : "-"
+                  ) : (
+                    val || "-"
+                  )}
+                </RowValue>
+              </Row>
+            );
+          })}
+        </Section>
+      )}
+
       <Section>
         <SectionTitle>
           장비 포인트
@@ -394,6 +487,16 @@ const PointCount = styled.span`
   font-size: 12px;
   font-weight: 600;
   color: #64748b;
+`;
+
+const PropTypeBadge = styled.span`
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #dbeafe;
+  padding: 1px 8px;
+  border-radius: 999px;
 `;
 
 const PointsHint = styled.p<{ $error?: boolean }>`

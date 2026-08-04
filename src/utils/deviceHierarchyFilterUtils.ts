@@ -63,3 +63,42 @@ export function deriveHierarchyFilterFromDevice(deviceId, devices, flatCategorie
     deviceId: String(deviceId),
   };
 }
+
+/**
+ * categoryId(소/중/대 어느 depth든)로부터 대>중>소 cascade 초깃값을 역산한다.
+ * 부모를 따라 올라가며 depth 를 판정한다(장비 미선택 → deviceId "").
+ * @param {number | string | null | undefined} categoryId
+ * @param {Array<{ categoryId: number; parentId: number | null }>} flatCategories
+ * @returns {DeviceHierarchyFilterValue}
+ */
+export function deriveHierarchyFilterFromCategory(categoryId, flatCategories) {
+  if (categoryId == null || categoryId === "") return { ...EMPTY_HIERARCHY_FILTER };
+  const cats = flatCategories ?? [];
+  const findCat = (id) => cats.find((c) => c.categoryId === Number(id));
+  const cat = findCat(categoryId);
+  if (!cat) {
+    return { ...EMPTY_HIERARCHY_FILTER, smallId: String(categoryId) };
+  }
+  const parent = cat.parentId != null ? findCat(cat.parentId) : undefined;
+  const grand = parent?.parentId != null ? findCat(parent.parentId) : undefined;
+  if (grand) {
+    // cat = 소, parent = 중, grand = 대
+    return {
+      majorId: String(grand.categoryId),
+      midId: String(parent.categoryId),
+      smallId: String(cat.categoryId),
+      deviceId: "",
+    };
+  }
+  if (parent) {
+    // cat = 중, parent = 대 (소 미선택)
+    return {
+      majorId: String(parent.categoryId),
+      midId: String(cat.categoryId),
+      smallId: "",
+      deviceId: "",
+    };
+  }
+  // cat = 대
+  return { majorId: String(cat.categoryId), midId: "", smallId: "", deviceId: "" };
+}

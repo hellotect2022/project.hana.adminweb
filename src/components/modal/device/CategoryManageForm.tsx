@@ -13,6 +13,7 @@ import {
   sortByDisplayOrder,
   updateCategoryAPI,
   updateCategorySchemaAPI,
+  useDevicePropertyTypes,
 } from "@/services/deviceService";
 import {
   fetchUnityAssetsList,
@@ -140,7 +141,11 @@ const CategoryManageForm = () => {
   const [editCategoryNameEn, setEditCategoryNameEn] = useState("");
   const [editCategoryCode, setEditCategoryCode] = useState("");
   const [editAssetId, setEditAssetId] = useState("");
+  const [editPropertyType, setEditPropertyType] = useState("");
   const [categoryInfoDirty, setCategoryInfoDirty] = useState(false);
+
+  // 카테고리 propertyType 옵션(메타)
+  const { data: propertyTypes = [] } = useDevicePropertyTypes();
 
   // ─── 기본 3D 에셋 후보(PIPE 제외: 카테고리 기본에셋은 장비 메시) ───
   const {
@@ -218,6 +223,7 @@ const CategoryManageForm = () => {
       setEditCategoryNameEn("");
       setEditCategoryCode("");
       setEditAssetId("");
+      setEditPropertyType("");
       setCategoryInfoDirty(false);
       setSchemaRows([]);
       setSchemaDirty(false);
@@ -227,6 +233,7 @@ const CategoryManageForm = () => {
     setEditCategoryNameEn(activeCategory.categoryNameEn ?? "");
     setEditCategoryCode(activeCategory.categoryCode ?? "");
     setEditAssetId(activeCategory.assetId != null ? String(activeCategory.assetId) : "");
+    setEditPropertyType(activeCategory.propertyType ?? "");
     setCategoryInfoDirty(false);
     const rows = (activeCategory.schemaDefinitions ?? []).map((s) => ({
       _key: Math.random().toString(36).slice(2),
@@ -306,6 +313,7 @@ const CategoryManageForm = () => {
         categoryCode: editCategoryCode.trim(),
         active: activeCategory?.active ?? true,
         assetId: editAssetId ? Number(editAssetId) : null,
+        propertyType: editPropertyType || null,
       },
     });
   };
@@ -590,6 +598,23 @@ const CategoryManageForm = () => {
                   noMatchText="검색 결과 없음"
                 />
               )}
+            </CategoryFieldGroup>
+            <CategoryFieldGroup>
+              <CategoryFieldLabel>속성 타입 (propertyType)</CategoryFieldLabel>
+              <PropertyTypeSelect
+                value={editPropertyType}
+                onChange={(e) => {
+                  setEditPropertyType(e.target.value);
+                  setCategoryInfoDirty(true);
+                }}
+              >
+                <option value="">없음 (null)</option>
+                {propertyTypes.map((p) => (
+                  <option key={p.type} value={p.type}>
+                    {p.type}
+                  </option>
+                ))}
+              </PropertyTypeSelect>
             </CategoryFieldGroup>
           </CategoryInfoGrid>
           <CategoryInfoHint>
@@ -951,6 +976,18 @@ const CategoryFieldInput = styled.input`
   font-size: 13px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
+  outline: none;
+  &:focus {
+    border-color: #4a6380;
+  }
+`;
+
+const PropertyTypeSelect = styled.select`
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
   outline: none;
   &:focus {
     border-color: #4a6380;

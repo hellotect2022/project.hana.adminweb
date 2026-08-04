@@ -6,7 +6,7 @@ import DisabledMenuPlaceholder from "@/components/common/DisabledMenuPlaceholder
 import SopTemplateManagePage from "@/pages/sop/SopTemplateManagePage";
 import SopTemplateEditorPage from "@/pages/sop/SopTemplateEditorPage";
 import EventThresholdPage from "@/pages/event/EventThresholdPage";
-import AlarmPolicyPage from "@/pages/event/AlarmPolicyPage";
+import AlarmEventPolicyPage from "@/pages/event/AlarmEventPolicyPage";
 import LogHubPage from "@/pages/log/LogHubPage";
 import MenuDisplayPage from "@/pages/menu/MenuDisplayPage";
 import MenuEditPage from "@/pages/menu/MenuEditPage";
@@ -138,10 +138,10 @@ export const menuData = [
       // { title: "임계값 설정",
       //   //icon: <SvgIcons.Layers/>,
       //   path: "/event/threshold", element: <EventThresholdPage/> },
-      { title: "알람 정책",
+      { title: "알람/이벤트 정책",
         //icon: <SvgIcons.Siren/>,
-        path: "/event/alarm-policy", 
-        element: <AlarmPolicyPage/> 
+        path: "/event/alarm-policy",
+        element: <AlarmEventPolicyPage/>
       },
       // {
       //   title: "알림 설정",

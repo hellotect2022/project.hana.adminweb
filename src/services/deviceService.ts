@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import privateApi from "./api";
 
 /**
@@ -14,6 +15,7 @@ import privateApi from "./api";
  *   fullPath: string;
  *   isRoot?: boolean;
  *   isLeaf?: boolean;
+ *   propertyType?: string | null;
  *   schemaDefinitions?: Array<object>;
  *   children?: DeviceCategoryNode[];
  * }} DeviceCategoryNode
@@ -43,6 +45,7 @@ import privateApi from "./api";
  *   isLeaf: boolean;
  *   assetId: number | null;
  *   assetName: string | null;
+ *   propertyType: string | null;
  *   schemaDefinitions: Array<object>;
  * }} DeviceCategoryFlat
  */
@@ -63,6 +66,7 @@ import privateApi from "./api";
  *   createdAt: string;
  *   updatedAt: string;
  *   set: boolean;
+ *   propertyInfo?: Record<string, any> | null;
  *   commandPoints?: Array<{ commandPointId: number; label: string; tagName: string | null; onValue: string; offValue: string }>;
  * }} DeviceDTO
  */
@@ -70,6 +74,33 @@ import privateApi from "./api";
 export const DEVICE_CATEGORY_QUERY_KEY = ["device", "device-categories"];
 export const DEVICE_LIST_QUERY_KEY = ["device", "list"];
 export const DEVICE_POINT_MAPPING_QUERY_KEY = ["device", "points", "mapping"];
+export const DEVICE_PROPERTY_TYPES_QUERY_KEY = ["device", "property-types"];
+
+/**
+ * 카테고리 propertyType 별 property_info 스켈레톤 메타 항목
+ * @typedef {{ type: string; template: Record<string, any> }} DevicePropertyTypeMeta
+ */
+
+/**
+ * GET /device/property-types — propertyType 별 property_info 스켈레톤(서버 파생)
+ * @returns {Promise<Array<{ type: string; template: Record<string, any> }>>}
+ */
+export async function getDevicePropertyTypes(): Promise<
+  Array<{ type: string; template: Record<string, any> }>
+> {
+  const { data } = await privateApi.get("/device/property-types");
+  return data?.data ?? [];
+}
+
+/** 장비 property 타입 메타 react-query 훅 (변화 적어 오래 캐시) */
+export function useDevicePropertyTypes() {
+  return useQuery({
+    queryKey: DEVICE_PROPERTY_TYPES_QUERY_KEY,
+    queryFn: getDevicePropertyTypes,
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
+  });
+}
 
 /**
  * GET /device/device-categories — 장비 카테고리 목록(트리)
@@ -82,7 +113,7 @@ export async function categoryFetchAPI() {
 
 /**
  * POST /device/device-categories — 카테고리 생성
- * @param {{ categoryName: string; categoryNameEn?: string; categoryCode: string; parentId?: number; description?: string; displayOrder?: number; active?: boolean; assetId?: number | null }} payload
+ * @param {{ categoryName: string; categoryNameEn?: string; categoryCode: string; parentId?: number; description?: string; displayOrder?: number; active?: boolean; assetId?: number | null; propertyType?: string | null }} payload
  */
 export async function createCategoryAPI(payload) {
   const { data } = await privateApi.post("/device/device-categories", payload);
@@ -91,7 +122,7 @@ export async function createCategoryAPI(payload) {
 
 /**
  * PUT /device/device-categories/{categoryId} — 카테고리 수정
- * @param {{ categoryId: number; payload: { categoryName?: string; categoryNameEn?: string | null; categoryCode?: string; active?: boolean; assetId?: number | null } }} param
+ * @param {{ categoryId: number; payload: { categoryName?: string; categoryNameEn?: string | null; categoryCode?: string; active?: boolean; assetId?: number | null; propertyType?: string | null } }} param
  */
 export async function updateCategoryAPI({ categoryId, payload }) {
   const { data } = await privateApi.put(`/device/device-categories/${categoryId}`, payload);
@@ -166,6 +197,7 @@ export async function fetchDeviceByIdAPI(deviceId) {
  *   categoryId?: number;
  *   assetId?: number | null;
  *   active: boolean;
+ *   propertyInfo?: Record<string, any> | null;
  *   points?: DevicePointRegisterItem[];
  * }} payload
  */
@@ -185,7 +217,7 @@ export async function updateDeviceAPI({ deviceId, payload }) {
 
 /**
  * PATCH /device/{deviceId} — 장비 기본 정보 부분 수정
- * @param {{ deviceId: number; payload: { deviceName?: string; description?: string; active?: boolean; categoryId?: number | null; assetId?: number | null } }} param
+ * @param {{ deviceId: number; payload: { deviceName?: string; description?: string; active?: boolean; categoryId?: number | null; assetId?: number | null; propertyInfo?: Record<string, any> | null } }} param
  */
 export async function patchDeviceAPI({ deviceId, payload }) {
   const { data } = await privateApi.patch(`/device/${deviceId}`, payload);
@@ -380,6 +412,62 @@ export async function saveTagMappingAPI({ deviceId, mappings }) {
 /** @param {number} deviceId */
 export const devicePointsQueryKey = (deviceId) => ["device", "points", deviceId];
 
+/* ────────────────────────────────────────────────────────────────
+ * CCTV 매핑 — 장비 주변 CCTV(이벤트 8분할 배치) 매핑.
+ * 순서(cctvIds 배열 순서) = sort_order 로 저장(replace).
+ * ──────────────────────────────────────────────────────────────── */
+
+/** CCTV 장비 속성(자격증명은 UI 미노출) */
+export interface CctvProperty {
+  type: "CCTV";
+  main_url?: string;
+  sub_url?: string;
+  user_id?: string;
+  password?: string;
+  [k: string]: unknown;
+}
+
+/** CCTV 정보 projection (매핑/후보 공용) */
+export interface CctvInfo {
+  deviceId: number;
+  deviceName: string;
+  floorId: number | null;
+  floorName: string | null;
+  deviceProperty: CctvProperty | null;
+}
+
+export const deviceCctvMappingQueryKey = (deviceId: number | string) => [
+  "device",
+  "cctv-mapping",
+  deviceId,
+];
+export const DEVICE_CCTV_CANDIDATES_QUERY_KEY = ["device", "cctv-candidates"];
+
+/** GET /device/{deviceId}/cctv-mapping → 현재 매핑(sort_order 순) */
+export async function getCctvMapping(
+  deviceId: number | string
+): Promise<CctvInfo[]> {
+  const { data } = await privateApi.get(`/device/${deviceId}/cctv-mapping`);
+  return data?.data ?? [];
+}
+
+/** GET /device/cctv-candidates → CCTV 후보 장비 전체 */
+export async function getCctvCandidates(): Promise<CctvInfo[]> {
+  const { data } = await privateApi.get(`/device/cctv-candidates`);
+  return data?.data ?? [];
+}
+
+/** POST /device/{deviceId}/cctv-mapping — body {cctvIds:[선택 순서]} (순서=sort_order, replace) */
+export async function postCctvMapping(
+  deviceId: number | string,
+  cctvIds: number[]
+) {
+  const { data } = await privateApi.post(`/device/${deviceId}/cctv-mapping`, {
+    cctvIds,
+  });
+  return data;
+}
+
 /**
  * 중첩 children 트리를 평탄 리스트로 변환 (대·중·소 컬럼 필터용)
  * @param {DeviceCategoryNode[] | undefined | null} nodes
@@ -402,6 +490,9 @@ export function flattenDeviceCategoryTree(nodes) {
         displayOrder: n.displayOrder ?? 0,
         active: n.active !== false,
         isLeaf: n.isLeaf === true,
+        assetId: n.assetId ?? null,
+        assetName: n.assetName ?? null,
+        propertyType: n.propertyType ?? null,
         schemaDefinitions: n.schemaDefinitions ?? [],
       });
       if (n.children?.length) walk(n.children);

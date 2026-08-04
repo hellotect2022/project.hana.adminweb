@@ -7,7 +7,7 @@ import { Button } from "@/components/ui";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import DeviceDetailModalContent from "@/components/modal/device/DeviceDetailModal";
 import DeviceRegistForm from "@/components/modal/device/DeviceRegistForm";
-import DevicePointMappingModal from "@/components/modal/device/DevicePointMappingModal";
+import DeviceCctvMappingModal from "@/components/modal/device/DeviceCctvMappingModal";
 import Pagination from "@/components/common/Pagination";
 import { useModal } from "@/contexts/ModalContext";
 import {
@@ -144,13 +144,13 @@ const DeviceManagePage = () => {
     });
   };
 
-  const openMappingModal = (device) => {
+  const openCctvMappingModal = (device) => {
     openModal({
-      title: `포인트 매핑 — ${device.deviceName}`,
+      title: `CCTV 매핑 — ${device.deviceName}`,
       hideFooter: true,
       wide: true,
       content: (
-        <DevicePointMappingModal device={device} onClose={closeModal} />
+        <DeviceCctvMappingModal device={device} onClose={closeModal} />
       ),
     });
   };
@@ -240,11 +240,10 @@ const DeviceManagePage = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => openMappingModal(device)}
-                        disabled={!device.categoryId}
-                        title={!device.categoryId ? "카테고리가 없어 매핑 불가" : "포인트 매핑"}
+                        onClick={() => openCctvMappingModal(device)}
+                        title="주변 CCTV 매핑"
                       >
-                        포인트 매핑
+                        CCTV 매핑
                       </Button>
                       <Button
                         variant="danger"

@@ -7,14 +7,12 @@ import AdminPageTemplate from "@/components/common/AdminPageTemplate";
 import { Button } from "@/components/ui";
 import SopTemplatePreview from "@/components/sop/SopTemplatePreview";
 import {
-  fetchSopMeta,
   fetchSopTemplate,
   saveSopTemplateBody,
   sopTemplateKey,
-  SOP_META_QUERY_KEY,
   SOP_TEMPLATES_QUERY_KEY,
   updateSopTemplate,
-  type SopMeta,
+  useSopMeta,
   type SopTemplateBody,
 } from "@/services/sopService";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
@@ -49,13 +47,8 @@ const SopTemplateEditorPage = () => {
     enabled: Boolean(templateId),
   });
 
-  // SOP 메타(enum/색 팔레트) — 실패 시 조용히 fallback
-  const { data: sopMeta } = useQuery<SopMeta>({
-    queryKey: SOP_META_QUERY_KEY,
-    queryFn: fetchSopMeta,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
+  // SOP 메타(enum/색 팔레트) — 서버 소유 값의 단일 출처
+  const { data: sopMeta } = useSopMeta();
 
   useEffect(() => {
     if (!template) return;
@@ -332,7 +325,6 @@ const SopTemplateEditorPage = () => {
                 body={parsedBody}
                 parseError={jsonParseError || null}
                 eventName={meta.title || template?.templateName}
-                variantColors={sopMeta?.variant}
               />
             </PreviewPane>
           </Split>

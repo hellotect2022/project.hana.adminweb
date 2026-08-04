@@ -6,45 +6,55 @@ import { menuData } from "@/constants/menuData";
 import { useAuth } from "@/contexts/AuthContext";
 import {useSidebarHistory } from "@/contexts/SidebarHistoryContext";
 
+interface SidebarMenuProps {
+  isCollapsed: boolean;
+  addSidebarHistory: (path: string, title: string) => void;
+}
+
+/**
+ * 좌측 메뉴 목록. Sidebar 밖(모듈 최상단)에 정의해 함수 정체성을 고정한다.
+ * (Sidebar 내부에 정의하면 상위 리렌더마다 새 함수로 인식돼 MenuContainer 가
+ *  언마운트→재마운트되어 스크롤 위치가 0으로 초기화되는 버그가 발생한다.)
+ */
+const SidebarMenu = ({ isCollapsed, addSidebarHistory }: SidebarMenuProps) => {
+  return (
+    <MenuContainer>
+      {menuData.map((section, idx) => (
+        <div key={idx}>
+          <CategoryTitle>{isCollapsed ? section.abbr : section.label}</CategoryTitle>
+          {section.items.map((item, itemIdx) =>
+            item.disabled ? (
+              <MenuItemDisabled
+                key={itemIdx}
+                title={item.disabledReason ?? "준비 중인 메뉴입니다."}
+              >
+                {(item as any).icon}
+                <MenuText $isCollapsed={isCollapsed}>{item.title}</MenuText>
+              </MenuItemDisabled>
+            ) : (
+              <MenuItem
+                key={itemIdx}
+                to={item.path}
+                end
+                title={isCollapsed ? item.title : ""}
+                onClick={() => addSidebarHistory(item.path, item.title)}
+              >
+                {(item as any).icon}
+                <MenuText $isCollapsed={isCollapsed}>{item.title}</MenuText>
+              </MenuItem>
+            )
+          )}
+        </div>
+      ))}
+    </MenuContainer>
+  );
+};
+
 const Sidebar = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const toggleSidebar = () => setIsCollapsed(!isCollapsed); // 사이드바 확장/축소
     const { user } = useAuth();
     const { addSidebarHistory } = useSidebarHistory();
-
-    const SidebarMenu = ({ isCollapsed }) => {
-      return (
-        <MenuContainer>
-          {menuData.map((section, idx) => (
-            <div key={idx}>
-              <CategoryTitle>{isCollapsed ? section.abbr : section.label}</CategoryTitle>
-              {section.items.map((item, itemIdx) =>
-                item.disabled ? (
-                  <MenuItemDisabled
-                    key={itemIdx}
-                    title={item.disabledReason ?? "준비 중인 메뉴입니다."}
-                  >
-                    {(item as any).icon}
-                    <MenuText $isCollapsed={isCollapsed}>{item.title}</MenuText>
-                  </MenuItemDisabled>
-                ) : (
-                  <MenuItem
-                    key={itemIdx}
-                    to={item.path}
-                    end
-                    title={isCollapsed ? item.title : ""}
-                    onClick={() => addSidebarHistory(item.path, item.title)}
-                  >
-                    {(item as any).icon}
-                    <MenuText $isCollapsed={isCollapsed}>{item.title}</MenuText>
-                  </MenuItem>
-                )
-              )}
-            </div>
-          ))}
-        </MenuContainer>
-      );
-    };
 
     return (
         <SidebarContainer $isCollapsed={isCollapsed}>
@@ -80,7 +90,7 @@ const Sidebar = () => {
             </ProfileSection>
 
             {/* 3. 메뉴 영역 */}
-            <SidebarMenu isCollapsed={isCollapsed}/>
+            <SidebarMenu isCollapsed={isCollapsed} addSidebarHistory={addSidebarHistory} />
 
         </SidebarContainer>
     )

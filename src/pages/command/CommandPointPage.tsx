@@ -5,68 +5,91 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
 import { Button } from "@/components/ui";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
+import Pagination from "@/components/common/Pagination";
 import CommandPointModal from "@/components/modal/command/CommandPointModal";
 import { useModal } from "@/contexts/ModalContext";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 import { EMPTY_HIERARCHY_FILTER } from "@/utils/deviceHierarchyFilterUtils";
 import {
-  commandPointsQueryKey,
+  COMMAND_POINTS_PAGE_QUERY_KEY,
   deleteCommandPoint,
-  fetchCommandPoints,
+  getCommandPointsPage,
   type CommandPointResponse,
 } from "@/services/commandService";
 
+const PAGE_SIZE = 20;
+
 /**
  * 제어 포인트 관리 (WA-COMMAND-POINT) — 디바이스 제어 그룹
- * 대>중>소>장비 필터로 디바이스를 선택하면 해당 디바이스의 제어 포인트를 조회/등록/수정/삭제한다.
+ * 제어 포인트를 장비 선택 없이 페이지네이션으로 직접 나열한다.
+ * (선택) keyword 검색 + 소분류(categoryId) 필터. 등록은 대상 장비/포인트를 골라 진행.
  */
 const CommandPointPage = () => {
   const queryClient = useQueryClient();
   const { openModal, closeModal } = useModal();
 
   const [filter, setFilter] = useState(EMPTY_HIERARCHY_FILTER);
-  const [pickedDevice, setPickedDevice] = useState<any | null>(null);
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [page, setPage] = useState(0);
 
-  const deviceId = filter.deviceId ? Number(filter.deviceId) : undefined;
-  const deviceName =
-    pickedDevice?.deviceName ??
-    (deviceId != null ? `Device#${deviceId}` : undefined);
+  // 소분류(smallId) 선택 시에만 categoryId 필터(백엔드 categoryId = 장비 소분류)
+  const categoryId = filter.smallId ? Number(filter.smallId) : undefined;
 
-  const {
-    data: points = [],
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: commandPointsQueryKey(deviceId ?? "none"),
-    queryFn: () => fetchCommandPoints(deviceId!),
-    enabled: deviceId != null,
+  const { data: res, isLoading, isError, error } = useQuery({
+    queryKey: [...COMMAND_POINTS_PAGE_QUERY_KEY, page, keyword, categoryId ?? "all"],
+    queryFn: () =>
+      getCommandPointsPage({
+        keyword: keyword || undefined,
+        categoryId,
+        page,
+        size: PAGE_SIZE,
+      }),
   });
+
+  const points: CommandPointResponse[] = res?.data?.content ?? [];
+  const pagination = {
+    totalPages: res?.data?.page?.totalPages ?? 0,
+    number: res?.data?.page?.number ?? 0,
+    totalElements: res?.data?.page?.totalElements ?? 0,
+    first: res?.data?.page?.first ?? true,
+    last: res?.data?.page?.last ?? true,
+  };
 
   const { mutate: removePoint } = useMutation({
     mutationFn: deleteCommandPoint,
     onSuccess: () => {
-      if (deviceId != null)
-        queryClient.invalidateQueries({ queryKey: commandPointsQueryKey(deviceId) });
+      queryClient.invalidateQueries({ queryKey: COMMAND_POINTS_PAGE_QUERY_KEY });
       closeModal();
     },
     onError: (err) =>
       showAlert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다.")),
   });
 
-  const openEditor = (cp: CommandPointResponse | null) => {
-    if (deviceId == null) {
-      showAlert("먼저 대상 디바이스를 선택하세요.");
-      return;
-    }
+  const handleSearch = () => {
+    setKeyword(keywordInput.trim());
+    setPage(0);
+  };
+
+  const openRegister = () => {
+    // 자기완결형: 모달 안에서 대>중>소>장비 선택 → 포인트 선택 (deviceId 미지정으로 오픈)
     openModal({
-      title: cp ? "제어 포인트 수정" : "제어 포인트 등록",
+      title: "제어 포인트 등록",
+      hideFooter: true,
+      wide: true,
+      content: <CommandPointModal commandPoint={null} onClose={closeModal} />,
+    });
+  };
+
+  const openEdit = (cp: CommandPointResponse) => {
+    openModal({
+      title: "제어 포인트 수정",
       hideFooter: true,
       wide: true,
       content: (
         <CommandPointModal
-          deviceId={deviceId}
-          deviceName={deviceName}
+          deviceId={cp.deviceId}
+          deviceName={cp.deviceName}
           commandPoint={cp}
           onClose={closeModal}
         />
@@ -85,118 +108,114 @@ const CommandPointPage = () => {
   return (
     <AdminPageTemplate
       title="제어 포인트 관리"
-      description="디바이스별 제어 포인트(제어 버튼)를 등록·관리합니다. 포인트의 ref_device_code·ref_point_code(XN 코드)로 실제 제어가 중계됩니다."
+      description="제어 포인트(제어 버튼)를 조회·등록·관리합니다. 포인트의 ref_device_code·ref_point_code(XN 코드)로 실제 제어가 중계됩니다."
     >
       <Toolbar>
         <DeviceHierarchyFilter
           value={filter}
           onChange={(v) => {
             setFilter(v);
-            if (!v.deviceId) setPickedDevice(null);
+            setPage(0);
           }}
-          onDevicePicked={setPickedDevice}
         />
+        <SearchInput
+          placeholder="장비명·tagName·표시명 검색"
+          value={keywordInput}
+          onChange={(e) => setKeywordInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+        />
+        <Button variant="secondary" onClick={handleSearch}>
+          검색
+        </Button>
         <Spacer />
-        <Button
-          variant="primary"
-          onClick={() => openEditor(null)}
-          disabled={deviceId == null}
-        >
+        <Button variant="primary" onClick={openRegister} title="제어 포인트 등록">
           + 제어 포인트 등록
         </Button>
       </Toolbar>
 
-      {deviceId == null ? (
-        <EmptyPanel>대분류 → 중분류 → 소분류 → 장비 순으로 대상 디바이스를 선택하세요.</EmptyPanel>
-      ) : (
-        <TableWrap>
-          <Table>
-            <thead>
+      <TableWrap>
+        <Table>
+          <thead>
+            <tr>
+              <Th style={{ width: 48 }}>#</Th>
+              <Th>장비명</Th>
+              <Th>표시명</Th>
+              <Th>tagName</Th>
+              <Th>ref_device_code</Th>
+              <Th>ref_point_code</Th>
+              <Th $center style={{ width: 90 }}>ON / OFF</Th>
+              <Th $center style={{ width: 64 }}>정렬</Th>
+              <Th $center style={{ width: 72 }}>활성</Th>
+              <Th $center style={{ width: 140 }}>관리</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
               <tr>
-                <Th style={{ width: 48 }}>#</Th>
-                <Th>표시명</Th>
-                <Th>tagName</Th>
-                <Th>ref_device_code</Th>
-                <Th>ref_point_code</Th>
-                <Th $center style={{ width: 90 }}>ON / OFF</Th>
-                <Th $center style={{ width: 64 }}>정렬</Th>
-                <Th $center style={{ width: 72 }}>활성</Th>
-                <Th $center style={{ width: 140 }}>관리</Th>
+                <Td colSpan={10} $center>불러오는 중…</Td>
               </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <Td colSpan={9} $center>불러오는 중…</Td>
-                </tr>
-              ) : isError ? (
-                <tr>
-                  <Td colSpan={9} $center>
-                    {(error as Error)?.message ?? "목록을 불러오지 못했습니다."}
+            ) : isError ? (
+              <tr>
+                <Td colSpan={10} $center>
+                  {(error as Error)?.message ?? "목록을 불러오지 못했습니다."}
+                </Td>
+              </tr>
+            ) : points.length === 0 ? (
+              <tr>
+                <Td colSpan={10} $center>
+                  등록된 제어 포인트가 없습니다. 장비를 선택해 "+ 제어 포인트 등록"으로 추가하세요.
+                </Td>
+              </tr>
+            ) : (
+              points.map((p, idx) => (
+                <tr key={p.commandPointId}>
+                  <Td $center>{page * PAGE_SIZE + idx + 1}</Td>
+                  <Td>
+                    <DeviceCell>
+                      {p.deviceName || <Muted>Device#{p.deviceId}</Muted>}
+                    </DeviceCell>
+                  </Td>
+                  <Td>
+                    <PointName>{p.label}</PointName>
+                    {!p.active && <MutedTag>비활성</MutedTag>}
+                  </Td>
+                  <Td>
+                    <Mono>{p.tagName || <Muted>-</Muted>}</Mono>
+                  </Td>
+                  <Td>
+                    <Mono>{p.refDeviceCode || <Muted>미매핑</Muted>}</Mono>
+                  </Td>
+                  <Td>
+                    <Mono>{p.refPointCode || <Muted>미매핑</Muted>}</Mono>
+                  </Td>
+                  <Td $center>
+                    <Mono>
+                      {p.onValue} / {p.offValue}
+                    </Mono>
+                  </Td>
+                  <Td $center>{p.sortOrder}</Td>
+                  <Td $center>
+                    {p.active ? <ActiveDot $on>ON</ActiveDot> : <ActiveDot>OFF</ActiveDot>}
+                  </Td>
+                  <Td $center>
+                    <BtnGroup>
+                      <Button variant="secondary" size="sm" onClick={() => openEdit(p)}>
+                        수정
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => openDelete(p)}>
+                        삭제
+                      </Button>
+                    </BtnGroup>
                   </Td>
                 </tr>
-              ) : points.length === 0 ? (
-                <tr>
-                  <Td colSpan={9} $center>
-                    등록된 제어 포인트가 없습니다. "+ 제어 포인트 등록"으로 추가하세요.
-                  </Td>
-                </tr>
-              ) : (
-                [...points]
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((p, idx) => (
-                    <tr key={p.commandPointId}>
-                      <Td $center>{idx + 1}</Td>
-                      <Td>
-                        <PointName>{p.label}</PointName>
-                        {!p.active && <MutedTag>비활성</MutedTag>}
-                      </Td>
-                      <Td>
-                        <Mono>{p.tagName || <Muted>-</Muted>}</Mono>
-                      </Td>
-                      <Td>
-                        <Mono>{p.refDeviceCode || <Muted>미매핑</Muted>}</Mono>
-                      </Td>
-                      <Td>
-                        <Mono>{p.refPointCode || <Muted>미매핑</Muted>}</Mono>
-                      </Td>
-                      <Td $center>
-                        <Mono>
-                          {p.onValue} / {p.offValue}
-                        </Mono>
-                      </Td>
-                      <Td $center>{p.sortOrder}</Td>
-                      <Td $center>
-                        {p.active ? (
-                          <ActiveDot $on>ON</ActiveDot>
-                        ) : (
-                          <ActiveDot>OFF</ActiveDot>
-                        )}
-                      </Td>
-                      <Td $center>
-                        <BtnGroup>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => openEditor(p)}
-                          >
-                            수정
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => openDelete(p)}
-                          >
-                            삭제
-                          </Button>
-                        </BtnGroup>
-                      </Td>
-                    </tr>
-                  ))
-              )}
-            </tbody>
-          </Table>
-        </TableWrap>
+              ))
+            )}
+          </tbody>
+        </Table>
+      </TableWrap>
+
+      {pagination.totalPages > 0 && (
+        <Pagination data={pagination} onPageChange={setPage} />
       )}
     </AdminPageTemplate>
   );
@@ -206,23 +225,27 @@ export default CommandPointPage;
 
 const Toolbar = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 10px;
   margin-bottom: 16px;
 `;
 
-const Spacer = styled.div`
-  flex: 1;
+const SearchInput = styled.input`
+  box-sizing: border-box;
+  min-width: 200px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  &::placeholder { color: #9ca3af; }
+  &:focus { border-color: #4a90d9; }
 `;
 
-const EmptyPanel = styled.div`
-  padding: 48px 0;
-  text-align: center;
-  font-size: 14px;
-  color: #9ca3af;
-  background: #fff;
-  border: 1px dashed #e5e7eb;
-  border-radius: 8px;
+const Spacer = styled.div`
+  flex: 1;
 `;
 
 const TableWrap = styled.div`
@@ -255,6 +278,11 @@ const Td = styled.td<{ $center?: boolean }>`
   color: #111827;
   text-align: ${(p) => (p.$center ? "center" : "left")};
   vertical-align: middle;
+`;
+
+const DeviceCell = styled.span`
+  font-size: 13px;
+  color: #111827;
 `;
 
 const PointName = styled.span`

@@ -1,11 +1,13 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import styled, { css } from "styled-components";
 import { colors, radius, fontSize, shadow } from "@/styles/tokens";
 
@@ -13,11 +15,11 @@ import { colors, radius, fontSize, shadow } from "@/styles/tokens";
  * 검색형 콤보박스 (제네릭, controlled).
  *
  * native <select> 가 불편한 대형 옵션 목록(수백~수천 항목)을 위한 재사용 컴포넌트.
- * 입력창 + absolute 드롭다운, `label` 부분일치(대소문자 무시) 실시간 필터,
+ * 입력창 + 드롭다운, `label` 부분일치(대소문자 무시) 실시간 필터,
  * 마우스/키보드(Esc·↑↓ 순환·Enter) 선택, 바깥 클릭 닫힘을 제공한다.
  *
- * 원래 DeviceHierarchyFilter 인라인 콤보박스 구현을 일반화한 것으로,
- * 장비 선택·카테고리 기본 3D 에셋 선택 등에서 공용으로 사용한다.
+ * 드롭다운은 `createPortal` 로 body 에 그리고 fixed 로 배치한다 → 조상의
+ * overflow(모달 내부 스크롤 박스 등)에 잘리지 않는다.
  */
 export interface SearchableSelectOption {
   value: string | number;
@@ -60,9 +62,13 @@ const SearchableSelect = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(
+    null
+  );
 
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const activeOptionRef = useRef<HTMLButtonElement>(null);
 
   const effectiveDisabled = disabled || loading;
@@ -81,11 +87,39 @@ const SearchableSelect = ({
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, search]);
 
-  // 바깥 클릭 시 닫힘
+  // 입력창(루트) 기준으로 드롭다운 fixed 위치 계산
+  const updateRect = useCallback(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updateRect();
+  }, [open, updateRect]);
+
+  // 열려 있는 동안 스크롤/리사이즈 시 위치 갱신
+  useEffect(() => {
+    if (!open) return undefined;
+    const onReflow = () => updateRect();
+    window.addEventListener("scroll", onReflow, true);
+    window.addEventListener("resize", onReflow);
+    return () => {
+      window.removeEventListener("scroll", onReflow, true);
+      window.removeEventListener("resize", onReflow);
+    };
+  }, [open, updateRect]);
+
+  // 바깥 클릭 시 닫힘 (루트 + 포탈 드롭다운 모두 내부로 취급)
   useEffect(() => {
     if (!open) return undefined;
     const onDocMouseDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      const t = e.target as Node;
+      const inRoot = rootRef.current?.contains(t);
+      const inDropdown = dropdownRef.current?.contains(t);
+      if (!inRoot && !inDropdown) {
         setOpen(false);
         setSearch("");
         setActiveIndex(-1);
@@ -174,7 +208,7 @@ const SearchableSelect = ({
 
   const showClear = allowClear && hasValue && !effectiveDisabled;
 
-  const renderDropdown = () => {
+  const renderDropdownBody = () => {
     if (loading) {
       return <ComboStatus>{LOADING_TEXT}</ComboStatus>;
     }
@@ -244,9 +278,18 @@ const SearchableSelect = ({
           ×
         </ComboClearBtn>
       ) : null}
-      {open ? (
-        <ComboDropdown role="listbox">{renderDropdown()}</ComboDropdown>
-      ) : null}
+      {open && rect
+        ? createPortal(
+            <ComboDropdown
+              ref={dropdownRef}
+              role="listbox"
+              style={{ top: rect.top, left: rect.left, width: rect.width }}
+            >
+              {renderDropdownBody()}
+            </ComboDropdown>,
+            document.body
+          )
+        : null}
     </ComboControl>
   );
 };
@@ -327,12 +370,10 @@ const ComboClearBtn = styled.button`
   }
 `;
 
+/* 포탈(body)로 렌더되므로 position: fixed + 모달(Backdrop z-index:9999) 위로 올림 */
 const ComboDropdown = styled.div`
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 50;
-  width: 100%;
+  position: fixed;
+  z-index: 10050;
   min-width: 220px;
   max-height: 260px;
   overflow-y: auto;

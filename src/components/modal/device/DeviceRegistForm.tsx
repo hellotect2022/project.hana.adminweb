@@ -10,6 +10,7 @@ import {
   DEVICE_LIST_QUERY_KEY,
   flattenDeviceCategoryTree,
   sortByDisplayOrder,
+  useDevicePropertyTypes,
 } from "@/services/deviceService";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
@@ -75,6 +76,11 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
   const [deviceName, setDeviceName] = useState("");
   const [deviceDescription, setDeviceDescription] = useState("");
   const [submitError, setSubmitError] = useState("");
+  // property_info 동적 입력값 (카테고리 propertyType 기반)
+  const [propertyInfo, setPropertyInfo] = useState<Record<string, string>>({});
+
+  // 카테고리 propertyType 별 property_info 스켈레톤 메타
+  const { data: propertyTypes = [] } = useDevicePropertyTypes();
 
   const {
     data: categoryTree,
@@ -138,6 +144,21 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     [deviceKey, schemaDefinitions]
   );
 
+  // 선택된 소분류의 propertyType → property_info 동적 필드 구성
+  const smallPropertyType: string | null = selectedSmall?.propertyType ?? null;
+  const propTemplate = useMemo<Record<string, any> | null>(
+    () =>
+      propertyTypes.find((p) => p.type === smallPropertyType)?.template ?? null,
+    [propertyTypes, smallPropertyType]
+  );
+  // template 키에서 type 제외 = 입력 필드 목록 (예: CCTV → main_url/sub_url/user_id/password)
+  const propFields = useMemo<string[]>(
+    () => (propTemplate ? Object.keys(propTemplate).filter((k) => k !== "type") : []),
+    [propTemplate]
+  );
+  const showPropertyInfo =
+    !!smallPropertyType && smallPropertyType !== "GENERIC" && propFields.length > 0;
+
   useEffect(() => {
     if (!majors.length) return;
     setSelectedMajorId((prev) =>
@@ -178,6 +199,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     setSelectedSmallId(null);
     setDeviceName("");
     setDeviceDescription("");
+    setPropertyInfo({});
     setSubmitError("");
   };
   const pickMid = (id) => {
@@ -185,12 +207,14 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     setSelectedSmallId(null);
     setDeviceName("");
     setDeviceDescription("");
+    setPropertyInfo({});
     setSubmitError("");
   };
   const pickSmall = (id) => {
     setSelectedSmallId(id);
     setDeviceName("");
     setDeviceDescription("");
+    setPropertyInfo({});
     setSubmitError("");
   };
 
@@ -200,12 +224,24 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     e.preventDefault();
     if (!canRegister) return;
     setSubmitError("");
+    // property_info: 카테고리 propertyType 이 있고 GENERIC 이 아니면 type + 입력값으로 조립.
+    // (type 은 카테고리에서 자동 결정 — 사용자가 못 바꿈. 값 없으면 null.)
+    let propertyInfoPayload: Record<string, any> | null = null;
+    if (showPropertyInfo && smallPropertyType) {
+      const entries: Record<string, any> = {};
+      propFields.forEach((k) => {
+        const v = propertyInfo[k];
+        entries[k] = v != null && v !== "" ? v : null;
+      });
+      propertyInfoPayload = { type: smallPropertyType, ...entries };
+    }
     createDevice({
       deviceName: deviceName.trim(),
       description: deviceDescription.trim(),
       deviceKey,
       categoryId: selectedSmallId,
       active: true,
+      propertyInfo: propertyInfoPayload,
       points: pointRows.map(({ tagName, pointKey, schemaTagName, pointName, pointType, unit, tagDesc, isDisplay }) => ({
         tagName,
         pointKey,
@@ -351,6 +387,39 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
               />
             </KeyFieldWrap>
           </FieldGrid>
+
+          {showPropertyInfo && (
+            <PropSection>
+              <PropHeader>
+                <PropTitle>
+                  장비 속성 (property_info)
+                  <PropTypeBadge>{smallPropertyType}</PropTypeBadge>
+                </PropTitle>
+                <PropHint>
+                  카테고리 타입에 따라 자동 구성됩니다. type 은 카테고리에서 결정됩니다.
+                </PropHint>
+              </PropHeader>
+              <PropGrid>
+                {propFields.map((k) => {
+                  const isPassword = k.toLowerCase().includes("password");
+                  return (
+                    <PropField key={k}>
+                      <PropLabel>{k}</PropLabel>
+                      <FieldInput
+                        type={isPassword ? "password" : "text"}
+                        value={propertyInfo[k] ?? ""}
+                        onChange={(e) =>
+                          setPropertyInfo((prev) => ({ ...prev, [k]: e.target.value }))
+                        }
+                        placeholder={k}
+                        autoComplete={isPassword ? "new-password" : "off"}
+                      />
+                    </PropField>
+                  );
+                })}
+              </PropGrid>
+            </PropSection>
+          )}
 
           <PointsSection>
             <PointsHeader>
@@ -687,6 +756,70 @@ const PointsSection = styled.section`
   border-radius: 8px;
   background: #fff;
   overflow: hidden;
+`;
+
+const PropSection = styled.section`
+  margin: 0 16px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+`;
+
+const PropHeader = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+const PropTitle = styled.h4`
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111d2c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PropTypeBadge = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: #dbeafe;
+  padding: 1px 8px;
+  border-radius: 999px;
+`;
+
+const PropHint = styled.span`
+  font-size: 12px;
+  color: #94a3b8;
+`;
+
+const PropGrid = styled.div`
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const PropField = styled.div`
+  display: contents;
+`;
+
+const PropLabel = styled.label`
+  font-size: 13px;
+  color: #374151;
+  font-family: ui-monospace, monospace;
 `;
 
 const PointsHeader = styled.div`
