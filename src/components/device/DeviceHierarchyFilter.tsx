@@ -147,7 +147,7 @@ const DeviceHierarchyFilter = ({
           <option value="">대분류 선택</option>
           {majors.map((c) => (
             <option key={c.categoryId} value={c.categoryId}>
-              {c.categoryName}
+              {c.categoryCode ? `${c.categoryName} (${c.categoryCode})` : c.categoryName}
             </option>
           ))}
         </CascadeSelect>
@@ -163,7 +163,7 @@ const DeviceHierarchyFilter = ({
           <option value="">{majorId ? "중분류 선택" : "대분류를 먼저 선택"}</option>
           {mids.map((c) => (
             <option key={c.categoryId} value={c.categoryId}>
-              {c.categoryName}
+              {c.categoryCode ? `${c.categoryName} (${c.categoryCode})` : c.categoryName}
             </option>
           ))}
         </CascadeSelect>
@@ -179,7 +179,7 @@ const DeviceHierarchyFilter = ({
           <option value="">{midId ? "소분류 선택" : "중분류를 먼저 선택"}</option>
           {smalls.map((c) => (
             <option key={c.categoryId} value={c.categoryId}>
-              {c.categoryName}
+              {c.categoryCode ? `${c.categoryName} (${c.categoryCode})` : c.categoryName}
             </option>
           ))}
         </CascadeSelect>

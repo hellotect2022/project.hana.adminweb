@@ -4,5 +4,5 @@
 const BASE = import.meta.env.BASE_URL; // 항상 "/" 로 끝남
 
 export function assetUrl(path: string): string {
-  return `${BASE}${path.replace(/^\//, '')}`;
+  return `${BASE}${path.replace(/^\//, '/')}`;
 }

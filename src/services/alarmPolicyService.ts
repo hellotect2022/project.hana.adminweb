@@ -10,7 +10,8 @@ export type AlarmScope = "CATEGORY" | "DEVICE";
 export type AlarmLevelKey = "CAUTION" | "WARNING" | "CRITICAL";
 export type AlarmOperator = "GTE" | "LTE" | "GT" | "LT";
 export type AlarmConditionKind = "THRESHOLD" | "TOGGLE";
-export type AlarmDisplayType = "SIMPLE" | "SOP" | "POPUP_SOP";
+/** 레벨별 3D 이펙트 연출 (서버 enum name, meta.effect 로 구동) */
+export type AlarmEffect = "NONE" | "BLINK" | "COLOR_CHANGE" | "PULSE";
 
 /* ────────────────────────────────────────────────────────────────
  * 레벨별 출력 채널 세트 (OutputSpec) — hana-common OutputSpec 과 1:1.
@@ -75,9 +76,6 @@ export interface AlarmPolicy {
   conditionKind: AlarmConditionKind;
   operator: AlarmOperator | null;
   triggerValue: string | null;
-  displayType: AlarmDisplayType;
-  sopTemplateId: number | null;
-  effectEnabled: boolean;
   sustainSec: number;
   cooldownSec: number;
   active: boolean;

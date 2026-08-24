@@ -54,6 +54,7 @@ import privateApi from "./api";
  * @typedef {{
  *   deviceId: number;
  *   deviceName: string;
+ *   deviceDisplayName?: string | null;
  *   description: string | null;
  *   active: boolean;
  *   categoryId: number | null;
@@ -67,9 +68,31 @@ import privateApi from "./api";
  *   updatedAt: string;
  *   set: boolean;
  *   propertyInfo?: Record<string, any> | null;
+ *   alarmState?: boolean;
+ *   operationState?: "RUNNING" | "STOPPED" | "FAULT" | "UNKNOWN";
+ *   connectionState?: "CONNECTED" | "DISCONNECTED" | "UNKNOWN";
  *   commandPoints?: Array<{ commandPointId: number; label: string; tagName: string | null; onValue: string; offValue: string }>;
  * }} DeviceDTO
  */
+
+/** 장비 동작상태 (서버 enum) */
+export type OperationState = "RUNNING" | "STOPPED" | "FAULT" | "UNKNOWN";
+/** 장비 연결상태 (서버 enum) */
+export type ConnectionState = "CONNECTED" | "DISCONNECTED" | "UNKNOWN";
+
+/** 동작상태 라벨 */
+export const OPERATION_STATE_LABEL: Record<OperationState, string> = {
+  RUNNING: "동작",
+  STOPPED: "정지",
+  FAULT: "고장",
+  UNKNOWN: "알수없음",
+};
+/** 연결상태 라벨 */
+export const CONNECTION_STATE_LABEL: Record<ConnectionState, string> = {
+  CONNECTED: "연결됨",
+  DISCONNECTED: "연결끊김",
+  UNKNOWN: "알수없음",
+};
 
 export const DEVICE_CATEGORY_QUERY_KEY = ["device", "device-categories"];
 export const DEVICE_LIST_QUERY_KEY = ["device", "list"];
@@ -192,6 +215,7 @@ export async function fetchDeviceByIdAPI(deviceId) {
  * POST /device — 장비 등록
  * @param {{
  *   deviceName: string;
+ *   deviceDisplayName?: string;
  *   deviceKey?: string;
  *   description?: string;
  *   categoryId?: number;
@@ -217,7 +241,7 @@ export async function updateDeviceAPI({ deviceId, payload }) {
 
 /**
  * PATCH /device/{deviceId} — 장비 기본 정보 부분 수정
- * @param {{ deviceId: number; payload: { deviceName?: string; description?: string; active?: boolean; categoryId?: number | null; assetId?: number | null; propertyInfo?: Record<string, any> | null } }} param
+ * @param {{ deviceId: number; payload: { deviceName?: string; deviceDisplayName?: string | null; description?: string; active?: boolean; categoryId?: number | null; assetId?: number | null; propertyInfo?: Record<string, any> | null } }} param
  */
 export async function patchDeviceAPI({ deviceId, payload }) {
   const { data } = await privateApi.patch(`/device/${deviceId}`, payload);
@@ -386,6 +410,25 @@ export async function downloadPointMappingTemplateAPI({
 }
 
 /**
+ * GET /device/excel — 현재 목록 필터(카테고리/키워드) 기준 장비 목록 xlsx(blob)
+ * @param {{ categoryId?: number; keyword?: string }} [params]
+ * @returns axios response (data: Blob, headers 포함 — 파일명 파싱용)
+ */
+export async function downloadDeviceListExcelAPI({
+  categoryId,
+  keyword,
+}: { categoryId?: number; keyword?: string } = {}) {
+  const res = await privateApi.get("/device/excel", {
+    params: {
+      ...(categoryId != null ? { categoryId } : {}),
+      ...(keyword ? { keyword } : {}),
+    },
+    responseType: "blob",
+  });
+  return res;
+}
+
+/**
  * POST /device/points/mapping/import — xlsx 업로드로 ref 매핑 일괄 반영
  * @param {File} file
  * @returns {Promise<{ total: number; applied: number; failed: Array<{ row: number; pointKey: string; reason: string }> }>}
@@ -464,6 +507,71 @@ export async function postCctvMapping(
 ) {
   const { data } = await privateApi.post(`/device/${deviceId}/cctv-mapping`, {
     cctvIds,
+  });
+  return data;
+}
+
+/* ────────────────────────────────────────────────────────────────
+ * 장비 실시간 값 이력 (device value history)
+ * ──────────────────────────────────────────────────────────────── */
+
+/** XN 포인트 값 스냅샷 1건 (XnPointData) */
+export interface XnPointData {
+  deviceId: number | null;
+  pointId: number | null;
+  pointkey: string | null;
+  deviceCode: string | null;
+  pointCode: string | null;
+  alarmYn: string | null;
+  objectType: string | null;
+  pointName: string | null;
+  valueRaw: string | null;
+  unit: string | null;
+  tagName: string | null;
+  updateDatetime: string | null;
+}
+
+/** 실시간 값 이력 1건 (= 특정 시각의 device bundle 스냅샷).
+ * PK 가 복합 (device_id, created_at) 이라 surrogate id 는 없음. */
+export interface DeviceValueHistoryResponse {
+  deviceId: number;
+  deviceKey: string;
+  createdAt: string;
+  points: XnPointData[];
+}
+
+/** 장비 실시간 값 이력 쿼리 키 (deviceId + 조건별로 뒤에 붙여 사용) */
+export const deviceValueHistoryQueryKey = (deviceId: number | string) => [
+  "device",
+  "value-history",
+  String(deviceId),
+];
+
+/**
+ * GET /api/device/{deviceId}/value-history?from=&to=&page=&size=
+ * → ApiResponse<PageResponse<DeviceValueHistoryResponse>> (content + page, 공용 Pagination 소비)
+ * @returns 전체 ApiResponse (res.data.content / res.data.page 로 소비)
+ */
+export async function getDeviceValueHistory({
+  deviceId,
+  from,
+  to,
+  page = 0,
+  size = 50,
+}: {
+  deviceId: number;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
+}) {
+  const { data } = await privateApi.get(`/device/${deviceId}/value-history`, {
+    params: {
+      page,
+      size,
+      ...(from ? { from } : {}),
+      ...(to ? { to } : {}),
+    },
   });
   return data;
 }

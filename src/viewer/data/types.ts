@@ -39,6 +39,7 @@ export interface DeviceLocation {
 export interface DeviceDTO {
   deviceId: number;
   deviceName: string;
+  deviceDisplayName: string | null;
   description: string | null;
   active: boolean;
   categoryId: number | null;

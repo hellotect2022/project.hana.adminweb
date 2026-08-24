@@ -6,6 +6,7 @@ import { resolveZoneAt } from '../lib/zone';
 import { deviceObjects } from '../state/registry';
 import { useViewerStore, type GizmoMode, type EditZone } from '../state/viewerStore';
 import { useAllDevices, useZoneMap } from '../hooks';
+import { deviceLabel } from '@/utils/deviceLabel';
 
 const Box = styled.div`
   position: fixed; bottom: 14px; right: 14px; z-index: 13; width: 250px;
@@ -61,7 +62,7 @@ export function Inspector() {
 
   return (
     <Box>
-      <Ttl>{dev.deviceName} {isDirty && <Dirty>● 변경됨</Dirty>}</Ttl>
+      <Ttl>{deviceLabel(dev)} {isDirty && <Dirty>● 변경됨</Dirty>}</Ttl>
       <Sub>#{dev.deviceId} · {dev.assetName ?? '(자산없음)'}{isPending ? ' · 신규배치' : ''}</Sub>
       <Zone>{editZone ? `구역: ${editZone.zoneName} (#${editZone.zoneId})` : '구역: (영역 밖 — 미지정)'}</Zone>
       <Modes>

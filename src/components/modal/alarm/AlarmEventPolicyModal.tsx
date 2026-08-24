@@ -15,7 +15,6 @@ import {
   createAlarmPolicy,
   updateAlarmPolicy,
   type AlarmConditionKind,
-  type AlarmDisplayType,
   type AlarmLevelKey,
   type AlarmOperator,
   type AlarmPolicy,
@@ -140,7 +139,7 @@ function buildInitialLevels(
       thresholdValue:
         existing?.thresholdValue != null ? String(existing.thresholdValue) : "",
       icon: existing?.icon ?? "",
-      effect: existing?.effect ?? "",
+      effect: existing?.effect ?? "NONE",
       ch: outputsToChannel(existing?.outputs),
     };
   });
@@ -155,7 +154,7 @@ interface Props {
 /**
  * 알람/이벤트 정책 등록·수정 모달 (WA-ALARM-POLICY, 통합)
  * scope 토글(카테고리/디바이스) + 대>중>소 계층 필터 + 포인트(tag) + 조건 +
- * 레벨별 임계값·출력 채널(알림/SOP/CCTV/SMS) + 경보표시(displayType)·이펙트 + 발동 설정.
+ * 레벨별 임계값·출력 채널(알림/SOP/CCTV/SMS)·이펙트(effect) + 발동 설정.
  * 값/라벨/순서는 서버 메타(GET /api/alarm/meta)로 구동. 메타 로딩 전에는 로딩 표시.
  */
 const AlarmEventPolicyModal = ({ policy, onClose }: Props) => {
@@ -213,16 +212,6 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
     policy?.operator ?? (operatorKeys[0] ?? "GTE")
   );
   const [triggerValue, setTriggerValue] = useState(policy?.triggerValue ?? "");
-  const [displayType, setDisplayType] = useState<AlarmDisplayType>(
-    policy?.displayType ??
-      ((metaKeys(meta.displayType)[0] ?? "SIMPLE") as AlarmDisplayType)
-  );
-  const [sopTemplateId, setSopTemplateId] = useState<string>(
-    policy?.sopTemplateId != null ? String(policy.sopTemplateId) : ""
-  );
-  const [effectEnabled, setEffectEnabled] = useState(
-    policy?.effectEnabled ?? false
-  );
   const [sustainSec, setSustainSec] = useState<string>(
     String(policy?.sustainSec ?? 0)
   );
@@ -236,7 +225,6 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
 
   const isThreshold = conditionKind === "THRESHOLD";
   const isCategory = scope === "CATEGORY";
-  const usesSop = displayType === "SOP" || displayType === "POPUP_SOP";
 
   // 카테고리 트리 (schema + cascade 역산용).
   // ※ queryFn 은 다른 모든 소비처(DeviceHierarchyFilter 등)와 동일하게 트리 배열(res.data)을
@@ -422,9 +410,6 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
       conditionKind,
       operator: isThreshold ? operator : null,
       triggerValue: !isThreshold ? triggerValue.trim() || null : null,
-      displayType,
-      sopTemplateId: usesSop && sopTemplateId ? Number(sopTemplateId) : null,
-      effectEnabled,
       sustainSec: Number(sustainSec) || 0,
       cooldownSec: Number(cooldownSec) || 0,
       active,
@@ -839,15 +824,20 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
                     </ExtraField>
                     <ExtraField>
                       <ExtraLabel>이펙트</ExtraLabel>
-                      <Input
-                        value={l.effect}
+                      <Select
+                        value={l.effect || "NONE"}
                         disabled={!l.enabled}
                         onChange={(e) =>
                           patchLevel(l.level, { effect: e.target.value })
                         }
-                        placeholder="예: blink, pulse"
                         style={{ width: "100%" }}
-                      />
+                      >
+                        {metaEntries(meta.effect).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </Select>
                     </ExtraField>
                   </LevelExtra>
                 </LevelCard>
@@ -856,57 +846,9 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
           </LevelCards>
         </Section>
 
-        {/* ⑤ 경보 표시 · 연출 */}
+        {/* ⑤ 발동 설정 */}
         <Section>
-          <SectionTitle>⑤ 경보 표시 · 연출</SectionTitle>
-          <Field>
-            <Label $required>경보 표시</Label>
-            <Select
-              value={displayType}
-              onChange={(e) =>
-                setDisplayType(e.target.value as AlarmDisplayType)
-              }
-              style={{ width: "100%" }}
-            >
-              {metaEntries(meta.displayType).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          {usesSop && (
-            <Field>
-              <Label>SOP 템플릿</Label>
-              <Select
-                value={sopTemplateId}
-                onChange={(e) => setSopTemplateId(e.target.value)}
-                style={{ width: "100%" }}
-              >
-                <option value="">선택하세요</option>
-                {sopTemplates.map((t: any) => (
-                  <option key={t.templateId} value={t.templateId}>
-                    {t.templateName}
-                    {t.templateCode ? ` (${t.templateCode})` : ""}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          )}
-          <Field>
-            <Label>3D 이펙트 연출</Label>
-            <Toggle
-              on={effectEnabled}
-              onClick={() => setEffectEnabled((v) => !v)}
-            >
-              {effectEnabled ? "연출 ON" : "연출 OFF"}
-            </Toggle>
-          </Field>
-        </Section>
-
-        {/* ⑥ 발동 설정 */}
-        <Section>
-          <SectionTitle>⑥ 발동 설정</SectionTitle>
+          <SectionTitle>⑤ 발동 설정</SectionTitle>
           <TwoCol>
             <Field>
               <Label>지속 시간(초)</Label>

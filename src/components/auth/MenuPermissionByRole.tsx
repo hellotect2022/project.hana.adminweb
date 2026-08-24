@@ -272,7 +272,7 @@ const MenuPermissionByRole = () => {
       <Panel>
         <PanelTitleRow>
           <PanelTitle>
-            BMS 시스템 접근 권한 —{" "}
+            디지털트윈 시스템 접근 권한 —{" "}
             {selectedRoleName || (roleId == null ? "역할을 선택하세요" : "")}
           </PanelTitle>
           <SectionActions>

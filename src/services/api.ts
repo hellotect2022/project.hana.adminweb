@@ -27,6 +27,7 @@ const privateApi = axios.create({
 });
 
 function handleApiResponseSuccess(response) {
+  //console.log('handleApiResponseSuccess',response)
   if (response.config?.skipApiErrorModal) return response;
 
   const apiError = extractApiError(response.data);
@@ -38,6 +39,9 @@ function handleApiResponseSuccess(response) {
 }
 
 function handleApiResponseError(error) {
+  //console.log('handleApiResponseError',error)
+  //console.log('handleApiResponseError',error.config?.skipApiErrorModal)
+  //console.log('handleApiResponseError',error.response)
   if (!error.config?.skipApiErrorModal) {
     const apiError = extractApiError(error.response?.data);
     if (apiError) notifyApiError(apiError);
@@ -108,6 +112,7 @@ privateApi.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
+
     return Promise.reject(error);
   }
 );

@@ -3,7 +3,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
-import { Button } from "@/components/ui";
+import { Button, Toggle } from "@/components/ui";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import DeviceDetailModalContent from "@/components/modal/device/DeviceDetailModal";
 import DeviceRegistForm from "@/components/modal/device/DeviceRegistForm";
@@ -11,10 +11,16 @@ import DeviceCctvMappingModal from "@/components/modal/device/DeviceCctvMappingM
 import Pagination from "@/components/common/Pagination";
 import { useModal } from "@/contexts/ModalContext";
 import {
+  CONNECTION_STATE_LABEL,
   deleteDeviceAPI,
   DEVICE_LIST_QUERY_KEY,
+  downloadDeviceListExcelAPI,
   fetchDeviceByIdAPI,
   fetchDevicesAPI,
+  OPERATION_STATE_LABEL,
+  patchDeviceAPI,
+  type ConnectionState,
+  type OperationState,
 } from "@/services/deviceService";
 import {
   EMPTY_HIERARCHY_FILTER,
@@ -23,6 +29,7 @@ import {
   resolveHierarchyDeviceId,
 } from "@/utils/deviceHierarchyFilterUtils";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
+import { deviceLabel } from "@/utils/deviceLabel";
 
 const PAGE_SIZE = 20;
 
@@ -93,6 +100,41 @@ const DeviceManagePage = () => {
     setPage(0);
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleDownloadExcel = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const res = await downloadDeviceListExcelAPI({
+        categoryId: appliedCategoryId ?? undefined,
+        keyword: keyword || undefined,
+      });
+      const disposition =
+        res?.headers?.["content-disposition"] ||
+        res?.headers?.["Content-Disposition"] ||
+        "";
+      let filename = "device-list.xlsx";
+      const star = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+      const plain = /filename="?([^";]+)"?/i.exec(disposition);
+      if (star?.[1]) filename = decodeURIComponent(star[1]);
+      else if (plain?.[1]) filename = plain[1];
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      showAlert("엑셀 다운로드에 실패했습니다.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const { mutate: removeDevice, isPending: isDeleting } = useMutation({
     mutationFn: deleteDeviceAPI,
     onSuccess: () => {
@@ -103,8 +145,29 @@ const DeviceManagePage = () => {
     },
   });
 
+  // 알람 on/off 토글 (alarmState 만 부분 수정)
+  const [alarmBusy, setAlarmBusy] = useState<Set<number>>(new Set());
+  const { mutate: toggleAlarm } = useMutation({
+    mutationFn: ({ deviceId, alarmState }: { deviceId: number; alarmState: boolean }) =>
+      patchDeviceAPI({ deviceId, payload: { alarmState } }),
+    onMutate: ({ deviceId }) =>
+      setAlarmBusy((prev) => new Set(prev).add(deviceId)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: DEVICE_LIST_QUERY_KEY });
+    },
+    onError: (err) => {
+      showAlert(getApiErrorMessage(err, "알람 설정 변경에 실패했습니다."));
+    },
+    onSettled: (_d, _e, { deviceId }) =>
+      setAlarmBusy((prev) => {
+        const next = new Set(prev);
+        next.delete(deviceId);
+        return next;
+      }),
+  });
+
   const handleDeleteDevice = async (device) => {
-    const label = device.deviceName || `ID #${device.deviceId}`;
+    const label = deviceLabel(device) || `ID #${device.deviceId}`;
     const ok = await showConfirm(`장비 "${label}" 을(를) 삭제할까요?\n연결된 포인트·이벤트 규칙도 함께 삭제됩니다.`);
     if (!ok) {
       return;
@@ -114,7 +177,7 @@ const DeviceManagePage = () => {
 
   const openDetailModal = (device) => {
     openModal({
-      title: `장비 상세 — ${device.deviceName}`,
+      title: `장비 상세 — ${deviceLabel(device)}`,
       hideFooter: true,
       wide: true,
       content: (
@@ -146,7 +209,7 @@ const DeviceManagePage = () => {
 
   const openCctvMappingModal = (device) => {
     openModal({
-      title: `CCTV 매핑 — ${device.deviceName}`,
+      title: `CCTV 매핑 — ${deviceLabel(device)}`,
       hideFooter: true,
       wide: true,
       content: (
@@ -181,9 +244,17 @@ const DeviceManagePage = () => {
           {hasHierarchyFilter(appliedFilter) ? " · 카테고리 필터 적용" : ""}
         </Summary>
         <Button
+          variant="secondary"
+          onClick={handleDownloadExcel}
+          disabled={isExporting}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, marginLeft: "auto", flexShrink: 0 }}
+        >
+          {isExporting ? "다운로드 중..." : "엑셀 다운로드"}
+        </Button>
+        <Button
           variant="primary"
           onClick={openRegisterModal}
-          style={{ height: TOOLBAR_CONTROL_HEIGHT, marginLeft: "auto", flexShrink: 0 }}
+          style={{ height: TOOLBAR_CONTROL_HEIGHT, flexShrink: 0 }}
         >
           + 장비 추가
         </Button>
@@ -194,24 +265,27 @@ const DeviceManagePage = () => {
           <thead>
             <tr>
               <Th $center style={{ width: 70 }}>번호</Th>
+              <Th $center style={{ width: 250 }}>표시이름</Th>
               <Th $center style={{ width: 120 }}>장비 이름</Th>
-              <Th style={{ width: 320}}>카테고리</Th>
+              <Th style={{ width: 280}}>카테고리</Th>
               <Th style={{ width: 120 }}>장비설명</Th>
-              <Th $center style={{ width: 90 }}>활성</Th>
-              <Th $center style={{ width: 90 }}>배치</Th>
+              <Th $center style={{ width: 80 }}>활성</Th>
+              <Th $center style={{ width: 90 }}>알람</Th>
+              <Th $center style={{ width: 80 }}>배치</Th>
+              <Th $center style={{ width: 150 }}>동작 / 연결</Th>
               <Th $center style={{ width: 240 }}>관리</Th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={10} $center>
                   불러오는 중...
                 </Td>
               </tr>
             ) : devices.length === 0 ? (
               <tr>
-                <Td colSpan={6} $center>
+                <Td colSpan={10} $center>
                   {keyword || hasHierarchyFilter(appliedFilter)
                     ? "검색 결과가 없습니다."
                     : "등록된 장비가 없습니다. 대·중·소·장비를 선택 후 검색하거나 키워드로 검색해 보세요."}
@@ -221,6 +295,13 @@ const DeviceManagePage = () => {
               devices.map((device, idx) => (
                 <tr key={device.deviceId}>
                   <Td $center>{page * PAGE_SIZE + idx + 1}</Td>
+                  <Td $center>
+                    {device.deviceDisplayName?.trim() ? (
+                      device.deviceDisplayName
+                    ) : (
+                      <MutedText>미지정</MutedText>
+                    )}
+                  </Td>
                   <Td $center>{device.deviceName}</Td>
                   <Td>{device.categoryPath || device.categoryName || "-"}</Td>
                   <Td>{device.description }</Td>
@@ -228,9 +309,38 @@ const DeviceManagePage = () => {
                     <Badge $active={device.active}>{device.active ? "활성" : "비활성"}</Badge>
                   </Td>
                   <Td $center>
+                    <Toggle
+                      on={device.alarmState !== false}
+                      disabled={alarmBusy.has(device.deviceId)}
+                      title="끄면 이 장비 알람이 발생해도 서버가 전송하지 않음(반영 최대 30초)"
+                      onClick={() =>
+                        toggleAlarm({
+                          deviceId: device.deviceId,
+                          alarmState: !(device.alarmState !== false),
+                        })
+                      }
+                    >
+                      {device.alarmState !== false ? "ON" : "OFF"}
+                    </Toggle>
+                  </Td>
+                  <Td $center>
                     <Badge $placed={device.placed ?? device.set}>
                       {device.placed ?? device.set ? "배치됨" : "미배치"}
                     </Badge>
+                  </Td>
+                  <Td $center>
+                    <StateStack>
+                      <StateBadge $state={device.operationState ?? "UNKNOWN"}>
+                        {OPERATION_STATE_LABEL[
+                          (device.operationState ?? "UNKNOWN") as OperationState
+                        ]}
+                      </StateBadge>
+                      <StateBadge $state={device.connectionState ?? "UNKNOWN"}>
+                        {CONNECTION_STATE_LABEL[
+                          (device.connectionState ?? "UNKNOWN") as ConnectionState
+                        ]}
+                      </StateBadge>
+                    </StateStack>
                   </Td>
                   <Td $center>
                     <BtnGroup>
@@ -361,10 +471,60 @@ const Badge = styled.span<{ $active?: boolean; $placed?: boolean }>`
   }};
 `;
 
+const MutedText = styled.span`
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+`;
+
 const BtnGroup = styled.div`
   display: flex;
   gap: 6px;
   justify-content: center;
   flex-wrap: wrap;
+`;
+
+const StateStack = styled.div`
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+`;
+
+const StateBadge = styled.span<{ $state: string }>`
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  white-space: nowrap;
+  background: ${(p) => {
+    switch (p.$state) {
+      case "RUNNING":
+      case "CONNECTED":
+        return "#dcfce7";
+      case "FAULT":
+      case "DISCONNECTED":
+        return "#fee2e2";
+      case "STOPPED":
+        return "#fef3c7";
+      default:
+        return "#f3f4f6";
+    }
+  }};
+  color: ${(p) => {
+    switch (p.$state) {
+      case "RUNNING":
+      case "CONNECTED":
+        return "#15803d";
+      case "FAULT":
+      case "DISCONNECTED":
+        return "#b91c1c";
+      case "STOPPED":
+        return "#b45309";
+      default:
+        return "#6b7280";
+    }
+  }};
 `;
 

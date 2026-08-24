@@ -2,17 +2,21 @@ import { showAlert, showConfirm } from "@/utils/dialogBridge";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui";
+import { Button, Toggle } from "@/components/ui";
 import {
   categoryFetchAPI,
+  CONNECTION_STATE_LABEL,
   DEVICE_CATEGORY_QUERY_KEY,
   deviceLogicalPointsQueryKey,
   DEVICE_LIST_QUERY_KEY,
   deleteDeviceAPI,
   fetchDeviceLogicalPointsAPI,
   flattenDeviceCategoryTree,
+  OPERATION_STATE_LABEL,
   patchDeviceAPI,
   useDevicePropertyTypes,
+  type ConnectionState,
+  type OperationState,
 } from "@/services/deviceService";
 import DeviceSmallCategorySelect from "@/components/device/DeviceSmallCategorySelect";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
@@ -39,21 +43,28 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
     deviceName: device?.deviceName ?? "",
+    deviceDisplayName: device?.deviceDisplayName ?? "",
     description: device?.description ?? "",
     active: device?.active ?? true,
     categoryId: device?.categoryId ? String(device.categoryId) : "",
   });
   const [dirty, setDirty] = useState(false);
 
+  // 알람 on/off (즉시 patch — 편집 모드와 독립)
+  const [alarmLocal, setAlarmLocal] = useState<boolean>(device?.alarmState !== false);
+  const [alarmBusy, setAlarmBusy] = useState(false);
+
   // device prop이 바뀌면 form 초기화
   useEffect(() => {
     if (!device) return;
     setForm({
       deviceName: device.deviceName ?? "",
+      deviceDisplayName: device.deviceDisplayName ?? "",
       description: device.description ?? "",
       active: device.active ?? true,
       categoryId: device.categoryId ? String(device.categoryId) : "",
     });
+    setAlarmLocal(device.alarmState !== false);
     setDirty(false);
     setEditMode(false);
   }, [device]);
@@ -136,10 +147,29 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       queryClient.invalidateQueries({ queryKey: deviceLogicalPointsQueryKey(device.deviceId) });
       setEditMode(false);
       setDirty(false);
+      // 저장 성공 시 모달 닫기(실패 시에는 onError 로 유지). 목록은 위 invalidate 로 갱신된 값 표시.
+      onClose?.();
     },
     onError: (err) => {
       showAlert(getApiErrorMessage(err, "장비 저장에 실패했습니다."));
     },
+  });
+
+  const { mutate: toggleAlarm } = useMutation({
+    mutationFn: (next: boolean) =>
+      patchDeviceAPI({ deviceId: device.deviceId, payload: { alarmState: next } }),
+    onMutate: (next: boolean) => {
+      setAlarmBusy(true);
+      setAlarmLocal(next); // 낙관적 반영
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: DEVICE_LIST_QUERY_KEY });
+    },
+    onError: (err) => {
+      setAlarmLocal((v) => !v); // 롤백
+      showAlert(getApiErrorMessage(err, "알람 설정 변경에 실패했습니다."));
+    },
+    onSettled: () => setAlarmBusy(false),
   });
 
   const { mutate: removeDevice, isPending: isDeleting } = useMutation({
@@ -162,6 +192,9 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
   const handleSave = () => {
     const payload: Record<string, any> = {
       deviceName: form.deviceName || null,
+      // 표시명: 값이 있으면 그대로, 비우면 빈문자열("") 전송.
+      // 백엔드 updateDevice 는 null=미변경 규칙이라 표시명 삭제는 ""로 저장 → 화면은 장비명 폴백.
+      deviceDisplayName: form.deviceDisplayName.trim() ? form.deviceDisplayName.trim() : "",
       description: form.description || null,
       active: form.active,
       categoryId: form.categoryId ? Number(form.categoryId) : null,
@@ -192,6 +225,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
   const handleCancel = () => {
     setForm({
       deviceName: device.deviceName ?? "",
+      deviceDisplayName: device.deviceDisplayName ?? "",
       description: device.description ?? "",
       active: device.active ?? true,
       categoryId: device.categoryId ? String(device.categoryId) : "",
@@ -234,7 +268,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
       <Section>
         <SectionTitle>기본 정보</SectionTitle>
 
-        {/* 장비 이름 */}
+        {/* 장비 이름 (내부 식별용 원본명 — 폴백 대상 아님) */}
         <Row>
           <RowLabel>장비 이름</RowLabel>
           <RowValue>
@@ -246,6 +280,25 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
               />
             ) : (
               device.deviceName
+            )}
+          </RowValue>
+        </Row>
+
+        {/* 표시명 (deviceDisplayName) — 비어 있으면 장비명으로 표시 */}
+        <Row>
+          <RowLabel>표시명</RowLabel>
+          <RowValue>
+            {editMode ? (
+              <Input
+                value={form.deviceDisplayName}
+                onChange={(e) => handleChange("deviceDisplayName", e.target.value)}
+                placeholder="비우면 장비명으로 표시됩니다"
+                maxLength={100}
+              />
+            ) : device.deviceDisplayName ? (
+              device.deviceDisplayName
+            ) : (
+              <CategoryEmpty>미지정 (장비명으로 표시)</CategoryEmpty>
             )}
           </RowValue>
         </Row>
@@ -324,6 +377,39 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
           </RowValue>
         </Row>
         <Row>
+          <RowLabel>알람</RowLabel>
+          <RowValue>
+            <Toggle
+              on={alarmLocal}
+              disabled={alarmBusy}
+              title="끄면 이 장비 알람이 발생해도 서버가 전송하지 않음(반영 최대 30초)"
+              onClick={() => toggleAlarm(!alarmLocal)}
+            >
+              {alarmLocal ? "ON" : "OFF"}
+            </Toggle>
+          </RowValue>
+        </Row>
+        <Row>
+          <RowLabel>동작 상태</RowLabel>
+          <RowValue>
+            <StateBadge $state={device.operationState ?? "UNKNOWN"}>
+              {OPERATION_STATE_LABEL[
+                (device.operationState ?? "UNKNOWN") as OperationState
+              ]}
+            </StateBadge>
+          </RowValue>
+        </Row>
+        <Row>
+          <RowLabel>연결 상태</RowLabel>
+          <RowValue>
+            <StateBadge $state={device.connectionState ?? "UNKNOWN"}>
+              {CONNECTION_STATE_LABEL[
+                (device.connectionState ?? "UNKNOWN") as ConnectionState
+              ]}
+            </StateBadge>
+          </RowValue>
+        </Row>
+        <Row>
           <RowLabel>등록일</RowLabel>
           <RowValue>{formatDate(device.createdAt)}</RowValue>
         </Row>
@@ -341,7 +427,6 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
             <PropTypeBadge>{propertyType}</PropTypeBadge>
           </SectionTitle>
           {propFields.map((k) => {
-            const isPassword = k.toLowerCase().includes("password");
             const val = propertyInfo[k] ?? "";
             return (
               <Row key={k}>
@@ -349,14 +434,12 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
                 <RowValue>
                   {editMode ? (
                     <Input
-                      type={isPassword ? "password" : "text"}
+                      type="text"
                       value={val}
                       onChange={(e) => handlePropChange(k, e.target.value)}
                       placeholder={k}
-                      autoComplete={isPassword ? "new-password" : "off"}
+                      autoComplete="off"
                     />
-                  ) : isPassword ? (
-                    val ? "••••••" : "-"
                   ) : (
                     val || "-"
                   )}
@@ -456,16 +539,16 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
         </Section>
       )}
 
-      {/* ── 편집 모드 액션 버튼 ── */}
+      {/* ── 편집 모드 액션 버튼 (sticky 푸터 — ModalBody 스크롤포트 하단 고정) ── */}
       {editMode && (
-        <ActionRow>
+        <Footer>
           <Button variant="outline" onClick={handleCancel}>
             취소
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={!dirty || isSaving}>
             {isSaving ? "저장 중…" : "저장"}
           </Button>
-        </ActionRow>
+        </Footer>
       )}
     </Container>
   );
@@ -480,6 +563,8 @@ export default DeviceDetailModal;
 const Container = styled.div`
   min-width: 520px;
   max-width: min(92vw, 720px);
+  /* 스크롤러는 셸의 ModalBody(overflow-y:auto). 여기(및 조상)에 overflow 를 걸면
+     Footer 의 position:sticky 가 깨지므로 걸지 않는다. 일반 블록 유지. */
 `;
 
 const PointCount = styled.span`
@@ -553,6 +638,7 @@ const KeySub = styled.span`
 `;
 
 const ModalToolbar = styled.div`
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -646,6 +732,43 @@ const Badge = styled.span<{ $active?: boolean; $placed?: boolean }>`
   }};
 `;
 
+const StateBadge = styled.span<{ $state: string }>`
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 12px;
+  white-space: nowrap;
+  background: ${(p) => {
+    switch (p.$state) {
+      case "RUNNING":
+      case "CONNECTED":
+        return "#dcfce7";
+      case "FAULT":
+      case "DISCONNECTED":
+        return "#fee2e2";
+      case "STOPPED":
+        return "#fef3c7";
+      default:
+        return "#f3f4f6";
+    }
+  }};
+  color: ${(p) => {
+    switch (p.$state) {
+      case "RUNNING":
+      case "CONNECTED":
+        return "#15803d";
+      case "FAULT":
+      case "DISCONNECTED":
+        return "#b91c1c";
+      case "STOPPED":
+        return "#b45309";
+      default:
+        return "#6b7280";
+    }
+  }};
+`;
+
 const Input = styled.input`
   width: 100%;
   box-sizing: border-box;
@@ -722,13 +845,19 @@ const CategoryEmpty = styled.span`
   font-style: italic;
 `;
 
-const ActionRow = styled.div`
+const Footer = styled.div`
+  /* 스크롤러(ModalBody) 하단에 항상 고정. 스크롤 조상~Footer 사이(Container)에 overflow 없음. */
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 12px;
+  padding: 12px 0 4px;
   border-top: 1px solid #e5e7eb;
   margin-top: 4px;
+  /* 아래로 스크롤되는 콘텐츠가 비치지 않도록 불투명 배경 유지 */
+  background: #fff;
 `;
 
 const Empty = styled.div`

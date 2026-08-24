@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import privateApi from "./api";
 import type {
   AlarmConditionKind,
-  AlarmDisplayType,
+  AlarmEffect,
   AlarmLevelKey,
   AlarmOperator,
   AlarmScope,
@@ -30,8 +30,8 @@ export interface AlarmMeta {
   operator: MetaMap<AlarmOperator>;
   /** 조건 종류 (THRESHOLD/TOGGLE) */
   conditionKind: MetaMap<AlarmConditionKind>;
-  /** 경보 표시 유형 (SIMPLE/SOP/POPUP_SOP …) */
-  displayType: MetaMap<AlarmDisplayType>;
+  /** 레벨별 3D 이펙트 연출 (NONE/BLINK/COLOR_CHANGE/PULSE, enum name → 한글 설명) */
+  effect: MetaMap<AlarmEffect>;
   /** 출력 채널 (대문자 키: NOTIFY/SOP/CCTV/SMS/BROADCAST/EMAIL …) */
   outputChannel: MetaMap;
   /** CCTV 소스 결정 방식 */

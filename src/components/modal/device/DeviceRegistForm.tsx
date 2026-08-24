@@ -74,6 +74,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
   const [selectedMidId, setSelectedMidId] = useState(null);
   const [selectedSmallId, setSelectedSmallId] = useState(null);
   const [deviceName, setDeviceName] = useState("");
+  const [deviceDisplayName, setDeviceDisplayName] = useState("");
   const [deviceDescription, setDeviceDescription] = useState("");
   const [submitError, setSubmitError] = useState("");
   // property_info 동적 입력값 (카테고리 propertyType 기반)
@@ -184,6 +185,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
         onSuccess(res, variables);
       } else {
         setDeviceName("");
+        setDeviceDisplayName("");
         setSubmitError("");
         showAlert(message);
       }
@@ -198,6 +200,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     setSelectedMidId(null);
     setSelectedSmallId(null);
     setDeviceName("");
+    setDeviceDisplayName("");
     setDeviceDescription("");
     setPropertyInfo({});
     setSubmitError("");
@@ -206,6 +209,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     setSelectedMidId(id);
     setSelectedSmallId(null);
     setDeviceName("");
+    setDeviceDisplayName("");
     setDeviceDescription("");
     setPropertyInfo({});
     setSubmitError("");
@@ -213,6 +217,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
   const pickSmall = (id) => {
     setSelectedSmallId(id);
     setDeviceName("");
+    setDeviceDisplayName("");
     setDeviceDescription("");
     setPropertyInfo({});
     setSubmitError("");
@@ -237,6 +242,8 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
     }
     createDevice({
       deviceName: deviceName.trim(),
+      // 표시명은 선택 입력 — 비우면 생략(백엔드에서 장비명으로 표시).
+      ...(deviceDisplayName.trim() ? { deviceDisplayName: deviceDisplayName.trim() } : {}),
       description: deviceDescription.trim(),
       deviceKey,
       categoryId: selectedSmallId,
@@ -364,6 +371,14 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
               required
             />
 
+            <FieldLabel>표시명 (deviceDisplayName)</FieldLabel>
+            <FieldInput
+              value={deviceDisplayName}
+              onChange={(e) => setDeviceDisplayName(e.target.value)}
+              placeholder="비우면 장비명으로 표시됩니다"
+              maxLength={100}
+            />
+
             <FieldLabel>장비 키 (deviceKey)</FieldLabel>
             <KeyFieldWrap>
               <KeyInput
@@ -401,18 +416,17 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
               </PropHeader>
               <PropGrid>
                 {propFields.map((k) => {
-                  const isPassword = k.toLowerCase().includes("password");
                   return (
                     <PropField key={k}>
                       <PropLabel>{k}</PropLabel>
                       <FieldInput
-                        type={isPassword ? "password" : "text"}
+                        type="text"
                         value={propertyInfo[k] ?? ""}
                         onChange={(e) =>
                           setPropertyInfo((prev) => ({ ...prev, [k]: e.target.value }))
                         }
                         placeholder={k}
-                        autoComplete={isPassword ? "new-password" : "off"}
+                        autoComplete="off"
                       />
                     </PropField>
                   );
@@ -509,6 +523,7 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
               variant="outline"
               onClick={() => {
                 setDeviceName("");
+                setDeviceDisplayName("");
                 setSubmitError("");
                 setDeviceDescription("");
               }}

@@ -18,6 +18,7 @@ import UserManagePage from "@/pages/users/UserManagePage";
 import DeviceCategoryManagePage from "@/pages/device/DeviceCategoryManagePage";
 import DeviceRegistPage from "@/pages/device/DeviceRegistPage";
 import DevicePointMappingPage from "@/pages/device/DevicePointMappingPage";
+import DeviceValueHistoryPage from "@/pages/device/DeviceValueHistoryPage";
 import SystemDiagramPage from "@/pages/device/SystemDiagramPage";
 import CommandPointPage from "@/pages/command/CommandPointPage";
 import DeviceControlPage from "@/pages/command/DeviceControlPage";
@@ -84,6 +85,9 @@ export const menuData = [
       { title: "포인트 정보 매핑",
         //icon: <SvgIcons.Layers/>,
         path: "/device/point-mapping", element: <DevicePointMappingPage/>},
+      { title: "실시간 값 이력",
+        //icon: <SvgIcons.Layers/>,
+        path: "/device/value-history", element: <DeviceValueHistoryPage/>},
       { title: "계통도",
         //icon: <SvgIcons.Layers/>,
         path: "/device/system-diagram", element: <SystemDiagramPage/>},

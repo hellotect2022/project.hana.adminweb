@@ -1,4 +1,5 @@
 import { showAlert } from "@/utils/dialogBridge";
+import { deviceLabel } from "@/utils/deviceLabel";
 import { useMemo, useState } from 'react';
 import * as THREE from 'three';
 import styled from 'styled-components';
@@ -182,7 +183,7 @@ function NodeView({ node, depth, expanded, toggle, filter, onToggleActive, onTog
               >
                 <St $on={d.placed}>{d.placed ? '배치' : '미배치'}</St>
                 <div style={{ minWidth: 0 }}>
-                  <div className="nm">{d.deviceName}</div>
+                  <div className="nm">{deviceLabel(d)}</div>
                   <div className="meta">{d.assetName ?? '(자산없음)'} · {d.location?.floorName ? floorLabel(floorNameToKey(d.location.floorName) ?? '') : '-'}</div>
                 </div>
                 <ActiveBtn

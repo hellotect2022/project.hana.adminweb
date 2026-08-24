@@ -59,7 +59,7 @@ type ScopeFilter = "ALL" | AlarmScope;
 /**
  * 알람/이벤트 정책 (WA-ALARM-POLICY, 통합)
  * 카테고리·디바이스 범위의 임계치(AI)·토글(DI) 정책과 레벨별 출력 채널
- * (알림/SOP/CCTV/SMS), 경보표시·이펙트를 한 화면에서 관리한다.
+ * (알림/SOP/CCTV/SMS)·이펙트를 한 화면에서 관리한다.
  * 단일 API(/api/alarm/policies) + 서버 메타로 값/라벨/순서 구동.
  */
 const AlarmEventPolicyPage = () => {
@@ -125,7 +125,7 @@ const AlarmEventPolicyPage = () => {
   return (
     <AdminPageTemplate
       title="알람/이벤트 정책"
-      description="카테고리·장비(포인트) 범위의 임계치(AI)·토글(DI) 정책과 레벨(주의·경계·심각)별 출력 채널(알림·SOP·CCTV·SMS), 경보 표시·이펙트를 관리합니다."
+      description="카테고리·장비(포인트) 범위의 임계치(AI)·토글(DI) 정책과 레벨(주의·경계·심각)별 출력 채널(알림·SOP·CCTV·SMS)·이펙트를 관리합니다."
     >
       <PanelHead>
         <TabBar>
@@ -153,7 +153,6 @@ const AlarmEventPolicyPage = () => {
               <Th $center>범위</Th>
               <Th>대상 · 포인트</Th>
               <Th $center>발생 조건</Th>
-              <Th $center>경보 표시</Th>
               <Th $center>레벨 · 출력 채널</Th>
               <Th $center>관리</Th>
             </tr>
@@ -161,19 +160,19 @@ const AlarmEventPolicyPage = () => {
           <tbody>
             {loading ? (
               <tr>
-                <Td colSpan={7} $center>
+                <Td colSpan={6} $center>
                   불러오는 중…
                 </Td>
               </tr>
             ) : isError ? (
               <tr>
-                <Td colSpan={7} $center>
+                <Td colSpan={6} $center>
                   {(error as Error)?.message ?? "목록을 불러오지 못했습니다."}
                 </Td>
               </tr>
             ) : policies.length === 0 ? (
               <tr>
-                <Td colSpan={7} $center>
+                <Td colSpan={6} $center>
                   등록된 정책이 없습니다. "+ 정책 등록"으로 추가하세요.
                 </Td>
               </tr>
@@ -198,9 +197,6 @@ const AlarmEventPolicyPage = () => {
                   </Td>
                   <Td $center>
                     <CondText>{formatCondition(p, meta!)}</CondText>
-                  </Td>
-                  <Td $center>
-                    <Chip>{meta!.displayType[p.displayType] ?? p.displayType}</Chip>
                   </Td>
                   <Td>
                     <LevelChannelSummary policy={p} meta={meta!} />
@@ -462,16 +458,6 @@ const TargetText = styled.code`
 const CondText = styled.span`
   font-size: 12px;
   font-family: monospace;
-  color: #374151;
-`;
-
-const Chip = styled.span`
-  display: inline-block;
-  padding: 2px 9px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-  background: #f3f4f6;
   color: #374151;
 `;
 
