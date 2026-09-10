@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Toggle } from "@/components/ui";
 import {
   categoryFetchAPI,
+  CONNECTION_STATE_COLOR,
   CONNECTION_STATE_LABEL,
   DEVICE_CATEGORY_QUERY_KEY,
   deviceLogicalPointsQueryKey,
@@ -405,7 +406,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
             <StateBadge $state={device.connectionState ?? "UNKNOWN"}>
               {CONNECTION_STATE_LABEL[
                 (device.connectionState ?? "UNKNOWN") as ConnectionState
-              ]}
+              ] ?? CONNECTION_STATE_LABEL.UNKNOWN}
             </StateBadge>
           </RowValue>
         </Row>
@@ -473,6 +474,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
                   <th>타입</th>
                   <th>단위</th>
                   <th>SI 매핑</th>
+                  <th>원천 소스</th>
                   <th>활성</th>
                 </tr>
               </thead>
@@ -483,7 +485,7 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
                       <TagCell>{p.tagName || "-"}</TagCell>
                       <KeySub>{p.pointKey}</KeySub>
                     </td>
-                    <td>{p.pointName || "-"}</td>
+                    <td>{p.description || "-"}</td>
                     <td>{p.pointType || "-"}</td>
                     <td>{p.unit || "-"}</td>
                     <td>
@@ -491,6 +493,8 @@ const DeviceDetailModal = ({ device, onClose, onDeleted }) => {
                         ? `${p.refDeviceCode}:${p.refPointCode}`
                         : "—"}
                     </td>
+                    {/* 서버에서 null 이면 VIEW01 로 취급되므로 화면도 동일하게 보여준다. */}
+                    <td>{p.dataSourceLabel || "뷰01 (XN 관제점)"}</td>
                     <td>
                       <Badge $active={p.active !== false}>
                         {p.active !== false ? "활성" : "비활성"}
@@ -732,6 +736,19 @@ const Badge = styled.span<{ $active?: boolean; $placed?: boolean }>`
   }};
 `;
 
+/* 동작상태·연결상태 공용 배지 색 (DeviceManagePage 와 동일 규칙).
+   연결상태는 CONNECTION_STATE_COLOR 단일 소스, 동작상태만 여기서 매핑한다. */
+const OPERATION_STATE_COLOR: Record<string, { bg: string; color: string }> = {
+  RUNNING: { bg: "#dcfce7", color: "#15803d" },
+  STOPPED: { bg: "#fef3c7", color: "#b45309" },
+  FAULT: { bg: "#fee2e2", color: "#b91c1c" },
+};
+
+const stateBadgeColor = (state: string) =>
+  CONNECTION_STATE_COLOR[state as ConnectionState] ??
+  OPERATION_STATE_COLOR[state] ??
+  CONNECTION_STATE_COLOR.UNKNOWN;
+
 const StateBadge = styled.span<{ $state: string }>`
   display: inline-block;
   padding: 2px 10px;
@@ -739,34 +756,8 @@ const StateBadge = styled.span<{ $state: string }>`
   font-weight: 600;
   border-radius: 12px;
   white-space: nowrap;
-  background: ${(p) => {
-    switch (p.$state) {
-      case "RUNNING":
-      case "CONNECTED":
-        return "#dcfce7";
-      case "FAULT":
-      case "DISCONNECTED":
-        return "#fee2e2";
-      case "STOPPED":
-        return "#fef3c7";
-      default:
-        return "#f3f4f6";
-    }
-  }};
-  color: ${(p) => {
-    switch (p.$state) {
-      case "RUNNING":
-      case "CONNECTED":
-        return "#15803d";
-      case "FAULT":
-      case "DISCONNECTED":
-        return "#b91c1c";
-      case "STOPPED":
-        return "#b45309";
-      default:
-        return "#6b7280";
-    }
-  }};
+  background: ${(p) => stateBadgeColor(p.$state).bg};
+  color: ${(p) => stateBadgeColor(p.$state).color};
 `;
 
 const Input = styled.input`

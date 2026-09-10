@@ -45,7 +45,7 @@ export function buildPointKey(deviceKey, schemaTagName) {
   return `${key}_${tag}`;
 }
 
-/** @param {Array<{ tagName?: string; type?: string; unit?: string; tagDesc?: string; isDisplay?: boolean }>} schemaDefinitions */
+/** @param {Array<{ tagName?: string; type?: string; unit?: string; tagDesc?: string; isDisplay?: boolean; tagDisplayName?: string }>} schemaDefinitions */
 export function buildPointRowsFromSchema(deviceKey, schemaDefinitions = []) {
   return schemaDefinitions
     .filter((s) => s?.tagName?.trim())
@@ -55,7 +55,9 @@ export function buildPointRowsFromSchema(deviceKey, schemaDefinitions = []) {
         schemaTagName,
         tagName: schemaTagName,
         pointKey: buildPointKey(deviceKey, schemaTagName),
-        pointName: s.tagDesc?.trim() || schemaTagName,
+        description: s.tagDesc?.trim() || schemaTagName,
+        // 표시명(pointDisplayName): 스키마 tagDisplayName 값을 전달, 없으면 null
+        pointDisplayName: s.tagDisplayName?.trim() || null,
         pointType: s.type ?? "",
         unit: s.unit ?? "",
         tagDesc: s.tagDesc ?? "",
@@ -249,11 +251,12 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
       categoryId: selectedSmallId,
       active: true,
       propertyInfo: propertyInfoPayload,
-      points: pointRows.map(({ tagName, pointKey, schemaTagName, pointName, pointType, unit, tagDesc, isDisplay }) => ({
+      points: pointRows.map(({ tagName, pointKey, schemaTagName, description, pointDisplayName, pointType, unit, tagDesc, isDisplay }) => ({
         tagName,
         pointKey,
         schemaTagName,
-        pointName,
+        description,
+        pointDisplayName,
         pointType,
         unit,
         tagDesc,
@@ -496,10 +499,11 @@ const DeviceRegistForm = ({ onSuccess = (..._a: any[]) => {}, onCancel = (..._a:
                   등록 시 전송되는 points:{" "}
                   <code>
                     {JSON.stringify(
-                      pointRows.map(({ tagName, pointKey, pointName, pointType, unit, isDisplay }) => ({
+                      pointRows.map(({ tagName, pointKey, description, pointDisplayName, pointType, unit, isDisplay }) => ({
                         tagName,
                         pointKey,
-                        pointName,
+                        description,
+                        pointDisplayName,
                         pointType,
                         unit,
                         isDisplay,

@@ -11,6 +11,7 @@ import DeviceCctvMappingModal from "@/components/modal/device/DeviceCctvMappingM
 import Pagination from "@/components/common/Pagination";
 import { useModal } from "@/contexts/ModalContext";
 import {
+  CONNECTION_STATE_COLOR,
   CONNECTION_STATE_LABEL,
   deleteDeviceAPI,
   DEVICE_LIST_QUERY_KEY,
@@ -199,6 +200,7 @@ const DeviceManagePage = () => {
         <DeviceRegistForm
           onCancel={closeModal}
           onSuccess={(res) => {
+            //console.log('rrr',res)
             showAlert(res?.message || "장비가 등록되었습니다.");
             //closeModal();
           }}
@@ -338,7 +340,7 @@ const DeviceManagePage = () => {
                       <StateBadge $state={device.connectionState ?? "UNKNOWN"}>
                         {CONNECTION_STATE_LABEL[
                           (device.connectionState ?? "UNKNOWN") as ConnectionState
-                        ]}
+                        ] ?? CONNECTION_STATE_LABEL.UNKNOWN}
                       </StateBadge>
                     </StateStack>
                   </Td>
@@ -491,6 +493,21 @@ const StateStack = styled.div`
   align-items: center;
 `;
 
+/* 동작상태·연결상태 공용 배지 색.
+   연결상태(NORMAL/ABNORMAL/DISCONNECTED/UNKNOWN)는 CONNECTION_STATE_COLOR 단일 소스를
+   그대로 쓰고, 동작상태(RUNNING/STOPPED/FAULT)만 여기서 매핑한다.
+   두 enum 이 공유하는 키는 UNKNOWN 뿐이고 색(회색)도 동일하다. */
+const OPERATION_STATE_COLOR: Record<string, { bg: string; color: string }> = {
+  RUNNING: { bg: "#dcfce7", color: "#15803d" },
+  STOPPED: { bg: "#fef3c7", color: "#b45309" },
+  FAULT: { bg: "#fee2e2", color: "#b91c1c" },
+};
+
+const stateBadgeColor = (state: string) =>
+  CONNECTION_STATE_COLOR[state as ConnectionState] ??
+  OPERATION_STATE_COLOR[state] ??
+  CONNECTION_STATE_COLOR.UNKNOWN;
+
 const StateBadge = styled.span<{ $state: string }>`
   display: inline-block;
   padding: 2px 10px;
@@ -498,33 +515,7 @@ const StateBadge = styled.span<{ $state: string }>`
   font-weight: 600;
   border-radius: 12px;
   white-space: nowrap;
-  background: ${(p) => {
-    switch (p.$state) {
-      case "RUNNING":
-      case "CONNECTED":
-        return "#dcfce7";
-      case "FAULT":
-      case "DISCONNECTED":
-        return "#fee2e2";
-      case "STOPPED":
-        return "#fef3c7";
-      default:
-        return "#f3f4f6";
-    }
-  }};
-  color: ${(p) => {
-    switch (p.$state) {
-      case "RUNNING":
-      case "CONNECTED":
-        return "#15803d";
-      case "FAULT":
-      case "DISCONNECTED":
-        return "#b91c1c";
-      case "STOPPED":
-        return "#b45309";
-      default:
-        return "#6b7280";
-    }
-  }};
+  background: ${(p) => stateBadgeColor(p.$state).bg};
+  color: ${(p) => stateBadgeColor(p.$state).color};
 `;
 

@@ -11,31 +11,30 @@ import {
 } from "@/utils/deviceHierarchyFilterUtils";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 import {
-  ALARM_POLICY_QUERY_KEY,
-  createAlarmPolicy,
-  updateAlarmPolicy,
-  type AlarmConditionKind,
-  type AlarmLevelKey,
-  type AlarmOperator,
-  type AlarmPolicy,
-  type AlarmPolicyPayload,
-  type AlarmScope,
+  EVENT_RULE_QUERY_KEY,
+  createEventRule,
+  updateEventRule,
+  type RuleConditionKind,
+  type EventLevelKey,
+  type RuleOperator,
+  type EventRule,
+  type EventRulePayload,
+  type RuleScope,
   type OutputSpec,
-} from "@/services/alarmPolicyService";
+} from "@/services/eventRuleService";
 import {
-  isComingSoon,
   metaEntries,
   metaKeys,
-  useAlarmMeta,
-  type AlarmMeta,
-} from "@/services/alarmMetaService";
+  useEventMeta,
+  type EventMeta,
+} from "@/services/eventMetaService";
 import {
   CCTV_DEFAULT_LIMIT,
   channelColor,
+  EDITABLE_CHANNELS,
   levelColor,
-  OUTPUT_SPEC_KEYS,
-  type OutputChannelKey,
-} from "@/pages/event/alarmPolicyConstants";
+  toOutputKey,
+} from "@/pages/event/eventRuleConstants";
 import {
   categoryFetchAPI,
   DEVICE_CATEGORY_QUERY_KEY,
@@ -56,7 +55,7 @@ type SchemaDef = {
 
 /** 레벨별 출력 채널 편집 상태 */
 type ChannelDraft = {
-  notify: boolean;
+  popup: boolean;
   sopEnabled: boolean;
   sopTemplateId: string;
   cctvEnabled: boolean;
@@ -66,7 +65,7 @@ type ChannelDraft = {
 
 /** 편집용 레벨 로컬 상태 */
 type LevelDraft = {
-  level: AlarmLevelKey;
+  level: EventLevelKey;
   enabled: boolean;
   thresholdValue: string;
   icon: string;
@@ -76,7 +75,7 @@ type LevelDraft = {
 
 function emptyChannel(): ChannelDraft {
   return {
-    notify: false,
+    popup: false,
     sopEnabled: false,
     sopTemplateId: "",
     cctvEnabled: false,
@@ -90,7 +89,7 @@ function outputsToChannel(outputs?: OutputSpec | null): ChannelDraft {
   const base = emptyChannel();
   if (!outputs) return base;
   return {
-    notify: !!outputs.notify?.enabled,
+    popup: !!outputs.popup?.enabled,
     sopEnabled: !!outputs.sop?.enabled,
     sopTemplateId:
       outputs.sop?.templateId != null ? String(outputs.sop.templateId) : "",
@@ -106,7 +105,7 @@ function outputsToChannel(outputs?: OutputSpec | null): ChannelDraft {
 /** 편집 상태 → 서버 outputs (켠 채널만 채움, 없으면 null) */
 function channelToOutputs(ch: ChannelDraft): OutputSpec | null {
   const out: OutputSpec = {};
-  if (ch.notify) out.notify = { enabled: true };
+  if (ch.popup) out.popup = { enabled: true };
   if (ch.sopEnabled) {
     out.sop = {
       enabled: true,
@@ -128,8 +127,8 @@ function channelToOutputs(ch: ChannelDraft): OutputSpec | null {
 
 /** 메타 level 순서로 레벨 초안 구성 */
 function buildInitialLevels(
-  policy: AlarmPolicy | null | undefined,
-  levelKeys: AlarmLevelKey[]
+  policy: EventRule | null | undefined,
+  levelKeys: EventLevelKey[]
 ): LevelDraft[] {
   return levelKeys.map((level) => {
     const existing = policy?.levels?.find((l) => l.level === level);
@@ -147,18 +146,18 @@ function buildInitialLevels(
 
 interface Props {
   /** 수정 대상. null 이면 신규 등록 */
-  policy?: AlarmPolicy | null;
+  policy?: EventRule | null;
   onClose: () => void;
 }
 
 /**
- * 알람/이벤트 정책 등록·수정 모달 (WA-ALARM-POLICY, 통합)
+ * 이벤트 규칙 등록·수정 모달 (WA-ALARM-POLICY)
  * scope 토글(카테고리/디바이스) + 대>중>소 계층 필터 + 포인트(tag) + 조건 +
  * 레벨별 임계값·출력 채널(알림/SOP/CCTV/SMS)·이펙트(effect) + 발동 설정.
- * 값/라벨/순서는 서버 메타(GET /api/alarm/meta)로 구동. 메타 로딩 전에는 로딩 표시.
+ * 값/라벨/순서는 서버 메타(GET /api/event/meta)로 구동. 메타 로딩 전에는 로딩 표시.
  */
-const AlarmEventPolicyModal = ({ policy, onClose }: Props) => {
-  const { data: meta, isError } = useAlarmMeta();
+const EventRuleModal = ({ policy, onClose }: Props) => {
+  const { data: meta, isError } = useEventMeta();
 
   if (isError) {
     return <Center>알람 메타 정보를 불러오지 못했습니다.</Center>;
@@ -166,32 +165,32 @@ const AlarmEventPolicyModal = ({ policy, onClose }: Props) => {
   if (!meta) {
     return <Center>불러오는 중…</Center>;
   }
-  return <AlarmEventPolicyForm meta={meta} policy={policy} onClose={onClose} />;
+  return <EventRuleForm meta={meta} policy={policy} onClose={onClose} />;
 };
 
-export default AlarmEventPolicyModal;
+export default EventRuleModal;
 
 /* ────────────────────────────────────────────────────────────────
  * 편집 폼 — meta 는 로딩 완료 후 주입되므로 non-null 로 사용.
  * ──────────────────────────────────────────────────────────────── */
 interface FormProps extends Props {
-  meta: AlarmMeta;
+  meta: EventMeta;
 }
 
-const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
+const EventRuleForm = ({ meta, policy, onClose }: FormProps) => {
   const queryClient = useQueryClient();
-  const isEdit = !!policy?.policyId;
+  const isEdit = !!policy?.ruleId;
 
   const levelKeys = useMemo(
-    () => metaKeys(meta.level) as AlarmLevelKey[],
+    () => metaKeys(meta.level) as EventLevelKey[],
     [meta]
   );
   const operatorKeys = useMemo(
-    () => metaKeys(meta.operator) as AlarmOperator[],
+    () => metaKeys(meta.operator) as RuleOperator[],
     [meta]
   );
 
-  const [scope, setScope] = useState<AlarmScope>(policy?.scope ?? "DEVICE");
+  const [scope, setScope] = useState<RuleScope>(policy?.scope ?? "DEVICE");
   // 대상: 대>중>소 계층 필터 (CATEGORY=smallId 사용 / DEVICE=deviceId 사용)
   const [hier, setHier] = useState(() =>
     policy?.scope === "DEVICE" && policy?.deviceId != null
@@ -200,15 +199,15 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
   );
   const deviceId = hier.deviceId;
 
-  const [policyName, setPolicyName] = useState(policy?.policyName ?? "");
+  const [ruleName, setRuleName] = useState(policy?.ruleName ?? "");
   const [description, setDescription] = useState(policy?.description ?? "");
   const [tagName, setTagName] = useState(policy?.tagName ?? "");
   const [pointType, setPointType] = useState(policy?.pointType ?? "");
-  const [conditionKind, setConditionKind] = useState<AlarmConditionKind>(
+  const [conditionKind, setConditionKind] = useState<RuleConditionKind>(
     policy?.conditionKind ??
-      ((metaKeys(meta.conditionKind)[0] ?? "THRESHOLD") as AlarmConditionKind)
+      ((metaKeys(meta.conditionKind)[0] ?? "THRESHOLD") as RuleConditionKind)
   );
-  const [operator, setOperator] = useState<AlarmOperator>(
+  const [operator, setOperator] = useState<RuleOperator>(
     policy?.operator ?? (operatorKeys[0] ?? "GTE")
   );
   const [triggerValue, setTriggerValue] = useState(policy?.triggerValue ?? "");
@@ -249,7 +248,7 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
 
   // 수정 모드: 기존 정책 → 대/중/소 cascade 초깃값 역산
   const { data: editDeviceRes } = useQuery({
-    queryKey: [...DEVICE_LIST_QUERY_KEY, "alarm-policy-edit-device", policy?.deviceId],
+    queryKey: [...DEVICE_LIST_QUERY_KEY, "event-rule-edit-device", policy?.deviceId],
     queryFn: () => fetchDeviceByIdAPI(policy!.deviceId),
     enabled: isEdit && policy?.scope === "DEVICE" && policy?.deviceId != null,
   });
@@ -288,7 +287,7 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
 
   // DEVICE 범위: 선택된 소분류의 장비 목록 → 장비 드롭다운(SearchableSelect) 옵션
   const { data: deviceListRes, isLoading: devicesLoading } = useQuery({
-    queryKey: [...DEVICE_LIST_QUERY_KEY, "alarm-policy-device-picker", hier.smallId],
+    queryKey: [...DEVICE_LIST_QUERY_KEY, "event-rule-device-picker", hier.smallId],
     queryFn: () => fetchDevicesAPI({ categoryId: Number(hier.smallId), size: 500 }),
     enabled: !isCategory && !!hier.smallId,
   });
@@ -334,11 +333,11 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
     queryFn: () => fetchSopTemplates(true),
   });
 
-  const patchLevel = (level: AlarmLevelKey, patch: Partial<LevelDraft>) =>
+  const patchLevel = (level: EventLevelKey, patch: Partial<LevelDraft>) =>
     setLevels((prev) =>
       prev.map((l) => (l.level === level ? { ...l, ...patch } : l))
     );
-  const patchChannel = (level: AlarmLevelKey, patch: Partial<ChannelDraft>) =>
+  const patchChannel = (level: EventLevelKey, patch: Partial<ChannelDraft>) =>
     setLevels((prev) =>
       prev.map((l) =>
         l.level === level ? { ...l, ch: { ...l.ch, ...patch } } : l
@@ -346,16 +345,16 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
     );
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (payload: AlarmPolicyPayload) =>
+    mutationFn: (payload: EventRulePayload) =>
       isEdit
-        ? updateAlarmPolicy({ policyId: policy!.policyId, payload })
-        : createAlarmPolicy(payload),
+        ? updateEventRule({ ruleId: policy!.ruleId, payload })
+        : createEventRule(payload),
     onSuccess: (res: any) => {
       if (res?.success === false) {
         showAlert(res?.message || "저장에 실패했습니다.");
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ALARM_POLICY_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENT_RULE_QUERY_KEY });
       onClose();
     },
     onError: (err) =>
@@ -377,7 +376,7 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
       showAlert("대상 포인트(tagName)를 선택/입력하세요.");
       return;
     }
-    if (!policyName.trim()) {
+    if (!ruleName.trim()) {
       showAlert("정책명을 입력하세요.");
       return;
     }
@@ -399,8 +398,8 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
       return;
     }
 
-    const payload: AlarmPolicyPayload = {
-      policyName: policyName.trim(),
+    const payload: EventRulePayload = {
+      ruleName: ruleName.trim(),
       description: description?.trim() || null,
       scope,
       categoryId: isCategory ? Number(hier.smallId) : null,
@@ -412,6 +411,9 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
       triggerValue: !isThreshold ? triggerValue.trim() || null : null,
       sustainSec: Number(sustainSec) || 0,
       cooldownSec: Number(cooldownSec) || 0,
+      // Active 축 설정은 아직 이 화면에서 편집하지 않는다 — 기존 값 유지(신규는 서버 기본값).
+      deadband: policy?.deadband ?? null,
+      suppressMode: policy?.suppressMode ?? null,
       active,
       levels: enabledLevels.map((l, idx) => ({
         level: l.level,
@@ -431,24 +433,25 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
     });
   };
 
-  /** 레벨별 출력 채널 그리드 — 메타 outputChannel 순서/라벨/준비중 구동 */
+  /**
+   * 레벨별 출력 채널 그리드 — 메타 notificationChannel(서버 enum) 순서/라벨로 구동.
+   * 메타 키(UPPER_SNAKE)를 OutputSpec 필드 키로 변환해 매칭한다(DEVICE_CONTROL → deviceControl).
+   */
   const renderChannels = (l: LevelDraft) =>
-    metaKeys(meta.outputChannel).map((upper) => {
-      const lower = upper.toLowerCase() as OutputChannelKey;
-      const rawLabel = meta.outputChannel[upper] ?? upper;
-      const soon = isComingSoon(rawLabel);
-      const label = rawLabel.replace(/\(준비중\)/g, "").trim();
-      const col = channelColor(lower);
-      const supported = (OUTPUT_SPEC_KEYS as string[]).includes(lower);
+    metaKeys(meta.notificationChannel).map((upper) => {
+      const key = toOutputKey(upper);
+      const label = meta.notificationChannel[upper] ?? upper;
+      const col = channelColor(key ?? upper);
+      const editable = !!key && EDITABLE_CHANNELS.includes(key);
 
-      // OutputSpec 슬롯이 없는 채널(BROADCAST/EMAIL 등) — 비활성 준비중 표시
-      if (!supported) {
+      // 서버 발송·실행기가 아직 없는 채널(EMAIL/DEVICE_CONTROL) 또는 프론트가 모르는 신규 채널
+      if (!editable) {
         return (
           <ChannelBox key={upper} $muted>
             <ChannelHead>
               <ChannelName $color={col.color}>
                 {label}
-                {soon && <ComingSoon>준비중</ComingSoon>}
+                <ComingSoon>준비중</ComingSoon>
               </ChannelName>
               <Toggle on={false} disabled>
                 OFF
@@ -459,20 +462,17 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
         );
       }
 
-      if (lower === "notify") {
+      if (key === "popup") {
         return (
-          <ChannelBox key={upper} $on={l.ch.notify}>
+          <ChannelBox key={upper} $on={l.ch.popup}>
             <ChannelHead>
-              <ChannelName $color={col.color}>
-                {label}
-                {soon && <ComingSoon>준비중</ComingSoon>}
-              </ChannelName>
+              <ChannelName $color={col.color}>{label}</ChannelName>
               <Toggle
-                on={l.ch.notify}
+                on={l.ch.popup}
                 disabled={!l.enabled}
-                onClick={() => patchChannel(l.level, { notify: !l.ch.notify })}
+                onClick={() => patchChannel(l.level, { popup: !l.ch.popup })}
               >
-                {l.ch.notify ? "ON" : "OFF"}
+                {l.ch.popup ? "ON" : "OFF"}
               </Toggle>
             </ChannelHead>
             <ChannelDesc>팝업·토스트 알림</ChannelDesc>
@@ -480,14 +480,11 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
         );
       }
 
-      if (lower === "sop") {
+      if (key === "sop") {
         return (
           <ChannelBox key={upper} $on={l.ch.sopEnabled}>
             <ChannelHead>
-              <ChannelName $color={col.color}>
-                {label}
-                {soon && <ComingSoon>준비중</ComingSoon>}
-              </ChannelName>
+              <ChannelName $color={col.color}>{label}</ChannelName>
               <Toggle
                 on={l.ch.sopEnabled}
                 disabled={!l.enabled}
@@ -522,14 +519,11 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
         );
       }
 
-      if (lower === "cctv") {
+      if (key === "cctv") {
         return (
           <ChannelBox key={upper} $on={l.ch.cctvEnabled}>
             <ChannelHead>
-              <ChannelName $color={col.color}>
-                {label}
-                {soon && <ComingSoon>준비중</ComingSoon>}
-              </ChannelName>
+              <ChannelName $color={col.color}>{label}</ChannelName>
               <Toggle
                 on={l.ch.cctvEnabled}
                 disabled={!l.enabled}
@@ -563,13 +557,13 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
         );
       }
 
-      // sms — 슬롯 있음(켜면 저장), 라벨은 메타(준비중 배지)
+      // sms — 규칙에는 저장되지만(액션 행 PENDING) 실제 발송기는 미구현이라 준비중 배지를 단다.
       return (
         <ChannelBox key={upper} $on={l.ch.smsEnabled} $muted>
           <ChannelHead>
             <ChannelName $color={col.color}>
               {label}
-              {soon && <ComingSoon>준비중</ComingSoon>}
+              <ComingSoon>준비중</ComingSoon>
             </ChannelName>
             <Toggle
               on={l.ch.smsEnabled}
@@ -688,8 +682,8 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
           <Field>
             <Label $required>정책명</Label>
             <Input
-              value={policyName}
-              onChange={(e) => setPolicyName(e.target.value)}
+              value={ruleName}
+              onChange={(e) => setRuleName(e.target.value)}
               placeholder="예: 급기 온도 과열 경보"
               style={{ width: "100%" }}
             />
@@ -713,7 +707,7 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
             <Select
               value={conditionKind}
               onChange={(e) =>
-                setConditionKind(e.target.value as AlarmConditionKind)
+                setConditionKind(e.target.value as RuleConditionKind)
               }
               style={{ width: "100%" }}
             >
@@ -729,7 +723,7 @@ const AlarmEventPolicyForm = ({ meta, policy, onClose }: FormProps) => {
               <Label $required>연산자</Label>
               <Select
                 value={operator}
-                onChange={(e) => setOperator(e.target.value as AlarmOperator)}
+                onChange={(e) => setOperator(e.target.value as RuleOperator)}
                 style={{ width: "100%" }}
               >
                 {metaEntries(meta.operator).map(([value, symbol]) => (

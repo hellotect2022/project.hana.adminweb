@@ -19,18 +19,24 @@ type ModalConfig = {
     full: boolean;
 };
 
+const initialConfig: ModalConfig = {
+    isOpen: false,
+    title: "",
+    content: "",
+    onConfirm: null,
+    onCancel: null,
+    hideFooter: false,
+    hideCancel: false,
+    wide: false,
+    full: false,
+};
+
 export const ModalProvider = ({children}) => {
-    const [modalConfig, setModalConfig] = useState<ModalConfig>({
-        isOpen: false,
-        title: "",
-        content: "",
-        onConfirm: null,
-        onCancel: null,
-        hideFooter: false,
-        hideCancel: false,
-        wide: false,
-        full: false,
-    })
+    // openModal 전용 상태
+    const [modalConfig, setModalConfig] = useState<ModalConfig>(initialConfig)
+
+    // showAlert / showConfirm / apiError 핸들러 전용 상태 (별도 레이어)
+    const [dialogConfig, setDialogConfig] = useState<ModalConfig>(initialConfig)
 
     // 모달 열기 함수
     // hideFooter: true → 폼 등에서 본문만 표시(취소/확인 푸터 숨김)
@@ -64,10 +70,22 @@ export const ModalProvider = ({children}) => {
         }))
     }, [])
 
+    // dialogConfig(알림/확인/에러) 전용 닫기 — closeModal 과 동일 리셋 로직
+    const closeDialog = useCallback(() => {
+        setDialogConfig((prev) => ({
+            ...prev,
+            isOpen: false,
+            hideFooter: false,
+            hideCancel: false,
+            wide: false,
+            full: false,
+        }))
+    }, [])
+
     // 전역 알림 모달(확인 1버튼) — 기존 alert() 대체
     const showAlert = useCallback((message: string, options?: DialogOptions) => {
         return new Promise<void>((resolve) => {
-            setModalConfig({
+            setDialogConfig({
                 isOpen: true,
                 title: options?.title ?? "알림",
                 content: <DialogMessageBody message={message} />,
@@ -84,7 +102,7 @@ export const ModalProvider = ({children}) => {
     // 전역 확인 모달(취소/확인) — 기존 confirm() 대체, Promise<boolean>
     const showConfirm = useCallback((message: string, options?: DialogOptions) => {
         return new Promise<boolean>((resolve) => {
-            setModalConfig({
+            setDialogConfig({
                 isOpen: true,
                 title: options?.title ?? "확인",
                 content: <DialogMessageBody message={message} />,
@@ -105,7 +123,7 @@ export const ModalProvider = ({children}) => {
 
     useEffect(() => {
         setApiErrorModalHandler(({ message, errorCode }) => {
-            setModalConfig({
+            setDialogConfig({
                 isOpen: true,
                 title: "오류",
                 content: (
@@ -125,11 +143,22 @@ export const ModalProvider = ({children}) => {
     return (
         <ModalContext.Provider value={{ openModal, closeModal }}>
             {children}
+            {/* openModal 전용 일반 모달 */}
             {modalConfig.isOpen && (
                 <Modal
                 config={modalConfig}
                 onClose={closeModal}
                 />
+            )}
+            {/* 알림/확인/에러 전용 다이얼로그 — 일반 모달 위에 별도 레이어로 표시.
+                Modal 오버레이 z-index(9999)가 고정값이라, 더 높은 stacking context 래퍼로 위에 띄운다. */}
+            {dialogConfig.isOpen && (
+                <div style={{ position: "relative", zIndex: 10000 }}>
+                    <Modal
+                    config={dialogConfig}
+                    onClose={closeDialog}
+                    />
+                </div>
             )}
         </ModalContext.Provider>
     );

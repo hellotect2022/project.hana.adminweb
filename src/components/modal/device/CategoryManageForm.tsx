@@ -9,7 +9,9 @@ import {
   deleteCategoryAPI,
   DEVICE_CATEGORY_QUERY_KEY,
   DEVICE_LIST_QUERY_KEY,
+  fetchPointDataSourcesAPI,
   flattenDeviceCategoryTree,
+  POINT_DATA_SOURCE_QUERY_KEY,
   sortByDisplayOrder,
   updateCategoryAPI,
   updateCategorySchemaAPI,
@@ -23,12 +25,20 @@ import {
 // 스키마 type 선택지
 const SCHEMA_TYPES = ["AI", "DI", "DO", "AO", "FUNCTION", "String", "Bool"];
 
+/**
+ * 원천 소스 기본값. 서버는 비어 있는 값을 VIEW01 로 취급하므로 화면 기본도 VIEW01 로 맞춘다.
+ * (빈칸으로 두면 관리자가 실제 동작과 다르게 이해한다)
+ */
+const DEFAULT_DATA_SOURCE = "VIEW01";
+
 const emptySchemRow = () => ({
   _key: Math.random().toString(36).slice(2),
   tagName: "",
   type: "AI",
   unit: "",
   isDisplay: true,
+  tagDisplayName: "",
+  dataSource: DEFAULT_DATA_SOURCE,
 });
 
 // ─────────────────────────────────────────────
@@ -158,6 +168,14 @@ const CategoryManageForm = () => {
     queryFn: () => fetchUnityAssetsList({ activeOnly: true }),
   });
 
+  // ─── 스키마 태그의 원천 소스 선택지 ───
+  // 거의 바뀌지 않는 코드 목록이라 길게 캐시한다.
+  const { data: dataSources = [] } = useQuery({
+    queryKey: POINT_DATA_SOURCE_QUERY_KEY,
+    queryFn: fetchPointDataSourcesAPI,
+    staleTime: 1000 * 60 * 30,
+  });
+
   const selectableAssets = useMemo(
     () => assets.filter((a) => a?.assetType !== "PIPE"),
     [assets]
@@ -242,6 +260,9 @@ const CategoryManageForm = () => {
       tagDesc: s.tagDesc ?? "",
       unit: s.unit ?? "",
       isDisplay: s.isDisplay ?? true,
+      tagDisplayName: s.tagDisplayName ?? "",
+      // 서버가 null 을 VIEW01 로 취급하므로 화면도 동일하게 보여준다.
+      dataSource: s.dataSource || DEFAULT_DATA_SOURCE,
     }));
     setSchemaRows(rows);
     setSchemaDirty(false);
@@ -358,12 +379,16 @@ const CategoryManageForm = () => {
 
   const handleSaveSchema = () => {
     if (!activeCategoryId) return;
-    const schema = schemaRows.map(({ tagName, type, unit, tagDesc, isDisplay }) => ({
+    const schema = schemaRows.map(({ tagName, type, unit, tagDesc, isDisplay, tagDisplayName, dataSource }) => ({
       tagName,
       type,
       unit,
       tagDesc,
       isDisplay,
+      tagDisplayName,
+      // 항상 명시적으로 보낸다. 서버는 빈 값을 "변경 없음"으로 처리하므로,
+      // 다른 소스에서 VIEW01 로 되돌린 경우를 반영하려면 코드를 실어야 한다.
+      dataSource: dataSource || DEFAULT_DATA_SOURCE,
     }));
     saveSchema({ categoryId: activeCategoryId, schema });
   };
@@ -661,7 +686,11 @@ const CategoryManageForm = () => {
                     <STh style={{ width: 50 }}>type</STh>
                     <STh style={{ width: 50 }}>unit</STh>
                     <STh $center style={{ width: 50 }}>표시(isDisplay)</STh>
+                    <STh $center style={{ width: 140 }}>표시이름</STh>
                     <STh $center style={{ width: 180 }}>설명</STh>
+                    <STh $center style={{ width: 130 }} title="이 태그 값을 채우는 수집 경로. 저장 시 이 카테고리의 모든 장비 포인트에 적용됩니다.">
+                      원천 소스
+                    </STh>
                     <STh $center style={{ width: 60 }}>삭제</STh>
                   </tr>
                 </thead>
@@ -701,10 +730,33 @@ const CategoryManageForm = () => {
                       </STd>
                       <STd>
                         <SchemaInput
+                          value={row.tagDisplayName}
+                          onChange={(e) => updateSchemaRow(row._key, "tagDisplayName", e.target.value)}
+                          placeholder="예) 실내온도"
+                        />
+                      </STd>
+                      <STd>
+                        <SchemaInput
                           value={row.tagDesc}
                           onChange={(e) => updateSchemaRow(row._key, "tagDesc", e.target.value)}
                           placeholder="예) 설명"
                         />
+                      </STd>
+                      <STd>
+                        <SchemaSelect
+                          value={row.dataSource || DEFAULT_DATA_SOURCE}
+                          onChange={(e) => updateSchemaRow(row._key, "dataSource", e.target.value)}
+                          title="이 태그 값을 채우는 수집 경로. 저장 시 이 카테고리의 모든 장비 포인트에 적용됩니다."
+                        >
+                          {dataSources.length === 0 && (
+                            <option value={DEFAULT_DATA_SOURCE}>{DEFAULT_DATA_SOURCE}</option>
+                          )}
+                          {dataSources.map((s) => (
+                            <option key={s.code} value={s.code}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </SchemaSelect>
                       </STd>
                       <STd $center>
                         <RemoveRowBtn type="button" onClick={() => removeSchemaRow(row._key)}>
@@ -722,8 +774,8 @@ const CategoryManageForm = () => {
             JSON 미리보기:{" "}
             <code>
               {JSON.stringify(
-                schemaRows.map(({ tagName, type, unit, tagDesc, isDisplay }) => ({
-                  tagName, type, unit, tagDesc, is_display: isDisplay,
+                schemaRows.map(({ tagName, type, unit, tagDesc, isDisplay, tagDisplayName }) => ({
+                  tagName, type, unit, tagDesc, is_display: isDisplay, tagDisplayName,
                 }))
               )}
             </code>

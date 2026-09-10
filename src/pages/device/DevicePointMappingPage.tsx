@@ -8,9 +8,11 @@ import Pagination from "@/components/common/Pagination";
 import DeviceHierarchyFilter from "@/components/device/DeviceHierarchyFilter";
 import {
   DEVICE_POINT_MAPPING_QUERY_KEY,
+  POINT_DATA_SOURCE_QUERY_KEY,
   POINT_MAPPING_STATS_QUERY_KEY,
   downloadPointMappingTemplateAPI,
   fetchDevicePointsForMappingAPI,
+  fetchPointDataSourcesAPI,
   fetchPointMappingStatsAPI,
   importPointMappingAPI,
   saveDevicePointRefMappingAPI,
@@ -26,6 +28,13 @@ const PAGE_SIZE = 50;
 
 const norm = (v) => (v ?? "").trim();
 
+/**
+ * 서버에서 data_source 가 비어 있으면(null) 하위호환으로 VIEW01 로 간주된다.
+ * 화면에서도 같은 규칙으로 보여줘야 관리자가 실제 동작과 다르게 이해하지 않는다.
+ */
+const DEFAULT_DATA_SOURCE = "VIEW01";
+const normDataSource = (v) => norm(v) || DEFAULT_DATA_SOURCE;
+
 const DevicePointMappingPage = () => {
   const queryClient = useQueryClient();
 
@@ -35,8 +44,15 @@ const DevicePointMappingPage = () => {
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(0);
   const [unmappedOnly, setUnmappedOnly] = useState(false); // 미매핑(ref 코드 없음)만 표시
-  /** @type {[Record<number, { refDeviceCode: string; refPointCode: string }>, Function]} */
+  /** @type {[Record<number, { refDeviceCode: string; refPointCode: string; dataSource: string }>, Function]} */
   const [drafts, setDrafts] = useState({});
+
+  // 원천 소스 선택지 — 거의 바뀌지 않는 코드 목록이라 길게 캐시한다.
+  const { data: dataSources = [] } = useQuery({
+    queryKey: POINT_DATA_SOURCE_QUERY_KEY,
+    queryFn: fetchPointDataSourcesAPI,
+    staleTime: 1000 * 60 * 30,
+  });
 
   // 장비 드롭다운은 DeviceHierarchyFilter 가 소분류별로 서버에서 직접 조회한다.
   // (과거 500-cap 목록 프리페치 → 앞 500개 밖 장비 누락 버그 제거)
@@ -174,7 +190,8 @@ const DevicePointMappingPage = () => {
     if (!d) return false;
     return (
       norm(d.refDeviceCode) !== norm(row.refDeviceCode) ||
-      norm(d.refPointCode) !== norm(row.refPointCode)
+      norm(d.refPointCode) !== norm(row.refPointCode) ||
+      normDataSource(d.dataSource) !== normDataSource(row.dataSource)
     );
   };
 
@@ -194,12 +211,17 @@ const DevicePointMappingPage = () => {
   const getRefPointCode = (row) =>
     drafts[row.pointId]?.refPointCode ?? row.refPointCode ?? "";
 
+  /** 서버가 null 을 VIEW01 로 취급하므로 화면도 VIEW01 로 표시한다. */
+  const getDataSource = (row) =>
+    normDataSource(drafts[row.pointId]?.dataSource ?? row.dataSource);
+
   const updateDraft = (pointId, field, value) => {
     setDrafts((prev) => {
       const row = points.find((p) => p.pointId === pointId);
       const base = prev[pointId] ?? {
         refDeviceCode: row?.refDeviceCode ?? "",
         refPointCode: row?.refPointCode ?? "",
+        dataSource: normDataSource(row?.dataSource),
       };
       return { ...prev, [pointId]: { ...base, [field]: value } };
     });
@@ -212,6 +234,9 @@ const DevicePointMappingPage = () => {
           pointId: row.pointId,
           refDeviceCode: norm(getRefDeviceCode(row)) || null,
           refPointCode: norm(getRefPointCode(row)) || null,
+          // 항상 명시적으로 보낸다. 서버는 null 을 "변경 없음"으로 처리하므로,
+          // 사용자가 VIEW01 로 되돌린 경우를 반영하려면 코드를 실어야 한다.
+          dataSource: getDataSource(row),
         }))
       ),
     onSuccess: (res) => {
@@ -322,6 +347,10 @@ const DevicePointMappingPage = () => {
       <HintBox>
         연계 시스템 포인트의 <code>ref_device_code</code>, <code>ref_point_code</code>를 입력하세요.
         두 값을 모두 비우면 매핑이 해제됩니다. 동일한 SI 코드는 한 논리 포인트에만 연결할 수 있습니다.
+        <br />
+        <strong>원천 소스</strong>는 이 포인트의 값을 채우는 수집 경로입니다. 카테고리 스키마에
+        소스를 지정하면 <strong>저장 시 이 값이 덮어쓰기</strong>되므로, 스키마가 있는 포인트는
+        카테고리 관리에서 지정하세요.
       </HintBox>
 
       <TableWrap>
@@ -338,19 +367,20 @@ const DevicePointMappingPage = () => {
               <Th $center style={{ width: 56 }}>단위</Th>
               <Th style={{ width: 140 }}>ref_device_code</Th>
               <Th style={{ width: 140 }}>ref_point_code</Th>
+              <Th style={{ width: 130 }}>원천 소스</Th>
               <Th $center style={{ width: 72 }}>상태</Th>
             </tr>
           </thead>
           <tbody>
             {isLoading || isFetching ? (
               <tr>
-                <Td colSpan={11} $center>
+                <Td colSpan={12} $center>
                   불러오는 중…
                 </Td>
               </tr>
             ) : displayRows.length === 0 ? (
               <tr>
-                <Td colSpan={11} $center>
+                <Td colSpan={12} $center>
                   {unmappedOnly
                     ? "미매핑 포인트가 없습니다."
                     : keyword || hasHierarchyFilter(appliedFilter)
@@ -374,7 +404,7 @@ const DevicePointMappingPage = () => {
                     <Td>
                       <TagName>{row.tagName}</TagName>
                     </Td>
-                    <Td>{row.pointName || "-"}</Td>
+                    <Td>{row.pointDisplayName || "-"}</Td>
                     <Td>
                       <Mono>{row.pointKey}</Mono>
                     </Td>
@@ -399,6 +429,25 @@ const DevicePointMappingPage = () => {
                         placeholder="SI 포인트 코드"
                         $dirty={dirty}
                       />
+                    </Td>
+                    <Td>
+                      <SourceSelect
+                        value={getDataSource(row)}
+                        onChange={(e) =>
+                          updateDraft(row.pointId, "dataSource", e.target.value)
+                        }
+                        $dirty={dirty}
+                        title="이 포인트의 값을 채우는 수집 경로. 잘못 지정하면 값이 덮이거나 수집되지 않습니다."
+                      >
+                        {dataSources.length === 0 && (
+                          <option value={DEFAULT_DATA_SOURCE}>{DEFAULT_DATA_SOURCE}</option>
+                        )}
+                        {dataSources.map((s) => (
+                          <option key={s.code} value={s.code}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </SourceSelect>
                     </Td>
                     <Td $center>
                       <StatusBadge $mapped={mapped} $dirty={dirty}>
@@ -591,6 +640,18 @@ const RefInput = styled.input<{ $dirty?: boolean }>`
   font-size: 12px;
   font-family: ui-monospace, monospace;
   background: ${(p) => (p.$dirty ? "#fffef5" : "#fff")};
+`;
+
+const SourceSelect = styled.select<{ $dirty?: boolean }>`
+  width: 100%;
+  min-width: 110px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid ${(p) => (p.$dirty ? "#f59e0b" : "#d0d3d8")};
+  border-radius: 4px;
+  font-size: 12px;
+  background: ${(p) => (p.$dirty ? "#fffef5" : "#fff")};
+  cursor: pointer;
 `;
 
 const StatusBadge = styled.span<{ $mapped?: boolean | string; $dirty?: boolean }>`

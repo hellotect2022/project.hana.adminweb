@@ -70,15 +70,15 @@ import privateApi from "./api";
  *   propertyInfo?: Record<string, any> | null;
  *   alarmState?: boolean;
  *   operationState?: "RUNNING" | "STOPPED" | "FAULT" | "UNKNOWN";
- *   connectionState?: "CONNECTED" | "DISCONNECTED" | "UNKNOWN";
+ *   connectionState?: "NORMAL" | "ABNORMAL" | "DISCONNECTED" | "UNKNOWN";
  *   commandPoints?: Array<{ commandPointId: number; label: string; tagName: string | null; onValue: string; offValue: string }>;
  * }} DeviceDTO
  */
 
 /** 장비 동작상태 (서버 enum) */
 export type OperationState = "RUNNING" | "STOPPED" | "FAULT" | "UNKNOWN";
-/** 장비 연결상태 (서버 enum) */
-export type ConnectionState = "CONNECTED" | "DISCONNECTED" | "UNKNOWN";
+/** 장비 연결상태 (서버 enum ConnectionState) */
+export type ConnectionState = "NORMAL" | "ABNORMAL" | "DISCONNECTED" | "UNKNOWN";
 
 /** 동작상태 라벨 */
 export const OPERATION_STATE_LABEL: Record<OperationState, string> = {
@@ -87,12 +87,33 @@ export const OPERATION_STATE_LABEL: Record<OperationState, string> = {
   FAULT: "고장",
   UNKNOWN: "알수없음",
 };
-/** 연결상태 라벨 */
+/** 연결상태 라벨 (서버 ConnectionState.description 과 동일) */
 export const CONNECTION_STATE_LABEL: Record<ConnectionState, string> = {
-  CONNECTED: "연결됨",
-  DISCONNECTED: "연결끊김",
+  NORMAL: "정상",
+  ABNORMAL: "이상",
+  DISCONNECTED: "통신끊김",
   UNKNOWN: "알수없음",
 };
+
+/**
+ * 연결상태 배지 색 토큰 (순수 UI 표현 — 서버 소유 아님).
+ * 정상=green / 이상=amber / 통신끊김=red / 알수없음=gray.
+ * 토큰 형태는 eventRuleConstants 의 LEVEL_COLORS 와 동일하게 { bg, color, dot }.
+ */
+export const CONNECTION_STATE_COLOR: Record<
+  ConnectionState,
+  { bg: string; color: string; dot: string }
+> = {
+  NORMAL: { bg: "#dcfce7", color: "#15803d", dot: "#22c55e" },
+  ABNORMAL: { bg: "#fef3c7", color: "#b45309", dot: "#f59e0b" },
+  DISCONNECTED: { bg: "#fee2e2", color: "#b91c1c", dot: "#ef4444" },
+  UNKNOWN: { bg: "#f3f4f6", color: "#6b7280", dot: "#9ca3af" },
+};
+
+/** 연결상태 색 조회 — 미지정/서버 신규값은 UNKNOWN(회색) 폴백 */
+export function connectionStateColor(state?: string | null) {
+  return CONNECTION_STATE_COLOR[state as ConnectionState] ?? CONNECTION_STATE_COLOR.UNKNOWN;
+}
 
 export const DEVICE_CATEGORY_QUERY_KEY = ["device", "device-categories"];
 export const DEVICE_LIST_QUERY_KEY = ["device", "list"];
@@ -163,7 +184,7 @@ export async function deleteCategoryAPI(categoryId) {
 
 /**
  * PUT /device/device-categories/{categoryId}/schema — 스키마 정의 저장
- * @param {{ categoryId: number; schema: Array<{tagName: string; type: string; unit: string; isDisplay: boolean}> }} param
+ * @param {{ categoryId: number; schema: Array<{tagName: string; type: string; unit: string; isDisplay: boolean; tagDesc?: string; tagDisplayName?: string}> }} param
  */
 export async function updateCategorySchemaAPI({ categoryId, schema }) {
   const { data } = await privateApi.put(`/device/device-categories/${categoryId}/schema`, schema);
@@ -203,7 +224,8 @@ export async function fetchDeviceByIdAPI(deviceId) {
  *   tagName: string;
  *   pointKey: string;
  *   schemaTagName?: string;
- *   pointName?: string;
+ *   description?: string;
+ *   pointDisplayName?: string | null;
  *   pointType?: string;
  *   unit?: string;
  *   tagDesc?: string;
@@ -272,7 +294,8 @@ export async function fetchDeviceLogicalPointsAPI(deviceId) {
  *   pointId: number;
  *   pointKey: string;
  *   tagName: string;
- *   pointName: string;
+ *   description: string;
+ *   pointDisplayName?: string | null;
  *   pointType: string | null;
  *   unit: string | null;
  *   active: boolean;
@@ -311,7 +334,8 @@ export async function fetchDevicePointsAPI({ deviceId, page = 0, keyword, priori
  *   categoryPath: string | null;
  *   pointKey: string;
  *   tagName: string;
- *   pointName: string;
+ *   description: string;
+ *   pointDisplayName?: string | null;
  *   pointType: string | null;
  *   unit: string | null;
  *   active: boolean;
@@ -361,12 +385,34 @@ export async function fetchDevicePointsForMappingAPI({
 }
 
 /**
- * PUT /device/points/ref-mapping — ref_device_code / ref_point_code 일괄 저장
- * @param {Array<{ pointId: number; refDeviceCode?: string | null; refPointCode?: string | null }>} items
+ * PUT /device/points/ref-mapping — ref_device_code / ref_point_code / data_source 일괄 저장
+ *
+ * ⚠ dataSource 는 **생략(undefined/null)하면 서버가 기존 값을 유지**한다(비우지 않는다).
+ *    이 필드를 모르는 화면이 저장할 때 AMQP/DERIVED 지정이 지워지는 사고를 막기 위한 설계다.
+ *    되돌리려면 "VIEW01" 을 명시적으로 보낸다.
+ *
+ * @param {Array<{ pointId: number; refDeviceCode?: string | null; refPointCode?: string | null; dataSource?: string | null }>} items
  */
 export async function saveDevicePointRefMappingAPI(items) {
   const { data } = await privateApi.put("/device/points/ref-mapping", items);
   return data;
+}
+
+/** 포인트 원천 소스 선택지 쿼리 키 */
+export const POINT_DATA_SOURCE_QUERY_KEY = ["device", "points", "data-sources"];
+
+/**
+ * GET /device/points/data-sources — 원천 소스 드롭다운 선택지
+ *
+ * 값이 지정되지 않은(null) 포인트는 서버에서 VIEW01 로 간주된다.
+ * RabbitMQ 로 채우는 포인트는 AMQP, 계산으로 채우는 포인트는 DERIVED 로 지정해야
+ * gateway 기동 시 값이 null 로 덮이지 않는다.
+ *
+ * @returns {Promise<Array<{ code: string; label: string }>>}
+ */
+export async function fetchPointDataSourcesAPI() {
+  const { data } = await privateApi.get("/device/points/data-sources");
+  return data?.data ?? [];
 }
 
 /** 포인트 매핑 통계 쿼리 키 (categoryId / keyword 를 뒤에 붙여 사용) */

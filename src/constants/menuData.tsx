@@ -5,8 +5,7 @@ import AuthMenuPermissionPage from "@/pages/auth/AuthMenuPermissionPage";
 import DisabledMenuPlaceholder from "@/components/common/DisabledMenuPlaceholder";
 import SopTemplateManagePage from "@/pages/sop/SopTemplateManagePage";
 import SopTemplateEditorPage from "@/pages/sop/SopTemplateEditorPage";
-import EventThresholdPage from "@/pages/event/EventThresholdPage";
-import AlarmEventPolicyPage from "@/pages/event/AlarmEventPolicyPage";
+import EventRulePage from "@/pages/event/EventRulePage";
 import LogHubPage from "@/pages/log/LogHubPage";
 import MenuDisplayPage from "@/pages/menu/MenuDisplayPage";
 import MenuEditPage from "@/pages/menu/MenuEditPage";
@@ -22,9 +21,12 @@ import DeviceValueHistoryPage from "@/pages/device/DeviceValueHistoryPage";
 import SystemDiagramPage from "@/pages/device/SystemDiagramPage";
 import CommandPointPage from "@/pages/command/CommandPointPage";
 import DeviceControlPage from "@/pages/command/DeviceControlPage";
+import DeviceInfraManagePage from "@/pages/infra/DeviceInfraManagePage";
 import UnityAssetManagePage from "@/pages/unityAsset/UnityAssetManagePage";
 import ZoneManagePage from "@/pages/zone/ZoneManagePage";
 import SpaceLightManagePage from "@/pages/zone/SpaceLightManagePage";
+import MemoPage from "@/pages/memo/MemoPage";
+import AlarmHistoryPage from "@/pages/alarm/AlarmHistoryPage";
 
 export const menuData = [
   {
@@ -88,9 +90,12 @@ export const menuData = [
       { title: "실시간 값 이력",
         //icon: <SvgIcons.Layers/>,
         path: "/device/value-history", element: <DeviceValueHistoryPage/>},
-      { title: "계통도",
+      { title: "장비그룹관리",
         //icon: <SvgIcons.Layers/>,
         path: "/device/system-diagram", element: <SystemDiagramPage/>},
+      { title: "인프라 관리",
+        //icon: <SvgIcons.Server/>,
+        path: "/device/infra", element: <DeviceInfraManagePage/>},
     ]
   },
   {
@@ -139,13 +144,12 @@ export const menuData = [
       //     />
       //   ),
       // },
-      // { title: "임계값 설정",
-      //   //icon: <SvgIcons.Layers/>,
-      //   path: "/event/threshold", element: <EventThresholdPage/> },
+      // 「임계값 설정」(/event/threshold, EventThresholdPage) 은 구 tbl_event_rule 계보 화면이라
+      // 2026-09-04 이벤트 도메인 재구조화에서 서버 API와 함께 제거했다. 그 역할은 아래 정책 화면이 대신한다.
       { title: "알람/이벤트 정책",
         //icon: <SvgIcons.Siren/>,
-        path: "/event/alarm-policy",
-        element: <AlarmEventPolicyPage/>
+        path: "/event/rules",
+        element: <EventRulePage/>
       },
       // {
       //   title: "알림 설정",
@@ -195,11 +199,29 @@ export const menuData = [
     ]
   },
   {
+    label: "알람 이력",
+    abbr: "알람",
+    items: [
+      { title: "알람 이력 보기",
+        //icon: <SvgIcons.Bell/>,
+        path: "/alarm/history", element:<AlarmHistoryPage/>},
+    ]
+  },
+  {
+    label: "메모",
+    abbr: "메모",
+    items: [
+      { title: "메모",
+        //icon: <SvgIcons.Folder/>,
+        path: "/memo", element:<MemoPage/>},
+    ]
+  },
+  {
     label: "테스트",
     abbr: "테스트",
     items: [
-      { title: "테스트1", 
-        //icon: <SvgIcons.Server/>, 
+      { title: "테스트1",
+        //icon: <SvgIcons.Server/>,
         path: "/test/1" , element:<AuthGroupsPage/>},
     ]
   }

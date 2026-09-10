@@ -5,31 +5,31 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminPageTemplate from "@/components/common/AdminPageTemplate";
 import { Button } from "@/components/ui";
 import { useModal } from "@/contexts/ModalContext";
-import AlarmEventPolicyModal from "@/components/modal/alarm/AlarmEventPolicyModal";
+import EventRuleModal from "@/components/modal/event/EventRuleModal";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 import {
-  ALARM_POLICY_QUERY_KEY,
-  deleteAlarmPolicy,
-  fetchAlarmPolicies,
-  type AlarmPolicy,
-  type AlarmScope,
-} from "@/services/alarmPolicyService";
+  EVENT_RULE_QUERY_KEY,
+  deleteEventRule,
+  fetchEventRules,
+  type EventRule,
+  type RuleScope,
+} from "@/services/eventRuleService";
 import {
   metaKeys,
-  useAlarmMeta,
-  type AlarmMeta,
-} from "@/services/alarmMetaService";
+  useEventMeta,
+  type EventMeta,
+} from "@/services/eventMetaService";
 import {
   channelColor,
   enabledChannels,
   formatCondition,
   levelColor,
-  OUTPUT_SPEC_KEYS,
+  toOutputKey,
   type OutputChannelKey,
-} from "./alarmPolicyConstants";
+} from "./eventRuleConstants";
 
 /** 대상 셀 텍스트 — scope 에 따라 카테고리 경로 또는 장비명 + tag */
-function targetText(p: AlarmPolicy): string {
+function targetText(p: EventRule): string {
   const tag = p.tagName ?? "-";
   if (p.scope === "DEVICE") {
     const name =
@@ -41,38 +41,40 @@ function targetText(p: AlarmPolicy): string {
   return `${path} · ${tag}`;
 }
 
-/** 메타 outputChannel 순서에서 OutputSpec 지원 채널만 소문자로 추출 */
-function channelOrderFromMeta(meta: AlarmMeta): OutputChannelKey[] {
-  return (metaKeys(meta.outputChannel).map((k) => k.toLowerCase()) as OutputChannelKey[]).filter(
-    (k) => (OUTPUT_SPEC_KEYS as string[]).includes(k)
+/** 메타 notificationChannel(서버 enum) 순서를 OutputSpec 키 순서로 변환 */
+function channelOrderFromMeta(meta: EventMeta): OutputChannelKey[] {
+  return metaKeys(meta.notificationChannel)
+    .map(toOutputKey)
+    .filter((k): k is OutputChannelKey => k !== null);
+}
+
+/** 채널 라벨(메타 소유). OutputSpec 키 → 메타 키를 역으로 찾아 설명을 쓴다. */
+function channelLabel(meta: EventMeta, key: OutputChannelKey): string {
+  const metaKey = metaKeys(meta.notificationChannel).find(
+    (k) => toOutputKey(k) === key
   );
+  return (metaKey && meta.notificationChannel[metaKey]) || key;
 }
 
-/** 채널 라벨(메타 소유) — "(준비중)" 접미사는 제거 */
-function channelLabel(meta: AlarmMeta, key: OutputChannelKey): string {
-  const raw = meta.outputChannel[key.toUpperCase()] ?? key;
-  return raw.replace(/\(준비중\)/g, "").trim();
-}
-
-type ScopeFilter = "ALL" | AlarmScope;
+type ScopeFilter = "ALL" | RuleScope;
 
 /**
- * 알람/이벤트 정책 (WA-ALARM-POLICY, 통합)
+ * 이벤트 규칙 (알람/이벤트 정책 화면, WA-ALARM-POLICY)
  * 카테고리·디바이스 범위의 임계치(AI)·토글(DI) 정책과 레벨별 출력 채널
  * (알림/SOP/CCTV/SMS)·이펙트를 한 화면에서 관리한다.
- * 단일 API(/api/alarm/policies) + 서버 메타로 값/라벨/순서 구동.
+ * 단일 API(/api/event/rules) + 서버 메타로 값/라벨/순서 구동.
  */
-const AlarmEventPolicyPage = () => {
+const EventRulePage = () => {
   const queryClient = useQueryClient();
   const { openModal, closeModal } = useModal();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("ALL");
 
-  const { data: meta } = useAlarmMeta();
+  const { data: meta } = useEventMeta();
 
   const { data: all = [], isLoading, isError, error } = useQuery({
-    queryKey: ALARM_POLICY_QUERY_KEY,
-    queryFn: fetchAlarmPolicies,
+    queryKey: EVENT_RULE_QUERY_KEY,
+    queryFn: fetchEventRules,
   });
 
   const policies = useMemo(
@@ -80,32 +82,32 @@ const AlarmEventPolicyPage = () => {
     [all, scopeFilter]
   );
 
-  const selected = policies.find((p) => p.policyId === selectedId) ?? null;
+  const selected = policies.find((p) => p.ruleId === selectedId) ?? null;
 
   const { mutate: removePolicy } = useMutation({
-    mutationFn: deleteAlarmPolicy,
+    mutationFn: deleteEventRule,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ALARM_POLICY_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: EVENT_RULE_QUERY_KEY });
       closeModal();
     },
     onError: (err) =>
       showAlert(getApiErrorMessage(err, "삭제 중 오류가 발생했습니다.")),
   });
 
-  const openEditor = (policy: AlarmPolicy | null) => {
+  const openEditor = (policy: EventRule | null) => {
     openModal({
       title: policy ? "알람/이벤트 정책 수정" : "알람/이벤트 정책 등록",
       hideFooter: true,
       wide: true,
-      content: <AlarmEventPolicyModal policy={policy} onClose={closeModal} />,
+      content: <EventRuleModal policy={policy} onClose={closeModal} />,
     });
   };
 
-  const openDelete = (policy: AlarmPolicy) => {
+  const openDelete = (policy: EventRule) => {
     openModal({
       title: "알람/이벤트 정책 삭제",
-      content: `정책 "${policy.policyName}" 을(를) 삭제할까요?`,
-      onConfirm: () => removePolicy(policy.policyId),
+      content: `정책 "${policy.ruleName}" 을(를) 삭제할까요?`,
+      onConfirm: () => removePolicy(policy.ruleId),
     });
   };
 
@@ -115,7 +117,7 @@ const AlarmEventPolicyPage = () => {
   const scopeTabs: { key: ScopeFilter; label: string }[] = [
     { key: "ALL", label: "전체" },
     ...(meta
-      ? (metaKeys(meta.scope) as AlarmScope[]).map((s) => ({
+      ? (metaKeys(meta.scope) as RuleScope[]).map((s) => ({
           key: s as ScopeFilter,
           label: meta.scope[s] ?? s,
         }))
@@ -179,12 +181,12 @@ const AlarmEventPolicyPage = () => {
             ) : (
               policies.map((p) => (
                 <Row
-                  key={p.policyId}
-                  $selected={p.policyId === selectedId}
-                  onClick={() => setSelectedId(p.policyId)}
+                  key={p.ruleId}
+                  $selected={p.ruleId === selectedId}
+                  onClick={() => setSelectedId(p.ruleId)}
                 >
                   <Td>
-                    <PolicyName>{p.policyName}</PolicyName>
+                    <PolicyName>{p.ruleName}</PolicyName>
                     {!p.active && <MutedTag>비활성</MutedTag>}
                   </Td>
                   <Td $center>
@@ -231,7 +233,7 @@ const AlarmEventPolicyPage = () => {
         <DetailPanel>
           <DetailHead>
             <DetailTitle>
-              선택 정책: <strong>{selected.policyName}</strong>
+              선택 정책: <strong>{selected.ruleName}</strong>
             </DetailTitle>
             <DetailMeta>
               {meta.scope[selected.scope] ?? selected.scope} · {targetText(selected)}
@@ -312,15 +314,15 @@ const AlarmEventPolicyPage = () => {
   );
 };
 
-export default AlarmEventPolicyPage;
+export default EventRulePage;
 
 /** 목록 행: 레벨별로 켜진 출력 채널을 한 줄 요약 (메타 구동) */
 const LevelChannelSummary = ({
   policy,
   meta,
 }: {
-  policy: AlarmPolicy;
-  meta: AlarmMeta;
+  policy: EventRule;
+  meta: EventMeta;
 }) => {
   const levelOrder = metaKeys(meta.level);
   const channelOrder = channelOrderFromMeta(meta);
